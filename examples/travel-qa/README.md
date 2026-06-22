@@ -53,7 +53,7 @@ same executor, different statistic — answer flips.
 |  |  |
 |---|---|
 | **SkillHone harness** | Local Forgejo + Python env — see [`docs/install/developer.md`](../../docs/install/developer.md) |
-| **TomTom Maps API key** | <https://developer.tomtom.com/> — free tier is 2,500 requests/day, enough for one full run |
+| **TomTom Maps API key** | <https://developer.tomtom.com/> |
 
 ```sh
 export TOMTOM_API_KEY='your-key-here'
