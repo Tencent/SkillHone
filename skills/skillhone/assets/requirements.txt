@@ -1,0 +1,43 @@
+# SkillHone Python dependencies
+# ─────────────────────────────────────────────────────────────────────────────
+# 安装方式：
+#   pip install -r requirements.txt
+#
+# 建议使用虚拟环境：
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Core open-source dependencies ────────────────────────────────────────────
+
+# JSON5 support for settings.json comments
+json5>=0.9.14
+
+# HTTP clients for Forgejo API calls and eval data downloads
+httpx>=0.27.0
+requests>=2.32.4
+
+# Git operations for clone/branch/push workflows
+GitPython>=3.1.41
+
+# YAML parsing for skill metadata and static checks
+PyYAML>=6.0.1
+
+# ── Optional open-source dependencies ────────────────────────────────────────
+
+# Progress display for concurrent evals
+tqdm>=4.66.0
+
+# ── Optional Anthropic integration ───────────────────────────────────────────
+
+# Required only when running Claude/Anthropic-backed agent workflows.
+# The SDK package is MIT-licensed, but use of Anthropic services is governed
+# by Anthropic's applicable terms. See README.md.
+claude-agent-sdk>=0.1.0
+anthropic>=0.40.0
+
+# ── Development / test dependencies (optional) ──────────────────────────────
+
+# pytest>=8.0.0
+# pytest-asyncio>=0.23.0
+# pytest-httpserver>=1.0.10

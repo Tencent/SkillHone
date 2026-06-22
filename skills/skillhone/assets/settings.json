@@ -1,0 +1,103 @@
+{
+  // ─────────────────────────────────────────────────────────────────────────
+  // ~/.skillhone/settings.json — SkillHone 全局配置文件
+  //
+  // 用法：将本文件复制到 ~/.skillhone/settings.json，然后填写各字段。
+  //   mkdir -p ~/.skillhone
+  //   cp assets/settings.json ~/.skillhone/settings.json
+  //
+  // 支持 JSON5 格式（可以写注释、末尾逗号）。
+  // 若未安装 json5 库，请使用标准 JSON 格式（去掉所有注释和末尾逗号）。
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // ── Anthropic API Key（用于 improver 调用 Claude） ─────────────────────
+  // 若使用第三方代理（api_base 非 api.anthropic.com），此处填代理要求的 key
+  "api_key": "sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+
+  // ── Forgejo Git 服务器 ────────────────────────────────────────────────
+  "forgejo": {
+    // Forgejo 实例的 HTTP 地址（不带末尾斜杠）
+    // Docker 默认端口 3000；如部署在同机则为 http://localhost:3000
+    "url": "http://localhost:3000",
+
+    // Forgejo 上所有 skill/eval 仓库的 owner 用户名（一般建一个专用账号）
+    "owner": "skillhone",
+
+    // 具有 repo 读写权限的 Personal Access Token
+    // 在 Forgejo → 头像 → 设置 → 应用 → 生成令牌 中创建
+    // 需要权限：repo（read/write）+ issue（read/write）+ pull-request（read/write）
+    "token": "your_forgejo_personal_access_token"
+  },
+
+  // ── improver 配置（optim.py 里驱动优化循环的 Claude Agent）─────────────
+  "improver": {
+    // Claude API 代理地址（留空则走官方 https://api.anthropic.com）
+    "api_base": "",
+
+    // 用于改进循环的模型（建议 claude-opus-4-5 及以上；能力越强效果越好）
+    "model": "claude-opus-4-5",
+
+    // Agent 单次 session 最多多少轮对话（太小会截断循环）
+    "max_turns": 100,
+
+    // 传入改进 Agent 进程的额外环境变量（可覆盖 api_base / api_key）
+    "env": {
+      "ANTHROPIC_BASE_URL": "",   // 留空则继承 api_base
+      "ANTHROPIC_API_KEY": ""     // 留空则继承顶层 api_key
+    }
+  },
+
+  // ── executor 配置（eval.py 里运行被测 skill 的执行模型）────────────────
+  "executor": {
+    // 执行模型的 API 代理地址（留空则走官方）
+    "api_base": "",
+
+    // 执行模型名（eval.py 的"执行 Agent"用此模型回答每道 probe）
+    // 示例：claude-haiku-4-5（低成本快速）/ claude-sonnet-4-5（高精度）
+    "model": "claude-haiku-4-5",
+
+    // sdk_model_alias：映射到 Claude Agent SDK 的别名（haiku / sonnet / opus）
+    // 若使用官方模型，填对应级别即可；若自定义代理，需与 env.ANTHROPIC_MODEL 一致
+    "sdk_model_alias": "haiku",
+
+    // 并发 worker 数（每个 item 一个 worker，设太高会打爆 API 速率限制）
+    "workers": 8,
+
+    // 每道题 solver 最多跑多少步
+    "max_iterations": 150,
+
+    // 是否开启扩展思考（extended thinking）
+    "thinking_enabled": true,
+
+    // 上下文窗口大小（token 数，建议 ≥ 32000）
+    "context_size": 40000,
+
+    // 以下采样参数视 API 支持情况填写，不确定留默认值
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 20,
+    "presence_penalty": 1.5,
+
+    // 进程池（v14+ 特性，加速 CLI 启动；不稳定时可设 false）
+    "enable_process_pool": true,
+    "process_pool_size": 16,
+    "pool_initialization_batch_size": 4,
+    "pool_bare_mode": true,
+
+    // 传入 solver 进程的额外环境变量
+    "env": {
+      "ANTHROPIC_BASE_URL": "",
+      "ANTHROPIC_API_KEY": "",
+      // 若 sdk_model_alias=haiku，则 ANTHROPIC_DEFAULT_HAIKU_MODEL 须指向实际模型名
+      "ANTHROPIC_MODEL": "claude-haiku-4-5",
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5"
+    }
+  },
+
+  // ── synthesis 配置（生成 eval 数据时用，可选）────────────────────────────
+  "synthesis": {
+    "api_base": "",
+    "model": "claude-sonnet-4-5",
+    "workers": 8
+  }
+}

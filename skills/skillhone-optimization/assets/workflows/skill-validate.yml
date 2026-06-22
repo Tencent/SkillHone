@@ -1,0 +1,108 @@
+name: Validate Skill Format
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check SKILL.md exists
+        run: |
+          if [ ! -f SKILL.md ]; then
+            echo "ERROR: SKILL.md not found in repo root"
+            exit 1
+          fi
+
+      - name: Validate SKILL.md against agentskills.io spec
+        run: |
+          python3 -c "
+          import yaml, sys, re, os
+
+          with open('SKILL.md') as f:
+              content = f.read()
+
+          # Extract YAML frontmatter
+          if not content.startswith('---'):
+              print('ERROR: SKILL.md must start with YAML frontmatter (---)')
+              sys.exit(1)
+
+          parts = content.split('---', 2)
+          if len(parts) < 3:
+              print('ERROR: Invalid frontmatter format')
+              sys.exit(1)
+
+          try:
+              meta = yaml.safe_load(parts[1])
+          except yaml.YAMLError as e:
+              print(f'ERROR: Invalid YAML: {e}')
+              sys.exit(1)
+
+          if not isinstance(meta, dict):
+              print('ERROR: Frontmatter must be a YAML mapping')
+              sys.exit(1)
+
+          errors = []
+
+          # Required: name
+          name = meta.get('name', '')
+          if not name:
+              errors.append('name field is required')
+          else:
+              if len(name) > 64:
+                  errors.append(f'name too long ({len(name)} > 64 chars)')
+              if not re.match(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$', name) and len(name) > 1:
+                  errors.append(f'name must be lowercase alphanumeric with hyphens: {name}')
+              if len(name) == 1 and not re.match(r'^[a-z0-9]$', name):
+                  errors.append(f'single-char name must be alphanumeric: {name}')
+              if '--' in name:
+                  errors.append(f'consecutive hyphens not allowed: {name}')
+              if name.startswith('-') or name.endswith('-'):
+                  errors.append(f'name must not start/end with hyphen: {name}')
+
+          # Required: description
+          desc = meta.get('description', '')
+          if not desc:
+              errors.append('description field is required')
+          elif len(desc) > 1024:
+              errors.append(f'description too long ({len(desc)} > 1024 chars)')
+
+          # Optional: compatibility
+          compat = meta.get('compatibility', '')
+          if compat and len(compat) > 500:
+              errors.append(f'compatibility too long ({len(compat)} > 500 chars)')
+
+          # Body size check (recommended < 500 lines)
+          body = parts[2]
+          lines = body.strip().split('\n')
+          if len(lines) > 500:
+              print(f'WARNING: SKILL.md body has {len(lines)} lines (recommended < 500)')
+
+          if errors:
+              for e in errors:
+                  print(f'ERROR: {e}')
+              sys.exit(1)
+
+          print(f'OK: name={name}, description={len(desc)} chars, body={len(lines)} lines')
+          "
+
+      - name: Check directory structure
+        run: |
+          echo "=== Skill structure ==="
+          ls -la
+          if [ -d scripts ]; then
+            echo "scripts/: $(ls scripts/ | wc -l) files"
+            for f in scripts/*; do
+              if [ -f "$f" ] && [ -x "$f" ] || [[ "$f" == *.py ]] || [[ "$f" == *.sh ]]; then
+                echo "  OK: $f"
+              fi
+            done
+          fi
+          if [ -d references ]; then
+            echo "references/: $(ls references/ | wc -l) files"
+          fi
+          if [ -d assets ]; then
+            echo "assets/: $(ls assets/ | wc -l) files"
+          fi
