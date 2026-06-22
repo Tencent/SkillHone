@@ -46,6 +46,12 @@
   <img src="docs/assets/skillhone-framework.jpg" alt="SkillHone framework — agent runtime dispatches role-bounded optimisation and evaluation subagents over a skill repo and a skill-eval repo, recording every step into a persistent decision history" width="100%">
 </p>
 
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/42c7458f-7511-4cda-8c66-423832949804" controls width="800"></video>
+</p>
+
+> Demo video rendered with [HyperFrames](https://github.com/heygen-com/hyperframes).
+
 ---
 
 ## About This Repo

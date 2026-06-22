@@ -46,6 +46,12 @@
   <img src="./assets/skillhone-framework.jpg" alt="SkillHone 框架——Agent Runtime 调度角色受限的优化与评测 subagent，在技能仓和评测仓之间运行，每一步都写入持久化决策历史" width="100%">
 </p>
 
+<p align="center">
+  <video src="https://github.com/user-attachments/assets/58ea7136-3583-475f-a8fe-4c5f6aee3363" controls width="800"></video>
+</p>
+
+> Demo 视频使用 [HyperFrames](https://github.com/heygen-com/hyperframes) 渲染。
+
 ---
 
 ## 项目介绍
