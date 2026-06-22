@@ -43,7 +43,7 @@ cp assets/settings.json ~/.skillhone/settings.json
     "top_p": 0.95,
     "top_k": 20,
     "presence_penalty": 1.5,
-    "enable_process_pool": true,     // v14+ process pool (speeds up CLI start)
+    "enable_process_pool": true,     // process pool (speeds up CLI start)
     "process_pool_size": 16,
     "pool_initialization_batch_size": 4,
     "pool_bare_mode": true,

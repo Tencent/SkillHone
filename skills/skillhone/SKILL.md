@@ -60,6 +60,7 @@ uncheckable preferences should be noted as unverified, not silently ignored.
 | `scripts/optim.py` | iterate on / optimize / auto-improve a skill | [references/optim.md](references/optim.md) |
 | `scripts/new.py` | create a new skill+eval repo pair (a new experiment) | [references/cli.md](references/cli.md) |
 | `scripts/seed.py` | scaffold SKILL.md / scripts/ for an empty skill repo | [references/seed.md](references/seed.md) |
+| `scripts/synth.py` | synthesise a probe split into the eval repo (calls into `skillhone-synthesis`) | [references/cli.md](references/cli.md) |
 | `scripts/serve.py` | listen for Forgejo webhooks (PR/issue/push) | [references/cli.md](references/cli.md) |
 | `scripts/quality/static_check.py` | validate skill structure and script discoverability | [references/quality_scoring_rubric.md](references/quality_scoring_rubric.md) |
 
@@ -109,7 +110,7 @@ python3 scripts/serve.py --port 8790
 
 ## Gotchas
 
-- **`~/.skillhone/settings.json` is required** before any script runs. It holds the Forgejo URL/token and two model profiles (`test` for the eval solver, `improver` for `optim.py`). See [references/configuration.md](references/configuration.md).
+- **`~/.skillhone/settings.json` is required** before any script runs. It holds the Forgejo URL/token and three model profiles: `improver` (drives `optim.py`), `executor` (runs the skill under eval), and optional `synthesis` (used by `synth.py`). See [references/configuration.md](references/configuration.md).
 - **Start with `scripts/status.py` on Forgejo repos.** It is read-only and shows the open/closed Issue and PR state for the current repo; use it before creating issues, developing fixes, reviewing PRs, or merging.
 - **`scripts/eval.py` never writes to the skill repo** — it reads SKILL.md and writes a JSON result. Safe to run read-only.
 - **`scripts/optim.py` spawns subagents** (issue-reporter → developer → reviewer) via the Agent tool. Do *not* add `Agent` / `Task` to `disallowed_tools` in `settings.json.improver` or the loop will no-op.

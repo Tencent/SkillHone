@@ -1,6 +1,7 @@
 """Forgejo REST API client.
 
-Thin wrapper around Forgejo REST API v1. Used by forgejo_cli.py.
+Thin wrapper around Forgejo REST API v1. Used by the per-resource scripts
+(issue.py, pr.py, wiki.py, repo.py, summary.py) via _common.get_client().
 """
 from __future__ import annotations
 

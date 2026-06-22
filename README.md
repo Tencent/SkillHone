@@ -207,7 +207,7 @@ eval repo.
 
 | Skill | What it does |
 |---|---|
-| **`skillhone`** | Top-level entry — wraps the CLI (`status`, `eval`, `optim`, `new`, `seed`, `serve`). |
+| **`skillhone`** | Top-level entry — wraps the CLI (`status`, `eval`, `optim`, `new`, `seed`, `synth`, `serve`). |
 | **`skillhone-optimization`** | Optimisation orchestrator — diagnoses failures, plans changes, lands focused PRs on the skill repo. |
 | **`skillhone-evaluation`** | Runs and interprets evaluations — eval / probe / PR-validation, regression checks, trajectory diagnosis. |
 | **`skillhone-prd`** | Interactive PRD builder — pins down a new skill's goal, tools, and scoring rubric before optimisation begins. |

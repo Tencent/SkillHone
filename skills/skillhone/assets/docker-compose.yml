@@ -1,15 +1,17 @@
 # Forgejo Docker Compose
-# ─────────────────────────────────────────────────────────────────────────────
-# 用法：
-#   cp assets/docker-compose.yml ./docker-compose.yml
-#   docker compose up -d
+# -----------------------------------------------------------------------------
+# Usage:
+#   docker compose -f skills/skillhone/assets/docker-compose.yml up -d
 #
-# 推荐通过 assets/bootstrap.sh 一键起 + 自动建管理员 + 生成 PAT。
-# 该 compose 已通过 FORGEJO__* 环境变量预配置好 SQLite + INSTALL_LOCK，
-# 启动后无需任何 Web 安装向导操作。
+# Full bring-up instructions (admin user creation, PAT generation,
+# settings.json wiring) live in docs/install/developer.md.
 #
-# Forgejo 监听 http://localhost:3000，SSH 端口映射到宿主机 2222。
-# ─────────────────────────────────────────────────────────────────────────────
+# This compose is pre-configured for ready-to-use boot: SQLite + INSTALL_LOCK
+# is set via FORGEJO__* env vars, so Forgejo skips the Web install wizard.
+# Forgejo listens on http://localhost:3000; SSH is mapped to host port 2222.
+# Override the host ports with FORGEJO_HTTP_PORT / FORGEJO_SSH_PORT if 3000
+# or 2222 are taken.
+# -----------------------------------------------------------------------------
 
 services:
   forgejo:
@@ -18,8 +20,7 @@ services:
     environment:
       - USER_UID=1000
       - USER_GID=1000
-      - TZ=Asia/Shanghai
-      # ── 跳过 Web 安装向导（预配置 SQLite + 锁定安装态）─────────────────
+      # -- Skip the Web install wizard (pre-configure SQLite + lock install) --
       - FORGEJO__security__INSTALL_LOCK=true
       - FORGEJO__database__DB_TYPE=sqlite3
       - FORGEJO__database__PATH=/data/gitea/gitea.db
@@ -28,18 +29,20 @@ services:
       - FORGEJO__server__SSH_DOMAIN=localhost
       - FORGEJO__server__HTTP_PORT=3000
       - FORGEJO__server__PROTOCOL=http
-      # 关闭公开注册：管理员仅由 bootstrap.sh 通过 CLI 创建
+      # Disable public sign-up; admins are created via the `forgejo admin user
+      # create` CLI command (see docs/install/developer.md).
       - FORGEJO__service__DISABLE_REGISTRATION=true
       - FORGEJO__service__REQUIRE_SIGNIN_VIEW=false
       - FORGEJO__log__MODE=console
     restart: unless-stopped
     volumes:
-      # 持久化数据目录（包含 repos、数据库、配置）
+      # Persistent data: repos, database, config.
       - forgejo-data:/data
     ports:
-      # Web 界面 / API（宿主机端口由 FORGEJO_HTTP_PORT 控制，默认 3000）
+      # Web UI / API (host port controlled by FORGEJO_HTTP_PORT, default 3000).
       - "${FORGEJO_HTTP_PORT:-3000}:3000"
-      # SSH（git clone/push over SSH）；宿主机端口由 FORGEJO_SSH_PORT 控制，默认 2222
+      # SSH for git clone/push (host port controlled by FORGEJO_SSH_PORT,
+      # default 2222).
       - "${FORGEJO_SSH_PORT:-2222}:22"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/version"]

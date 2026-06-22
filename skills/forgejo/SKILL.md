@@ -101,7 +101,6 @@ equivalent command surface without changing SkillHone's optimization logic.
 - Tokens with `@` characters break git clone URL injection. Use a token without `@` or URL-encode it.
 - `merge --method squash` is not supported by older Forgejo versions. If you hit `Unknown method`, fall back to `merge`.
 - Wiki pages are stored as `.md` files in a separate git repo (`<repo>.wiki.git`). `wiki.py` hides that, but if you need custom editing, clone the wiki repo directly.
-- `_data/forgejo_cli.log` is written automatically when `_data/` exists in CWD. Useful for post-mortems.
 
 ## Hard Rules
 

@@ -1,100 +1,114 @@
 {
-  // ─────────────────────────────────────────────────────────────────────────
-  // ~/.skillhone/settings.json — SkillHone 全局配置文件
+  // ---------------------------------------------------------------------------
+  // ~/.skillhone/settings.json — SkillHone global config.
   //
-  // 用法：将本文件复制到 ~/.skillhone/settings.json，然后填写各字段。
+  // Usage: copy this file to ~/.skillhone/settings.json, then fill the fields.
   //   mkdir -p ~/.skillhone
   //   cp assets/settings.json ~/.skillhone/settings.json
   //
-  // 支持 JSON5 格式（可以写注释、末尾逗号）。
-  // 若未安装 json5 库，请使用标准 JSON 格式（去掉所有注释和末尾逗号）。
-  // ─────────────────────────────────────────────────────────────────────────
+  // JSON5 syntax is supported (comments + trailing commas) when the `json5`
+  // Python package is installed. If you only have the stdlib `json`, strip the
+  // comments and trailing commas before use.
+  // ---------------------------------------------------------------------------
 
-  // ── Anthropic API Key（用于 improver 调用 Claude） ─────────────────────
-  // 若使用第三方代理（api_base 非 api.anthropic.com），此处填代理要求的 key
+  // -- Anthropic API key (used by the improver to call Claude) --
+  // If you route through a third-party Anthropic-compatible proxy (api_base
+  // is not api.anthropic.com), put the proxy's key here instead.
   "api_key": "sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
 
-  // ── Forgejo Git 服务器 ────────────────────────────────────────────────
+  // -- Forgejo Git server --
   "forgejo": {
-    // Forgejo 实例的 HTTP 地址（不带末尾斜杠）
-    // Docker 默认端口 3000；如部署在同机则为 http://localhost:3000
+    // HTTP URL of your Forgejo instance (no trailing slash).
+    // Default for the bundled docker-compose is http://localhost:3000.
     "url": "http://localhost:3000",
 
-    // Forgejo 上所有 skill/eval 仓库的 owner 用户名（一般建一个专用账号）
+    // Owner account that holds every skill/eval repo (typically a dedicated
+    // service account, e.g. "skillhone").
     "owner": "skillhone",
 
-    // 具有 repo 读写权限的 Personal Access Token
-    // 在 Forgejo → 头像 → 设置 → 应用 → 生成令牌 中创建
-    // 需要权限：repo（read/write）+ issue（read/write）+ pull-request（read/write）
+    // Personal Access Token with repo read/write permission.
+    // Create at: Forgejo -> avatar -> Settings -> Applications -> Generate Token.
+    // Required scopes: repo (read/write) + issue (read/write) + pull-request
+    // (read/write).
     "token": "your_forgejo_personal_access_token"
   },
 
-  // ── improver 配置（optim.py 里驱动优化循环的 Claude Agent）─────────────
+  // -- Improver config (the Claude agent driving the optim.py loop) --
   "improver": {
-    // Claude API 代理地址（留空则走官方 https://api.anthropic.com）
+    // Claude API base URL. Leave empty to use the official endpoint
+    // https://api.anthropic.com.
     "api_base": "",
 
-    // 用于改进循环的模型（建议 claude-opus-4-5 及以上；能力越强效果越好）
+    // Model used for the improvement loop. Stronger models give better
+    // results; Opus-class is recommended.
     "model": "claude-opus-4-5",
 
-    // Agent 单次 session 最多多少轮对话（太小会截断循环）
+    // Max conversation turns per agent session. Setting this too low will
+    // truncate the loop mid-iteration.
     "max_turns": 100,
 
-    // 传入改进 Agent 进程的额外环境变量（可覆盖 api_base / api_key）
+    // Extra env vars passed into the improver agent process. These override
+    // the top-level api_base / api_key when set.
     "env": {
-      "ANTHROPIC_BASE_URL": "",   // 留空则继承 api_base
-      "ANTHROPIC_API_KEY": ""     // 留空则继承顶层 api_key
+      "ANTHROPIC_BASE_URL": "",   // empty -> inherit api_base
+      "ANTHROPIC_API_KEY": ""     // empty -> inherit top-level api_key
     }
   },
 
-  // ── executor 配置（eval.py 里运行被测 skill 的执行模型）────────────────
+  // -- Executor config (the model that runs the skill being tested in eval.py) --
   "executor": {
-    // 执行模型的 API 代理地址（留空则走官方）
+    // Executor API base URL. Leave empty to use the official endpoint.
     "api_base": "",
 
-    // 执行模型名（eval.py 的"执行 Agent"用此模型回答每道 probe）
-    // 示例：claude-haiku-4-5（低成本快速）/ claude-sonnet-4-5（高精度）
+    // Executor model name; this is the "solver" that answers each probe.
+    // Examples: claude-haiku-4-5 (cheap + fast), claude-sonnet-4-5 (higher
+    // accuracy).
     "model": "claude-haiku-4-5",
 
-    // sdk_model_alias：映射到 Claude Agent SDK 的别名（haiku / sonnet / opus）
-    // 若使用官方模型，填对应级别即可；若自定义代理，需与 env.ANTHROPIC_MODEL 一致
+    // sdk_model_alias maps to the Claude Agent SDK tier (haiku / sonnet /
+    // opus). If you use an official model, set the matching tier. If you
+    // route through a custom proxy, this must agree with env.ANTHROPIC_MODEL.
     "sdk_model_alias": "haiku",
 
-    // 并发 worker 数（每个 item 一个 worker，设太高会打爆 API 速率限制）
+    // Concurrent workers (one per probe item). Too high will trip API
+    // rate limits.
     "workers": 8,
 
-    // 每道题 solver 最多跑多少步
+    // Max solver steps per item.
     "max_iterations": 150,
 
-    // 是否开启扩展思考（extended thinking）
+    // Enable extended thinking.
     "thinking_enabled": true,
 
-    // 上下文窗口大小（token 数，建议 ≥ 32000）
+    // Context window (in tokens). 32000+ recommended.
     "context_size": 40000,
 
-    // 以下采样参数视 API 支持情况填写，不确定留默认值
+    // Sampling parameters — fill these in based on what your API supports.
+    // When unsure, keep the defaults.
     "temperature": 1.0,
     "top_p": 0.95,
     "top_k": 20,
     "presence_penalty": 1.5,
 
-    // 进程池（v14+ 特性，加速 CLI 启动；不稳定时可设 false）
+    // Process pool to speed up CLI startup. Set to false if you hit pool
+    // instability.
     "enable_process_pool": true,
     "process_pool_size": 16,
     "pool_initialization_batch_size": 4,
     "pool_bare_mode": true,
 
-    // 传入 solver 进程的额外环境变量
+    // Extra env vars passed into each solver process.
     "env": {
       "ANTHROPIC_BASE_URL": "",
       "ANTHROPIC_API_KEY": "",
-      // 若 sdk_model_alias=haiku，则 ANTHROPIC_DEFAULT_HAIKU_MODEL 须指向实际模型名
+      // When sdk_model_alias=haiku, ANTHROPIC_DEFAULT_HAIKU_MODEL must point
+      // to the actual model name your provider serves.
       "ANTHROPIC_MODEL": "claude-haiku-4-5",
       "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5"
     }
   },
 
-  // ── synthesis 配置（生成 eval 数据时用，可选）────────────────────────────
+  // -- Synthesis config (used when generating eval data; optional) --
   "synthesis": {
     "api_base": "",
     "model": "claude-sonnet-4-5",
