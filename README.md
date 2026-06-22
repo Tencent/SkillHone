@@ -10,18 +10,8 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2606.08671"><img src="https://img.shields.io/badge/arXiv-2606.08671-b31b1b?style=flat-square&logo=arxiv&logoColor=white" alt="arXiv"></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-1f6feb?style=flat-square" alt="License"></a>
-  <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/Runtime-Claude%20Code%20%7C%20Codex%20%7C%20OpenClaw%20%7C%20Hermes-21b998?style=flat-square" alt="Runtimes">
-  <img src="https://img.shields.io/badge/Backend-Forgejo%20%7C%20GitHub-orange?style=flat-square" alt="Backend">
   <img src="https://img.shields.io/badge/Status-Active-2ea44f?style=flat-square" alt="Status">
-</p>
-
-<p align="center">
-  <img alt="Whole-Skill Optimisation"     src="https://img.shields.io/badge/%E2%97%89%20Whole--Skill%20Optimisation-1f9e80?style=flat-square">
-  <img alt="Optimisation Observability"   src="https://img.shields.io/badge/%E2%97%89%20Optimisation%20Observability-1f6feb?style=flat-square">
-  <img alt="Persistent Decision History"  src="https://img.shields.io/badge/%E2%97%89%20Persistent%20Decision%20History-7c3aed?style=flat-square">
-  <img alt="100% Local Deployment"        src="https://img.shields.io/badge/%E2%97%89%20100%25%20Local%20Deployment-d6633a?style=flat-square">
 </p>
 
 <p align="center">
@@ -31,56 +21,23 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2606.08671">Paper</a> &bull;
-  <a href="#about-this-repo">About</a> &bull;
   <a href="#why-skillhone">Why SkillHone</a> &bull;
+  <a href="#vs-other-skill-evolution-projects">Compare</a> &bull;
+  <a href="#install">Install</a> &bull;
+  <a href="#usage">Usage</a> &bull;
   <a href="#whole-skill-optimisation">Whole-Skill Optimisation</a> &bull;
   <a href="#observability">Observability</a> &bull;
   <a href="#one-harness-across-major-runtimes">Runtimes</a> &bull;
   <a href="#evalskill-split">Eval / Skill Split</a> &bull;
-  <a href="#vs-other-skill-evolution-projects">Compare</a> &bull;
-  <a href="#install">Install</a> &bull;
+  <a href="#skills-in-this-bundle">Bundle</a> &bull;
   <a href="#configure">Configure</a>
-</p>
-
-<p align="center">
-  <img src="docs/assets/skillhone-framework.jpg" alt="SkillHone framework — agent runtime dispatches role-bounded optimisation and evaluation subagents over a skill repo and a skill-eval repo, recording every step into a persistent decision history" width="100%">
 </p>
 
 <p align="center">
   <video src="https://github.com/user-attachments/assets/42c7458f-7511-4cda-8c66-423832949804" controls width="800"></video>
 </p>
 
-> Demo video rendered with [HyperFrames](https://github.com/heygen-com/hyperframes).
-
 ---
-
-## About This Repo
-
-SkillHone-Skills is a bundle of standard agent skills built around
-the ideas in the paper "**SkillHone: A Harness for Continual Agent
-Skill Evolution Through Persistent Decision History**"
-([arXiv:2606.08671](https://arxiv.org/abs/2606.08671), 2026).
-
-The SkillHone harness in the paper is built on an enterprise-internal
-agent framework with no current plans for open-source release. For
-the convenience of community adoption, we packaged its ideas as a
-bundle of standard agent skills following the
-[agentskills.io](https://agentskills.io) protocol — a free, publicly
-available, runtime-agnostic skill specification — with
-`claude-agent-sdk` as the default agent backend and Forgejo as the
-default Git server. The bundle runs on any agent runtime supporting
-the protocol — Claude Code, Codex, OpenClaw, Hermes, …
-
-The core methodology remains identical: each development step is
-recorded as a `(diagnosis, candidate revision, redacted evidence,
-outcome)` tuple — the **persistent decision history**;
-role-separated optimisation and evaluation subagents prevent
-practice feedback from leaking into skill instructions; and the
-eval / skill split is enforced by code paths and filesystem
-permissions. Due to differences between agent frameworks, there are
-some implementation-level distinctions (e.g., role separation is
-enforced through skill mount boundaries and code paths instead of
-framework-native subagent policies).
 
 ## Why SkillHone
 
@@ -112,6 +69,56 @@ Supporting properties that make the above viable in practice:
   agent runtime that already supports skills supports SkillHone — for
   example Claude Code, Codex, OpenClaw, Hermes, and any future runtime
   that speaks the same protocol.
+
+## vs. Other Skill-Evolution Projects
+
+| Capability | [microsoft/SkillOpt](https://github.com/microsoft/SkillOpt) | [NousResearch/hermes-agent-self-evolution](https://github.com/NousResearch/hermes-agent-self-evolution) | **SkillHone** |
+|---|:---:|:---:|:---:|
+| Evolves agent skills automatically                                            | ✅ | ✅ | ✅ |
+| Open source, Python implementation                                            | ✅ | ✅ | ✅ |
+| Held-out validation before adopting a change                                  | ✅ | ✅ | ✅ |
+| **Patches the entire skill folder** — `SKILL.md` + `scripts/` + `references/` | ❌ | ❌ | ✅ |
+| **GitHub-style audit trail** — every step is a git issue / PR / commit / wiki | ❌ | ❌ | ✅ |
+
+## Install
+
+Copy the prompt below and send it to any skill-capable AI assistant —
+Claude Code, Codex, OpenClaw, Lighthouse, Kimi, and so on. The assistant
+fetches the install guide, detects your runtime, and puts SkillHone in the
+right place.
+
+> Please install SkillHone by following the instructions at
+> `https://raw.githubusercontent.com/Tencent/SkillHone/main/docs/install/skillhone.md`.
+> Detect my agent runtime, install the `skillhone` skill into its skills
+> directory, and then ask me for the model credentials needed to finish
+> configuration.
+
+To update later, re-send the same prompt and ask the assistant to refresh
+the install.
+
+## Usage
+
+Once installed, invoke skills the way your runtime invokes any
+[agentskills.io](https://agentskills.io) skill — by slash command
+(`/skillhone`) or by intent. The top-level `skillhone` skill is the
+recommended entry; it dispatches to the right sub-skill (see
+[Skills in this Bundle](#skills-in-this-bundle) below).
+
+Paste any of these into your agent:
+
+> `/skillhone` optimize my `travel-qa` skill for 5 iterations.
+
+> Use skillhone to evaluate my `travel-qa` skill against the latest
+> probe split.
+
+> Use skillhone-prd to draft a PRD for a new "code-review" skill, then
+> use skillhone to seed and run a first optimisation pass.
+
+Each sub-skill's `SKILL.md` lists its full trigger surface.
+
+<p align="center">
+  <img src="docs/assets/skillhone-framework.jpg" alt="SkillHone framework — agent runtime dispatches role-bounded optimisation and evaluation subagents over a skill repo and a skill-eval repo, recording every step into a persistent decision history" width="100%">
+</p>
 
 ## Whole-Skill Optimisation
 
@@ -199,16 +206,6 @@ filesystem permissions, not by prompts. By default the engine reads probes
 without copying them into skill instructions, and gold labels stay in the
 eval repo.
 
-## vs. Other Skill-Evolution Projects
-
-| Capability | [microsoft/SkillOpt](https://github.com/microsoft/SkillOpt) | [NousResearch/hermes-agent-self-evolution](https://github.com/NousResearch/hermes-agent-self-evolution) | **SkillHone** |
-|---|:---:|:---:|:---:|
-| Evolves agent skills automatically                                            | ✅ | ✅ | ✅ |
-| Open source, Python implementation                                            | ✅ | ✅ | ✅ |
-| Held-out validation before adopting a change                                  | ✅ | ✅ | ✅ |
-| **Patches the entire skill folder** — `SKILL.md` + `scripts/` + `references/` | ❌ | ❌ | ✅ |
-| **GitHub-style audit trail** — every step is a git issue / PR / commit / wiki | ❌ | ❌ | ✅ |
-
 ## Skills in this Bundle
 
 | Skill | What it does |
@@ -219,22 +216,6 @@ eval repo.
 | **`skillhone-prd`** | Interactive PRD builder — pins down a new skill's goal, tools, and scoring rubric before optimisation begins. |
 | **`skillhone-synthesis`** *(experimental — data-synthesis skill)* | **Experimental** skill for synthesising closed-form, automatically verifiable benchmark Q/A by exploring tool environments. Used to bootstrap eval datasets; not part of the core measurement / optimisation loop and may change without notice. |
 | **`forgejo`** | REST-API toolkit for the default Git backend — issues, PRs, wikis, repos, branches. |
-
-## Install
-
-Copy the prompt below and send it to any skill-capable AI assistant —
-Claude Code, Codex, OpenClaw, Lighthouse, Kimi, and so on. The assistant
-fetches the install guide, detects your runtime, and puts SkillHone in the
-right place.
-
-> Please install SkillHone by following the instructions at
-> `https://raw.githubusercontent.com/Tencent/SkillHone/main/docs/install/skillhone.md`.
-> Detect my agent runtime, install the `skillhone` skill into its skills
-> directory, and then ask me for the model credentials needed to finish
-> configuration.
-
-To update later, re-send the same prompt and ask the assistant to refresh
-the install.
 
 ## Configure
 
@@ -265,6 +246,16 @@ Full schema, multi-identity Forgejo tokens, and the `~/.skillhone/`
 directory layout live in
 [`skills/skillhone/references/configuration.md`](./skills/skillhone/references/configuration.md).
 
+## Star History
+
+<a href="https://www.star-history.com/#Tencent/SkillHone&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Tencent/SkillHone&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Tencent/SkillHone&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Tencent/SkillHone&type=Date" />
+  </picture>
+</a>
+
 ## Citation
 
 ```bibtex
@@ -288,6 +279,7 @@ SkillHone is released under the [MIT License](./LICENSE).
 <p align="center">
   <sub>
     An open-source implementation of the SkillHone paper. <br>
-    Powered by persistent decision history.
+    Powered by persistent decision history. <br>
+    Demo video rendered with <a href="https://github.com/heygen-com/hyperframes">HyperFrames</a>.
   </sub>
 </p>
