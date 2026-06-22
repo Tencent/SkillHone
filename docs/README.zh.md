@@ -225,6 +225,29 @@ model_name = deepseek-v4-pro
 完整字段、多身份 Forgejo token、以及 `~/.skillhone/` 下的目录结构都在
 [`../skills/skillhone/references/configuration.md`](../skills/skillhone/references/configuration.md)。
 
+## 项目介绍
+
+SkillHone-Skills 是一组围绕论文 "**SkillHone: A Harness for Continual
+Agent Skill Evolution Through Persistent Decision History**"
+（[arXiv:2606.08671](https://arxiv.org/abs/2606.08671)，2026）思想
+构建的标准 Agent skills 集合。
+
+论文中描述的 SkillHone harness 构建于企业内部 Agent 框架之上，
+暂无开源计划。为方便社区使用，我们将其整理为一组遵循
+[agentskills.io](https://agentskills.io) 协议的标准 Agent skills ——
+该协议为公开、免费、与运行时无关的技能规范 —— 默认搭配
+`claude-agent-sdk` 作为 Agent 运行时、Forgejo 作为 Git 服务器。
+该 bundle 可运行于任何支持该协议的 Agent Runtime —— Claude Code、
+Codex、OpenClaw、Hermes 等。
+
+核心方法与原版一致：每一次开发步骤都被记录为
+`(诊断, 候选改写, 脱敏证据, 结论)` 四元组 —— 即**持久化决策
+历史**；角色分离的优化与评测 subagent 避免练习反馈泄露进技能
+指令；评测仓与技能仓的隔离由代码路径与文件系统权限强制保证。
+受底层 Agent 框架差异影响，存在少量实现层面的区别（例如，
+角色分离通过 skill 挂载边界与代码路径强制，而非依赖框架原生
+subagent 策略）。
+
 ## Star 历史
 
 <a href="https://www.star-history.com/#Tencent/SkillHone&Date">

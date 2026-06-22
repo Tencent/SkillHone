@@ -246,6 +246,34 @@ Full schema, multi-identity Forgejo tokens, and the `~/.skillhone/`
 directory layout live in
 [`skills/skillhone/references/configuration.md`](./skills/skillhone/references/configuration.md).
 
+## About This Repo
+
+SkillHone-Skills is a bundle of standard agent skills built around
+the ideas in the paper "**SkillHone: A Harness for Continual Agent
+Skill Evolution Through Persistent Decision History**"
+([arXiv:2606.08671](https://arxiv.org/abs/2606.08671), 2026).
+
+The SkillHone harness in the paper is built on an enterprise-internal
+agent framework with no current plans for open-source release. For
+the convenience of community adoption, we packaged its ideas as a
+bundle of standard agent skills following the
+[agentskills.io](https://agentskills.io) protocol — a free, publicly
+available, runtime-agnostic skill specification — with
+`claude-agent-sdk` as the default agent backend and Forgejo as the
+default Git server. The bundle runs on any agent runtime supporting
+the protocol — Claude Code, Codex, OpenClaw, Hermes, …
+
+The core methodology remains identical: each development step is
+recorded as a `(diagnosis, candidate revision, redacted evidence,
+outcome)` tuple — the **persistent decision history**;
+role-separated optimisation and evaluation subagents prevent
+practice feedback from leaking into skill instructions; and the
+eval / skill split is enforced by code paths and filesystem
+permissions. Due to differences between agent frameworks, there are
+some implementation-level distinctions (e.g., role separation is
+enforced through skill mount boundaries and code paths instead of
+framework-native subagent policies).
+
 ## Star History
 
 <a href="https://www.star-history.com/#Tencent/SkillHone&Date">
