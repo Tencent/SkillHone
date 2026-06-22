@@ -49,10 +49,3 @@ Per-graph stages (Miner → Validator) can run in parallel across graphs; only t
 ## Collapsed mode (small runs only)
 
 For < 10 samples, one subagent can run Cartographer + Miner + Validator together. At production scale (typical `synth.py --count 15+`) keep them split — debuggability wins, and the Miner-can-re-run-against-library trick only records with separate stages.
-
-## Versioning
-
-This is **v0.2** — graph-based, hard-only. Earlier docs may refer to:
-- *Explorer* / *Proposer* / *Obfuscator* — replaced by Cartographer (Explorer + initial Proposer) and Miner (Proposer + Obfuscator).
-- Easy / medium / hard difficulty mix — replaced by hard-only with the anti-patterns in `difficulty_traps.md`.
-- `assert`-style verification — replaced by `scores: dict[str, bool]` (legacy still accepted via back-compat shim).

@@ -34,12 +34,8 @@ change.
 
 ## What To Inspect
 
-Start by understanding the current repo state and observation history:
-
-```bash
-python3 ~/.skillhone/skills/skillhone/scripts/status.py
-python3 ~/.skillhone/skills/forgejo/scripts/summary.py
-```
+Start by understanding the current repo state and observation history — run
+`status.py` and `summary.py` from the Available Scripts section below.
 
 Use this as context, not as a rigid workflow. If there is an open PR, review or
 resolve it before adding competing work. If a wiki page or closed issue already
@@ -73,7 +69,7 @@ python3 ~/.skillhone/skills/skillhone-optimization/scripts/analyze_probe.py _dat
 # Render durable observation markdown for Forgejo wiki
 python3 ~/.skillhone/skills/skillhone-optimization/scripts/write_observation.py --probe _data/probe_result.json --title "Iteration-N-Observation"
 
-# Legacy Forgejo summary (issues, PRs, wiki pages)
+# Forgejo summary (issues, PRs, wiki pages)
 python3 ~/.skillhone/skills/forgejo/scripts/summary.py
 ```
 

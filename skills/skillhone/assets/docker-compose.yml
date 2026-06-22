@@ -1,0 +1,53 @@
+# Forgejo Docker Compose
+# ─────────────────────────────────────────────────────────────────────────────
+# 用法：
+#   cp assets/docker-compose.yml ./docker-compose.yml
+#   docker compose up -d
+#
+# 推荐通过 assets/bootstrap.sh 一键起 + 自动建管理员 + 生成 PAT。
+# 该 compose 已通过 FORGEJO__* 环境变量预配置好 SQLite + INSTALL_LOCK，
+# 启动后无需任何 Web 安装向导操作。
+#
+# Forgejo 监听 http://localhost:3000，SSH 端口映射到宿主机 2222。
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:9
+    container_name: forgejo
+    environment:
+      - USER_UID=1000
+      - USER_GID=1000
+      - TZ=Asia/Shanghai
+      # ── 跳过 Web 安装向导（预配置 SQLite + 锁定安装态）─────────────────
+      - FORGEJO__security__INSTALL_LOCK=true
+      - FORGEJO__database__DB_TYPE=sqlite3
+      - FORGEJO__database__PATH=/data/gitea/gitea.db
+      - FORGEJO__server__DOMAIN=localhost
+      - FORGEJO__server__ROOT_URL=http://localhost:${FORGEJO_HTTP_PORT:-3000}/
+      - FORGEJO__server__SSH_DOMAIN=localhost
+      - FORGEJO__server__HTTP_PORT=3000
+      - FORGEJO__server__PROTOCOL=http
+      # 关闭公开注册：管理员仅由 bootstrap.sh 通过 CLI 创建
+      - FORGEJO__service__DISABLE_REGISTRATION=true
+      - FORGEJO__service__REQUIRE_SIGNIN_VIEW=false
+      - FORGEJO__log__MODE=console
+    restart: unless-stopped
+    volumes:
+      # 持久化数据目录（包含 repos、数据库、配置）
+      - forgejo-data:/data
+    ports:
+      # Web 界面 / API（宿主机端口由 FORGEJO_HTTP_PORT 控制，默认 3000）
+      - "${FORGEJO_HTTP_PORT:-3000}:3000"
+      # SSH（git clone/push over SSH）；宿主机端口由 FORGEJO_SSH_PORT 控制，默认 2222
+      - "${FORGEJO_SSH_PORT:-2222}:22"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  forgejo-data:
+    driver: local

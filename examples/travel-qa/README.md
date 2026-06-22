@@ -76,9 +76,8 @@ That's it. SkillHone takes it from there.
 
 Every fix is a real Pull request, every failure is a real Issue,
 every iteration leaves a wiki page. Open Forgejo and the trail
-reads like any code review you've done before — no proprietary
-dashboard, no SaaS dependency. The screenshots below are from this
-example's own run.
+reads like any code review you've done before. The screenshots
+below are from this example's own run.
 
 ### The whole-skill evolution
 

@@ -1023,7 +1023,7 @@ def _redact(trace: dict) -> dict:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Public API — called by eval.py and harness.py
+# Public API — called by eval.py
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def run_eval(

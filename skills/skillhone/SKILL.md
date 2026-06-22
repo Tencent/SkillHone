@@ -5,8 +5,8 @@ description: >
   Use when asked to "evaluate a skill", "run probe", "optimize/iterate a skill",
   "create a new skill experiment", "seed a skill repo", or "run skill benchmarks";
   also use when the user mentions a Forgejo-hosted skill repo and wants to
-  measure or improve its quality. Wraps six standalone scripts: status, eval,
-  optim, new, seed, serve.
+  measure or improve its quality. Wraps standalone scripts: status, eval,
+  optim, new, seed, serve, synth.
 compatibility: Requires Python 3.10+, git, and access to a Forgejo instance (or local FS).
 ---
 

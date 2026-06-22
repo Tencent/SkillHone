@@ -11,7 +11,6 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2606.08671"><img src="https://img.shields.io/badge/arXiv-2606.08671-b31b1b?style=flat-square&logo=arxiv&logoColor=white" alt="arXiv"></a>
   <img src="https://img.shields.io/badge/Runtime-Claude%20Code%20%7C%20Codex%20%7C%20OpenClaw%20%7C%20Hermes-21b998?style=flat-square" alt="Runtimes">
-  <img src="https://img.shields.io/badge/Status-Active-2ea44f?style=flat-square" alt="Status">
 </p>
 
 <p align="center">
@@ -52,12 +51,10 @@ string" projects. Everything else is plumbing:
   gated by the regression suite. Detail and a real PR-diff table
   in the [Whole-Skill Optimisation](#whole-skill-optimisation)
   section below.
-- **GitHub-style observability, 100% local.** Every step lands as a real
+- **GitHub-style observability, local.** Every step lands as a real
   issue, branch, commit, PR, or wiki entry on a Git server that can run
   entirely on your machine (Forgejo by default). Open the UI a reviewer
-  already knows how to read, and the whole decision path is right there —
-  no proprietary dashboard, no SaaS dependency, no data leaving your
-  network.
+  already knows how to read, and the whole decision path is right there.
 
 Supporting properties that make the above viable in practice:
 
@@ -257,8 +254,7 @@ The SkillHone harness in the paper is built on an enterprise-internal
 agent framework with no current plans for open-source release. For
 the convenience of community adoption, we packaged its ideas as a
 bundle of standard agent skills following the
-[agentskills.io](https://agentskills.io) protocol — a free, publicly
-available, runtime-agnostic skill specification — with
+[agentskills.io](https://agentskills.io) protocol, with
 `claude-agent-sdk` as the default agent backend and Forgejo as the
 default Git server. The bundle runs on any agent runtime supporting
 the protocol — Claude Code, Codex, OpenClaw, Hermes, …
@@ -307,7 +303,6 @@ SkillHone is released under the [MIT License](./LICENSE).
 <p align="center">
   <sub>
     An open-source implementation of the SkillHone paper. <br>
-    Powered by persistent decision history. <br>
     Demo video rendered with <a href="https://github.com/heygen-com/hyperframes">HyperFrames</a>.
   </sub>
 </p>

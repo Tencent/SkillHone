@@ -4,7 +4,6 @@ Thin wrapper around Forgejo REST API v1. Used by forgejo_cli.py.
 """
 from __future__ import annotations
 
-import base64
 from pathlib import Path
 from typing import Any
 
@@ -148,99 +147,6 @@ class ForgejoClient:
     def repo_branches(self) -> list[dict]:
         path = f"/repos/{self.owner}/{self.repo}/branches"
         return self._get(path)
-
-    # ── Actions / Workflows ──
-
-    def workflow_create(self, workflow_name: str, content: str) -> None:
-        """Create/update a workflow file via the contents API.
-
-        Pushes .forgejo/workflows/<name>.yml to the repo.
-        """
-        file_path = f".forgejo/workflows/{workflow_name}.yml"
-        path = f"/repos/{self.owner}/{self.repo}/contents/{file_path}"
-        encoded = base64.b64encode(content.encode()).decode()
-
-        # Check if file exists
-        try:
-            existing = self._get(path)
-            sha = existing.get("sha", "")
-            self._put(path, {
-                "message": f"ci: update workflow {workflow_name}",
-                "content": encoded,
-                "sha": sha,
-            })
-        except Exception:
-            self._post(path, {
-                "message": f"ci: add workflow {workflow_name}",
-                "content": encoded,
-            })
-
-    def workflow_list(self) -> list[dict]:
-        """List workflow files in the repo."""
-        path = f"/repos/{self.owner}/{self.repo}/contents/.forgejo/workflows"
-        try:
-            return self._get(path)
-        except Exception:
-            return []
-
-    # ── Actions Secrets ──
-
-    def set_secret(self, name: str, value: str) -> None:
-        """Create or update a repo action secret."""
-        path = f"/repos/{self.owner}/{self.repo}/actions/secrets/{name}"
-        self._put(path, {"data": value})
-
-    # ── Branch Protection ──
-
-    def set_branch_protection(self, branch: str = "main",
-                              required_checks: list[str] | None = None) -> dict:
-        """Set branch protection requiring status checks to pass.
-
-        This enforces that PRs must pass CI before merging.
-        """
-        path = f"/repos/{self.owner}/{self.repo}/branch_protections"
-        data = {
-            "branch_name": branch,
-            "enable_push": True,
-            "enable_status_check": bool(required_checks),
-            "status_check_contexts": required_checks or [],
-            "enable_merge_whitelist": False,
-            "enable_approvals_whitelist": False,
-        }
-        # Check if protection already exists
-        try:
-            existing = self._get(path)
-            for bp in existing:
-                if bp.get("branch_name") == branch:
-                    # Update existing
-                    bp_path = f"{path}/{branch}"
-                    return self._patch(bp_path, data)
-        except Exception:
-            pass
-        return self._post(path, data)
-
-    def ensure_ci_enforced(self, workflow_content: str) -> None:
-        """Push the skill-validate workflow + require it via branch protection.
-
-        Only the static `skill-validate` workflow is pushed — it runs offline
-        (no network) and is therefore safe on any Forgejo runner.
-
-        Skill quality scoring (rubric, agent-as-judge) is invoked from the
-        local SkillHone quality tools by `dev-quality-reviewer` and
-        `pr-quality-reviewer`. This avoids requiring CI runners to reach the
-        internet.
-        """
-        # 1. Push the validation workflow (blocking)
-        self.workflow_create("skill-validate", workflow_content)
-
-        # 2. Set branch protection requiring the validate job
-        try:
-            self.set_branch_protection(
-                branch="main",
-                required_checks=["validate"],
-            )
-        except Exception:
-            pass
 
     # ─── Wiki ─────────────────────────────────────────────────────────────────
 

@@ -11,7 +11,6 @@
 <p align="center">
   <a href="https://arxiv.org/abs/2606.08671"><img src="https://img.shields.io/badge/arXiv-2606.08671-b31b1b?style=flat-square&logo=arxiv&logoColor=white" alt="arXiv"></a>
   <img src="https://img.shields.io/badge/Runtime-Claude%20Code%20%7C%20Codex%20%7C%20OpenClaw%20%7C%20Hermes-21b998?style=flat-square" alt="Runtimes">
-  <img src="https://img.shields.io/badge/Status-Active-2ea44f?style=flat-square" alt="Status">
 </p>
 
 <p align="center">
@@ -51,11 +50,10 @@ SkillHone 与"用 LLM 改写一段 `SKILL.md` 文本"类项目的本质区别只
   参考文档 —— 一个原子 PR、回归 eval 把关。详细论述与一次
   `travel-qa` 实际运行所产生的真实 PR-diff 表见下文
   [整技能优化](#整技能优化)章节。
-- **GitHub 式可观测性，100% 本地部署。** 闭环里的每一步都落到一个
+- **GitHub 式可观测性，本地部署。** 闭环里的每一步都落到一个
   可以**完全跑在你机器上**的 Git 服务器（默认 Forgejo）—— 真实的
   Issue / Branch / Commit / PR / Wiki。打开一个评审者本来就熟悉的
-  界面，整条决策路径就在那儿——没有专有仪表盘、没有 SaaS 依赖、
-  数据不出网。
+  界面，整条决策路径就在那儿。
 
 让上面两点真正落地的配套特性：
 
@@ -234,9 +232,8 @@ Agent Skill Evolution Through Persistent Decision History**"
 
 论文中描述的 SkillHone harness 构建于企业内部 Agent 框架之上，
 暂无开源计划。为方便社区使用，我们将其整理为一组遵循
-[agentskills.io](https://agentskills.io) 协议的标准 Agent skills ——
-该协议为公开、免费、与运行时无关的技能规范 —— 默认搭配
-`claude-agent-sdk` 作为 Agent 运行时、Forgejo 作为 Git 服务器。
+[agentskills.io](https://agentskills.io) 协议的标准 Agent skills，
+默认搭配 `claude-agent-sdk` 作为 Agent 运行时、Forgejo 作为 Git 服务器。
 该 bundle 可运行于任何支持该协议的 Agent Runtime —— Claude Code、
 Codex、OpenClaw、Hermes 等。
 
@@ -281,7 +278,6 @@ SkillHone 以 [MIT License](../LICENSE) 发布。
 <p align="center">
   <sub>
     SkillHone 论文的开源实现。<br>
-    由持久化决策历史驱动。<br>
     Demo 视频使用 <a href="https://github.com/heygen-com/hyperframes">HyperFrames</a> 渲染。
   </sub>
 </p>
