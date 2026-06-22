@@ -44,10 +44,31 @@ TMPDIR=$(mktemp -d)
 git clone --depth=1 https://github.com/Tencent/SkillHone.git "$TMPDIR/SkillHone"
 cp -r "$TMPDIR/SkillHone/skills/skillhone" "$SKILLS_DIR/"
 rm -rf "$TMPDIR"
+
+# Install the skill's Python runtime dependencies (GitPython, PyYAML,
+# requests, httpx, claude-agent-sdk, …). Without this step the scripts
+# under skills/skillhone/scripts/ will fail at first import.
+python3 -m pip install -r "$SKILLS_DIR/skillhone/assets/requirements.txt"
 ```
 
 > Use `cp -r`, not `ln -sf`. Other skills may already live under
 > `$SKILLS_DIR/` and a symlinked directory would clash with them.
+
+> The `pip install` step is **required** — `new.py`, `seed.py`,
+> `optim.py`, and the eval scripts import `git`, `yaml`, etc. at
+> module load time. If the user prefers an isolated environment,
+> run the `pip install` line inside a `python3 -m venv` first;
+> the absolute path to that interpreter must then be used for all
+> SkillHone scripts.
+
+> **Also required on the default Anthropic path:** the `claude` CLI
+> (Node.js, installed via `npm install -g @anthropic-ai/claude-code`).
+> `claude-agent-sdk` is a thin Python wrapper that shells out to this
+> binary, so a missing `claude` CLI does **not** surface at
+> `pip install` time but crashes `optim.py` / `synth.py` / the eval
+> solver at first run with `FileNotFoundError: claude`. Verify with
+> `command -v claude`; if it's missing, install Node.js 18+ first,
+> then `npm install -g @anthropic-ai/claude-code`.
 
 After this step, `$SKILLS_DIR/skillhone/SKILL.md` must exist. Verify it.
 

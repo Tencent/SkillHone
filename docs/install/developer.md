@@ -8,7 +8,7 @@ macOS / Linux; Windows works equivalently under WSL2.
 - Python 3.10+
 - Docker with the `docker compose` plugin
 - Git 2.38+
-- *Optional:* Node.js 18+ and `claude` CLI for Claude Code workflows
+- **Required for the default LLM path (`claude-agent-sdk`):** Node.js 18+ and the `claude` CLI on `PATH`. Install with `npm install -g @anthropic-ai/claude-code`. The SDK is a thin Python wrapper that shells out to this CLI; without it `optim.py` / `synth.py` / the eval solver crash with `FileNotFoundError: claude`.
 
 The repo expects a Forgejo instance for skill / eval repositories; the bundled
 `docker-compose.yml` brings one up pre-installed (no Web setup wizard).
