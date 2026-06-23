@@ -42,8 +42,10 @@
 
 > **The unit of change is a skill folder, not a prompt string. Every decision is a Git artifact.**
 
-Two things make SkillHone different from "let an LLM rewrite the `SKILL.md`
-string" projects. Everything else is plumbing:
+SkillHone-Skills abstracts the SkillHone harness described in the paper
+into a bundle of standard agent skills — install it into any
+skill-supporting runtime to run the full optimisation loop. Two things
+set it apart from "let an LLM rewrite the `SKILL.md` string" projects:
 
 - **Whole-skill optimisation.** Each merged PR can rewrite
   `SKILL.md`, add a new helper under `scripts/`, *and* drop a
@@ -302,7 +304,7 @@ SkillHone is released under the [MIT License](./LICENSE).
 
 <p align="center">
   <sub>
-    An open-source implementation of the SkillHone paper. <br>
+    Open-source agent skills built on the ideas of the SkillHone harness. <br>
     Demo video rendered with <a href="https://github.com/heygen-com/hyperframes">HyperFrames</a>.
   </sub>
 </p>

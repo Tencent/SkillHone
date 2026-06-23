@@ -42,8 +42,9 @@
 
 > **改动单元是技能文件夹，而不是一段 prompt；每次决策都会沉淀为一条可追溯的 Git 记录。**
 
-SkillHone 与"用 LLM 改写一段 `SKILL.md` 文本"类项目的本质区别只有两点，
-其余皆为工程实现细节：
+SkillHone-Skills 将 SkillHone 论文中的 harness 抽象为一组标准 Agent
+skills——装入任何支持 skill 的 Runtime 即可运行完整的优化闭环。
+和"用 LLM 改写一段 `SKILL.md` 文本"类项目相比，关键区别在两点：
 
 - **整技能优化。** 每一个合入的 PR 都可同时改写 `SKILL.md`、
   在 `scripts/` 中新增辅助脚本、并在 `references/` 下补充
@@ -277,7 +278,7 @@ SkillHone 以 [MIT License](../LICENSE) 发布。
 
 <p align="center">
   <sub>
-    SkillHone 论文的开源实现。<br>
+    基于 SkillHone harness 思想构建的开源 Agent skills 集合。<br>
     Demo 视频使用 <a href="https://github.com/heygen-com/hyperframes">HyperFrames</a> 渲染。
   </sub>
 </p>
