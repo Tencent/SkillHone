@@ -88,6 +88,10 @@ Claude Code、Codex、OpenClaw、Lighthouse、Kimi——助手会自己抓取安
 
 之后需要更新时，再发一遍同样的提示词，让助手刷新一次安装即可。
 
+> **执行提示。** 部分 SkillHone-Skills 工作流可能会使用 Claude Code bypass 模式，以及 `exec` / subprocess 等本地命令执行机制，用于答案校验、评测运行、回归检查或技能优化。
+>
+> 请仅在隔离的工作区、沙箱、容器、虚拟机，或一次性的干净仓库副本中运行这些工作流。请避免在包含密钥、凭证、生产数据、私人文件或无关仓库的目录中运行。
+
 ## 使用
 
 安装好后，按你 Runtime 调用 skill 的标准方式触发即可 —— slash 命令
