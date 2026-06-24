@@ -95,6 +95,8 @@ right place.
 To update later, re-send the same prompt and ask the assistant to refresh
 the install.
 
+> **Execution notice.** Some SkillHone-Skills workflows may use Claude Code bypass mode and local command execution, such as `exec` / subprocess calls, for validation or optimization. Run them only in an isolated workspace, sandbox, container, virtual machine, or disposable clean clone. Avoid directories containing secrets, credentials, production data, private files, or unrelated repositories.
+
 ## Usage
 
 Once installed, invoke skills the way your runtime invokes any
