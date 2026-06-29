@@ -32,9 +32,19 @@
   <a href="#configure">Configure</a>
 </p>
 
-<p align="center">
-  <video src="https://github.com/user-attachments/assets/42c7458f-7511-4cda-8c66-423832949804" controls width="800"></video>
-</p>
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <b>Overview Video</b><br>
+      <video src="https://github.com/user-attachments/assets/1433fd49-fffd-4c55-8b90-ab6f14967446" controls width="390"></video>
+    </td>
+    <td align="center">
+      <b>Demo Video</b><br>
+      <video src="https://github.com/user-attachments/assets/ecab6d56-b2c1-4c2b-a584-e15e4fdf21d7" controls width="390"></video>
+    </td>
+  </tr>
+</table>
 
 ---
 
