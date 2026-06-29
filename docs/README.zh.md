@@ -32,9 +32,18 @@
   <a href="#配置">配置</a>
 </p>
 
-<p align="center">
-  <video src="https://github.com/user-attachments/assets/58ea7136-3583-475f-a8fe-4c5f6aee3363" controls width="800"></video>
-</p>
+<table align="center">
+  <tr>
+    <td align="center">
+      <b>介绍视频</b><br>
+      <video src="https://github.com/user-attachments/assets/dc4acb5e-f430-48b8-a44d-0f35e6360552" controls width="390"></video>
+    </td>
+    <td align="center">
+      <b>演示视频</b><br>
+      <video src="https://github.com/user-attachments/assets/5f109ca2-a2d5-4395-a3cc-a58b79fc0052" controls width="390"></video>
+    </td>
+  </tr>
+</table>
 
 ---
 
