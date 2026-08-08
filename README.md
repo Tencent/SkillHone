@@ -20,6 +20,7 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2606.08671">Paper</a> &bull;
+  <a href="#news">News</a> &bull;
   <a href="#why-skillhone">Why SkillHone</a> &bull;
   <a href="#vs-other-skill-evolution-projects">Compare</a> &bull;
   <a href="#install">Install</a> &bull;
@@ -45,6 +46,16 @@
     </td>
   </tr>
 </table>
+
+---
+
+## News
+
+- **[2026-08-08] 🚀 Unified LiteLLM gateway.** SkillHone now accepts one
+  `provider/model` configuration across Anthropic, DeepSeek, OpenAI, Gemini,
+  and other LiteLLM providers—no external Anthropic-compatible endpoint or
+  transport switch required. Improver, executor, and synthesis can each use
+  independent credentials and endpoints.
 
 ---
 
@@ -251,6 +262,15 @@ fill the three fields per role: `base_url` (Anthropic-format),
 base_url   = https://api.deepseek.com/anthropic
 api_key    = sk-xxx
 model_name = deepseek-v4-pro
+```
+
+Model profiles use LiteLLM's `provider/model` naming. SkillHone starts a
+private local bridge and supplies its Anthropic Messages endpoint to Claude
+Agent SDK automatically—no transport switch or external Anthropic-compatible
+endpoint is needed. This also covers Anthropic models (`anthropic/claude-…`):
+
+```jsonc
+{"improver":{"model":"deepseek/deepseek-chat","api_key":"sk-xxx","api_base":"https://api.deepseek.com/v1"}}
 ```
 
 Full schema, multi-identity Forgejo tokens, and the `~/.skillhone/`

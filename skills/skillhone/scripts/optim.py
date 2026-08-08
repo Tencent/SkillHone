@@ -40,6 +40,7 @@ def _log_event(action: str, data: dict) -> None:
 # Ensure core/ is importable
 sys.path.insert(0, str(SKILLHONE_HOME / "skills" / "skillhone" / "scripts"))
 from core.redaction import redact_for_log  # noqa: E402
+from core.litellm_proxy import agent_env_for  # noqa: E402
 
 
 def main() -> int:
@@ -161,7 +162,7 @@ def main() -> int:
     # Run agent
     improver_cfg = settings.get("improver", {})
     model = improver_cfg.get("sdk_model_alias", "opus")
-    improver_env = improver_cfg.get("env", {})
+    improver_env = agent_env_for(improver_cfg, settings.get("api_key", ""))
     disallowed_tools = improver_cfg.get("disallowed_tools", ["WebSearch"])
 
     # Verify skills and agents are correctly set up

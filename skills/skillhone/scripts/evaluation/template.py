@@ -35,6 +35,13 @@ import time
 from pathlib import Path
 from typing import Optional
 
+_skillhone_home = Path(os.environ.get("SKILLHONE_HOME", Path.home() / ".skillhone"))
+sys.path.insert(0, str(_skillhone_home / "skills" / "skillhone" / "scripts"))
+try:
+    from core.litellm_proxy import agent_env_for
+except ImportError:
+    agent_env_for = None
+
 _SENSITIVE_KEY_RE = re.compile(
     r"(^|[_-])(token|api[_-]?key|apikey|authorization|secret|password|credential)([_-]|$)",
     re.IGNORECASE,
@@ -671,7 +678,13 @@ def _build_agent_env() -> dict[str, str]:
     """Build environment variables for claude-agent-sdk from settings.json,
     plus any allowlisted task-domain credentials present in os.environ
     (controlled by `executor.passthrough_env`)."""
-    if _cfg and "executor" in _cfg and "env" in _cfg["executor"]:
+    if _cfg and "executor" in _cfg and agent_env_for is not None:
+        env = agent_env_for(_cfg["executor"], _cfg.get("api_key", ""))
+    elif (_cfg and "executor" in _cfg
+          and ("/" in _cfg["executor"].get("model", "")
+               or _cfg["executor"].get("provider") == "litellm")):
+        raise RuntimeError("LiteLLM adapter not found; reinstall the SkillHone skill bundle")
+    elif _cfg and "executor" in _cfg and "env" in _cfg["executor"]:
         env = {k: str(v) for k, v in _cfg["executor"]["env"].items()}
     else:
         env = {

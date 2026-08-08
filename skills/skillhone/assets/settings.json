@@ -11,10 +11,10 @@
   // comments and trailing commas before use.
   // ---------------------------------------------------------------------------
 
-  // -- Anthropic API key (used by the improver to call Claude) --
-  // If you route through a third-party Anthropic-compatible proxy (api_base
-  // is not api.anthropic.com), put the proxy's key here instead.
-  "api_key": "sk-ant-xxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  // -- Legacy shared API key --
+  // Prefer api_key inside each role below. This field remains only so existing
+  // installations that share one key across all roles keep working.
+  "api_key": "",
 
   // -- Forgejo Git server --
   "forgejo": {
@@ -35,35 +35,40 @@
 
   // -- Improver config (the Claude agent driving the optim.py loop) --
   "improver": {
-    // Claude API base URL. Leave empty to use the official endpoint
-    // https://api.anthropic.com.
+    // Models use LiteLLM's provider/model format. SkillHone starts a private
+    // local proxy and translates to Anthropic Messages automatically.
+    // Credentials belong to this role. The top-level api_key remains a
+    // backwards-compatible fallback only.
+    "api_key": "",
+    // Alternatively: "api_key_env": "IMPROVER_API_KEY"
+    // Optional upstream provider endpoint. Leave empty to let LiteLLM use the
+    // provider's standard endpoint.
     "api_base": "",
 
     // Model used for the improvement loop. Stronger models give better
     // results; Opus-class is recommended.
-    "model": "claude-opus-4-5",
+    "model": "anthropic/claude-opus-4-5",
 
     // Max conversation turns per agent session. Setting this too low will
     // truncate the loop mid-iteration.
     "max_turns": 100,
 
-    // Extra env vars passed into the improver agent process. These override
-    // the top-level api_base / api_key when set.
-    "env": {
-      "ANTHROPIC_BASE_URL": "",   // empty -> inherit api_base
-      "ANTHROPIC_API_KEY": ""     // empty -> inherit top-level api_key
-    }
+    // Optional extra env vars passed into the agent process. Adapter-owned
+    // ANTHROPIC_* connection variables are generated automatically.
+    "env": {}
   },
 
   // -- Executor config (the model that runs the skill being tested in eval.py) --
   "executor": {
-    // Executor API base URL. Leave empty to use the official endpoint.
+    "api_key": "",
+    // Alternatively: "api_key_env": "EXECUTOR_API_KEY"
+    // Optional executor upstream endpoint.
     "api_base": "",
 
     // Executor model name; this is the "solver" that answers each probe.
     // Examples: claude-haiku-4-5 (cheap + fast), claude-sonnet-4-5 (higher
     // accuracy).
-    "model": "claude-haiku-4-5",
+    "model": "anthropic/claude-haiku-4-5",
 
     // sdk_model_alias maps to the Claude Agent SDK tier (haiku / sonnet /
     // opus). If you use an official model, set the matching tier. If you
@@ -110,8 +115,10 @@
 
   // -- Synthesis config (used when generating eval data; optional) --
   "synthesis": {
+    "api_key": "",
+    // Alternatively: "api_key_env": "SYNTHESIS_API_KEY"
     "api_base": "",
-    "model": "claude-sonnet-4-5",
+    "model": "anthropic/claude-sonnet-4-5",
     "workers": 8
   }
 }
