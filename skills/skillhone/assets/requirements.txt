@@ -30,7 +30,7 @@ tqdm>=4.66.0
 
 # Transparent provider adapter. The proxy exposes Anthropic Messages locally
 # while LiteLLM talks to the configured upstream provider.
-litellm[proxy]==1.80.17
+litellm[proxy]==1.94.2
 
 # ── Optional Anthropic integration ───────────────────────────────────────────
 
