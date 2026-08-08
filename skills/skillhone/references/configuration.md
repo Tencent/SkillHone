@@ -2,6 +2,35 @@
 
 ## ~/.skillhone/settings.json
 
+### LiteLLM adapter (non-Anthropic providers)
+
+Use LiteLLM's `provider/model` model name. SkillHone starts a loopback-only
+proxy automatically and points Claude Agent SDK at its Anthropic Messages
+endpoint. The same schema covers Anthropic, DeepSeek, OpenAI, Gemini, and other
+LiteLLM providers; you do not configure a transport or run a proxy yourself.
+
+```jsonc
+{
+  "improver": {
+    "api_key": "<improver provider key>",
+    "api_base": "<optional improver endpoint>",
+    "model": "deepseek/deepseek-chat",
+    "sdk_model_alias": "opus"
+  },
+  "executor": {
+    "api_key": "<executor provider key>",
+    "api_base": "<optional executor endpoint>",
+    "model": "openai/gpt-5-mini",
+    "sdk_model_alias": "haiku"
+  }
+}
+```
+
+Each role owns its `model`, `api_key` (or `api_key_env`), optional `api_base`,
+and optional `api_version`. The old top-level `api_key` is accepted only as a
+backwards-compatible fallback. Upstream keys are passed to proxies through
+their environments and are never written to temporary config files.
+
 Copy the annotated template to get started:
 ```bash
 mkdir -p ~/.skillhone
@@ -13,8 +42,6 @@ cp assets/settings.json ~/.skillhone/settings.json
 
 ```json
 {
-  "api_key": "sk-ant-...",           // Anthropic API key for the improver
-
   "forgejo": {
     "url": "http://localhost:3000",  // Forgejo HTTP address (no trailing slash)
     "owner": "skillhone",            // Forgejo username owning all skill repos
@@ -22,8 +49,9 @@ cp assets/settings.json ~/.skillhone/settings.json
   },
 
   "improver": {
-    "api_base": "",                  // API proxy (blank = use official endpoint)
-    "model": "claude-opus-4-5",      // Agent model for the optimization loop
+    "api_key": "...",                // This role's provider credential
+    "api_base": "",                  // Optional upstream endpoint
+    "model": "anthropic/claude-opus-4-5",
     "max_turns": 100,                // Max turns per Agent session
     "env": {
       "ANTHROPIC_BASE_URL": "",
@@ -32,8 +60,9 @@ cp assets/settings.json ~/.skillhone/settings.json
   },
 
   "executor": {
-    "api_base": "",                  // API proxy for the eval solver
-    "model": "claude-haiku-4-5",     // Solver model (haiku = fast/cheap)
+    "api_key": "...",                // May differ from improver
+    "api_base": "",                  // Optional upstream endpoint
+    "model": "anthropic/claude-haiku-4-5",
     "sdk_model_alias": "haiku",      // Agent SDK alias: haiku / sonnet / opus
     "workers": 8,                    // Parallel eval workers
     "max_iterations": 150,           // Max solver steps per item

@@ -41,6 +41,7 @@ WORK_DIR = Path("/tmp/skillhone")
 
 sys.path.insert(0, str(SKILLHONE_HOME / "skills" / "skillhone" / "scripts"))
 from core.redaction import redact_for_log  # noqa: E402
+from core.litellm_proxy import agent_env_for  # noqa: E402
 
 
 def _make_run_id(repo_name: str) -> str:
@@ -554,7 +555,7 @@ def main() -> int:
 
     improver_cfg = settings.get("improver", {})
     model = improver_cfg.get("sdk_model_alias", "opus")
-    improver_env = improver_cfg.get("env", {})
+    improver_env = agent_env_for(improver_cfg, settings.get("api_key", ""))
     disallowed_tools = improver_cfg.get("disallowed_tools", ["WebSearch"])
     # Allowlist of env-var names forwarded from the parent shell into the
     # synth agent. Read from `improver.passthrough_env` (a list of UPPER_CASE

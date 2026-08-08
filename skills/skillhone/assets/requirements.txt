@@ -28,6 +28,10 @@ PyYAML>=6.0.1
 # Progress display for concurrent evals
 tqdm>=4.66.0
 
+# Transparent provider adapter. The proxy exposes Anthropic Messages locally
+# while LiteLLM talks to the configured upstream provider.
+litellm[proxy]==1.80.17
+
 # ── Optional Anthropic integration ───────────────────────────────────────────
 
 # Required only when running Claude/Anthropic-backed agent workflows.

@@ -20,6 +20,7 @@
 
 <p align="center">
   <a href="https://arxiv.org/abs/2606.08671">论文</a> &bull;
+  <a href="#最新动态">最新动态</a> &bull;
   <a href="#为什么选-skillhone">为什么选 SkillHone</a> &bull;
   <a href="#与其他技能进化项目的对比">对比</a> &bull;
   <a href="#安装">安装</a> &bull;
@@ -44,6 +45,16 @@
     </td>
   </tr>
 </table>
+
+---
+
+## 最新动态
+
+- **[2026-08-08] 🚀 统一 LiteLLM 模型网关。** SkillHone 现已使用一套
+  `provider/model` 配置连接 Anthropic、DeepSeek、OpenAI、Gemini 及其他
+  LiteLLM provider，无需外部 Anthropic-compatible endpoint，也无需切换
+  transport。Improver、Executor 和 Synthesis 可分别使用独立凭据与上游
+  地址。
 
 ---
 
@@ -232,6 +243,15 @@ DeepSeek),才需要每个角色填三个字段:`base_url`(Anthropic
 base_url   = https://api.deepseek.com/anthropic
 api_key    = sk-xxx
 model_name = deepseek-v4-pro
+```
+
+模型统一使用 LiteLLM 的 `provider/model` 名称，不再配置 transport。
+SkillHone 会自动启动仅监听本机的转换代理，
+并把 Anthropic Messages 地址注入 Claude Agent SDK，无需用户自行部署
+Anthropic-compatible endpoint：
+
+```jsonc
+{"improver":{"model":"deepseek/deepseek-chat","api_key":"sk-xxx","api_base":"https://api.deepseek.com/v1"}}
 ```
 
 完整字段、多身份 Forgejo token、以及 `~/.skillhone/` 下的目录结构都在

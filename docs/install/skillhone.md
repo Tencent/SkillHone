@@ -98,6 +98,28 @@ api_key    = sk-xxx
 model_name = deepseek-v4-pro
 ```
 
+**Unified LiteLLM adapter (no Anthropic-compatible endpoint required).** Ask
+for the provider API key and a LiteLLM `provider/model` identifier. SkillHone
+starts and stops a loopback-only proxy automatically. Anthropic uses the same
+schema with an `anthropic/claude-...` model name:
+
+```jsonc
+{
+  "improver": {
+    "model": "deepseek/deepseek-chat",
+    "api_key": "<improver api key>",
+    "api_base": "<optional improver endpoint>"
+  },
+  "executor": {
+    "model": "openai/gpt-5-mini",
+    "api_key": "<executor api key>",
+    "api_base": "<optional executor endpoint>"
+  }
+}
+```
+
+The user does not need to run LiteLLM or supply `ANTHROPIC_BASE_URL`.
+
 Then write `~/.skillhone/settings.json` yourself, following the schema in
 [`skills/skillhone/references/configuration.md`](../../skills/skillhone/references/configuration.md).
 
@@ -105,10 +127,10 @@ Minimum JSON (improver only):
 
 ```jsonc
 {
-  "api_key": "<user api_key>",
   "improver": {
-    "api_base": "<user base_url>",
-    "model":    "<user model_name>"
+    "api_key":  "<improver api key>",
+    "api_base": "<optional upstream endpoint>",
+    "model":    "<provider/model>"
   }
 }
 ```
