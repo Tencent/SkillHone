@@ -44,6 +44,11 @@ from core.redaction import redact_for_log  # noqa: E402
 from core.litellm_proxy import agent_env_for  # noqa: E402
 
 
+def _model_profile(settings: dict, role: str) -> dict:
+    """Return a role profile, falling back to the improver profile."""
+    return settings.get(role) or settings.get("improver", {})
+
+
 def _make_run_id(repo_name: str) -> str:
     import datetime
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -553,16 +558,16 @@ def main() -> int:
         f"factually answerable does not override these gates.\n"
     )
 
-    improver_cfg = settings.get("improver", {})
-    model = improver_cfg.get("sdk_model_alias", "opus")
-    improver_env = agent_env_for(improver_cfg, settings.get("api_key", ""))
-    disallowed_tools = improver_cfg.get("disallowed_tools", ["WebSearch"])
+    synthesis_cfg = _model_profile(settings, "synthesis")
+    model = synthesis_cfg.get("sdk_model_alias", "opus")
+    improver_env = agent_env_for(synthesis_cfg, settings.get("api_key", ""))
+    disallowed_tools = synthesis_cfg.get("disallowed_tools", ["WebSearch"])
     # Allowlist of env-var names forwarded from the parent shell into the
-    # synth agent. Read from `improver.passthrough_env` (a list of UPPER_CASE
+    # synth agent. Read from `synthesis.passthrough_env` (a list of UPPER_CASE
     # names). Empty by default — task-domain credentials are opt-in per
     # deployment.
     passthrough_env = tuple(
-        str(x) for x in (improver_cfg.get("passthrough_env") or []) if x
+        str(x) for x in (synthesis_cfg.get("passthrough_env") or []) if x
     )
 
     target_max = args.target_pass_rate_max

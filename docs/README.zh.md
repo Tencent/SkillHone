@@ -50,7 +50,7 @@
 
 ## 最新动态
 
-- **[2026-08-08] 🚀 统一 LiteLLM 模型网关。** SkillHone 现已使用一套
+- **[2026-08-08] 统一 LiteLLM 模型网关。** SkillHone 现已使用一套
   `provider/model` 配置连接 Anthropic、DeepSeek、OpenAI、Gemini 及其他
   LiteLLM provider，无需外部 Anthropic-compatible endpoint，也无需切换
   transport。Improver、Executor 和 Synthesis 可分别使用独立凭据与上游
@@ -229,29 +229,26 @@ AI 助手就行，剩下的 `~/.skillhone/settings.json` 它会自己写。
 
 | 角色 | 是否必填 | 作用 |
 |---|---|---|
-| **Optimizer** | 必填 | 驱动优化闭环 —— 给技能写补丁。 |
-| **Executor**  | 可选，不填则与 Optimizer 一致 | 在每条 probe 上运行被测技能。 |
-| **Tester**    | 可选，不填则与 Optimizer 一致 | 给执行结果打分 / 判定。 |
+| **Improver** | 必填 | 驱动优化闭环 —— 给技能写补丁。 |
+| **Executor** | 可选，不填则与 Improver 一致 | 在每条 probe 上运行被测技能。 |
+| **Synthesis** | 可选，不填则与 Improver 一致 | 在使用数据合成工作流时生成评测数据。 |
 
-如果直接走 Anthropic 官方,只需要给 AI 助手一个 Anthropic API
-key 即可 —— `claude-agent-sdk` 默认就走 Anthropic 官方 endpoint。
-**只有在你需要把流量转到第三方 Anthropic 兼容代理时**(例如
-DeepSeek),才需要每个角色填三个字段:`base_url`(Anthropic
-格式)、`api_key`、`model_name`。例如:
+每个角色只需提供 `api_key` 和 LiteLLM 的 `provider/model` 名称；仅当
+provider 需要非默认上游地址时才填写 `api_base`。不同角色可以使用各自
+独立的凭据和上游地址，省略的可选角色会复用 Improver 配置。
 
-```ini
-base_url   = https://api.deepseek.com/anthropic
-api_key    = sk-xxx
-model_name = deepseek-v4-pro
-```
-
-模型统一使用 LiteLLM 的 `provider/model` 名称，不再配置 transport。
-SkillHone 会自动启动仅监听本机的转换代理，
-并把 Anthropic Messages 地址注入 Claude Agent SDK，无需用户自行部署
-Anthropic-compatible endpoint：
+SkillHone 会自动启动仅监听本机的 LiteLLM 转换代理，并把 Anthropic
+Messages 地址注入 Claude Agent SDK。用户无需自行运行代理，也无需寻找
+Anthropic-compatible endpoint。同一套配置适用于 DeepSeek、Anthropic、
+OpenAI、Gemini 及其他 LiteLLM provider：
 
 ```jsonc
-{"improver":{"model":"deepseek/deepseek-chat","api_key":"sk-xxx","api_base":"https://api.deepseek.com/v1"}}
+{
+  "improver": {
+    "model": "deepseek/deepseek-chat",
+    "api_key": "sk-xxx"
+  }
+}
 ```
 
 完整字段、多身份 Forgejo token、以及 `~/.skillhone/` 下的目录结构都在
