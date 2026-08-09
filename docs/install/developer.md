@@ -96,7 +96,8 @@ attributes. Symlinks also work on regular filesystems.
 
 ## 4. Write `~/.skillhone/settings.json`
 
-Save this template, filling in the four bracketed values. The full schema lives
+Save this template with a LiteLLM `provider/model` name and credentials for
+each role. The full schema lives
 at [`skills/skillhone/references/configuration.md`](../../skills/skillhone/references/configuration.md).
 
 ```bash
@@ -104,8 +105,6 @@ mkdir -p ~/.skillhone
 
 cat > ~/.skillhone/settings.json <<'EOF'
 {
-  "api_key": "<YOUR_API_KEY>",
-
   "forgejo": {
     "url":   "http://localhost:3000",
     "owner": "skillhone",
@@ -113,50 +112,32 @@ cat > ~/.skillhone/settings.json <<'EOF'
   },
 
   "improver": {
-    "api_base": "<ANTHROPIC_BASE_URL>",
-    "model":    "<IMPROVER_MODEL_NAME>",
+    "api_key":  "<IMPROVER_API_KEY>",
+    "model":    "<PROVIDER/MODEL>",
+    "api_base": "<OPTIONAL_UPSTREAM_ENDPOINT>",
     "sdk_model_alias": "opus",
     "max_turns": 100,
-    "env": {
-      "ANTHROPIC_BASE_URL":  "<ANTHROPIC_BASE_URL>",
-      "ANTHROPIC_API_KEY":   "<YOUR_API_KEY>",
-      "ANTHROPIC_MODEL":     "<IMPROVER_MODEL_NAME>",
-      "ANTHROPIC_DEFAULT_OPUS_MODEL":   "<IMPROVER_MODEL_NAME>",
-      "ANTHROPIC_DEFAULT_SONNET_MODEL": "<IMPROVER_MODEL_NAME>",
-      "ANTHROPIC_AUTH_TOKEN":     "",
-      "ANTHROPIC_CUSTOM_HEADERS": ""
-    }
+    "env": {}
   },
 
   "executor": {
-    "api_base": "<ANTHROPIC_BASE_URL>",
-    "model":    "<EXECUTOR_MODEL_NAME>",
+    "api_key":  "<EXECUTOR_API_KEY>",
+    "model":    "<PROVIDER/MODEL>",
+    "api_base": "<OPTIONAL_UPSTREAM_ENDPOINT>",
     "sdk_model_alias": "haiku",
     "workers": 2,
     "max_iterations": 150,
     "thinking_enabled": true,
     "context_size": 40000,
-    "env": {
-      "ANTHROPIC_BASE_URL":  "<ANTHROPIC_BASE_URL>",
-      "ANTHROPIC_API_KEY":   "<YOUR_API_KEY>",
-      "ANTHROPIC_MODEL":     "<EXECUTOR_MODEL_NAME>",
-      "ANTHROPIC_DEFAULT_HAIKU_MODEL": "<EXECUTOR_MODEL_NAME>",
-      "ANTHROPIC_AUTH_TOKEN":     "",
-      "ANTHROPIC_CUSTOM_HEADERS": ""
-    }
+    "env": {}
   },
 
   "synthesis": {
-    "api_base": "<ANTHROPIC_BASE_URL>",
-    "model":    "<IMPROVER_MODEL_NAME>",
+    "api_key":  "<SYNTHESIS_API_KEY>",
+    "model":    "<PROVIDER/MODEL>",
+    "api_base": "<OPTIONAL_UPSTREAM_ENDPOINT>",
     "workers":  2,
-    "env": {
-      "ANTHROPIC_BASE_URL":  "<ANTHROPIC_BASE_URL>",
-      "ANTHROPIC_API_KEY":   "<YOUR_API_KEY>",
-      "ANTHROPIC_MODEL":     "<IMPROVER_MODEL_NAME>",
-      "ANTHROPIC_AUTH_TOKEN":     "",
-      "ANTHROPIC_CUSTOM_HEADERS": ""
-    }
+    "env": {}
   }
 }
 EOF
@@ -164,18 +145,15 @@ EOF
 chmod 600 ~/.skillhone/settings.json
 ```
 
-Two things worth knowing:
+`api_base` is optional: omit it to use LiteLLM's standard endpoint for the
+provider. For example, DeepSeek can use `deepseek/deepseek-chat` with no
+`api_base`; Anthropic can use an `anthropic/claude-...` model. SkillHone starts
+a loopback-only proxy and injects its Anthropic Messages endpoint into Claude
+Agent SDK automatically. Do not configure `ANTHROPIC_BASE_URL` yourself.
 
-- **`ANTHROPIC_BASE_URL` is the prefix only.** The SDK appends `/v1/messages`
-  itself; strip any `/v1/messages` suffix your provider's docs hand you.
-- **The blank `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_CUSTOM_HEADERS` is
-  deliberate.** They shadow any inherited shell env so the SDK uses
-  `ANTHROPIC_API_KEY` instead of a stale token from the parent shell — a
-  silent source of `401`s otherwise.
-
-If you talk to Anthropic directly, set `api_base` to `https://api.anthropic.com`
-and the model to a Claude model name. For DeepSeek's Anthropic-compatible
-endpoint, use `https://api.deepseek.com/anthropic` and `deepseek-v4-pro` / etc.
+The Executor and Synthesis sections are optional. Omit either section to reuse
+the Improver model profile. Prefer `api_key_env` over `api_key` when credentials
+are already managed in the process environment.
 
 ---
 

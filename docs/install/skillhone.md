@@ -78,30 +78,17 @@ SkillHone reads `~/.skillhone/settings.json` for its model credentials.
 The only thing you actually need from the user is **one set of model
 credentials** for the optimisation loop.
 
-**Default — Anthropic direct.** Ask only for an Anthropic API key.
-`claude-agent-sdk` uses Anthropic's official endpoint by default, so
-no `base_url` / `model_name` overrides are needed.
-
-**Third-party Anthropic-compatible providers** (e.g. DeepSeek).
-Only when the user explicitly routes through such a
-provider, ask for three fields:
+Ask for the provider API key and a LiteLLM `provider/model` identifier. Add an
+upstream `api_base` only when the provider does not use LiteLLM's default
+endpoint:
 
 | Required | Optional |
 |---|---|
-| **Optimizer LLM** — `base_url` (Anthropic-format), `api_key`, `model_name`. | **Executor LLM** — same three fields. If omitted, SkillHone reuses the optimizer settings for the eval solver. |
+| **Improver** — `api_key`, `model` (`provider/model`). | **Executor** and **Synthesis** — independent `api_key`, `model`, and optional `api_base`. Omitted roles reuse the Improver profile. |
 
-Example values to ask for, in plain English:
-
-```
-base_url   = https://api.deepseek.com/anthropic
-api_key    = sk-xxx
-model_name = deepseek-v4-pro
-```
-
-**Unified LiteLLM adapter (no Anthropic-compatible endpoint required).** Ask
-for the provider API key and a LiteLLM `provider/model` identifier. SkillHone
-starts and stops a loopback-only proxy automatically. Anthropic uses the same
-schema with an `anthropic/claude-...` model name:
+SkillHone starts and stops a loopback-only LiteLLM proxy automatically. The
+user does not need to run LiteLLM or supply an Anthropic-compatible endpoint.
+Anthropic uses the same schema with an `anthropic/claude-...` model name:
 
 ```jsonc
 {
@@ -117,8 +104,6 @@ schema with an `anthropic/claude-...` model name:
   }
 }
 ```
-
-The user does not need to run LiteLLM or supply `ANTHROPIC_BASE_URL`.
 
 Then write `~/.skillhone/settings.json` yourself, following the schema in
 [`skills/skillhone/references/configuration.md`](../../skills/skillhone/references/configuration.md).

@@ -51,7 +51,7 @@
 
 ## News
 
-- **[2026-08-08] 🚀 Unified LiteLLM gateway.** SkillHone now accepts one
+- **[2026-08-08] Unified LiteLLM gateway.** SkillHone now accepts one
   `provider/model` configuration across Anthropic, DeepSeek, OpenAI, Gemini,
   and other LiteLLM providers—no external Anthropic-compatible endpoint or
   transport switch required. Improver, executor, and synthesis can each use
@@ -247,30 +247,27 @@ assistant these values when you install — it will write the right
 
 | Role | Required? | What it does |
 |---|---|---|
-| **Optimizer** | required | Drives the optimisation loop — proposes patches to the skill. |
-| **Executor** | optional, defaults to Optimizer | Runs the skill being tested on each probe. |
-| **Tester**   | optional, defaults to Optimizer | Scores / judges the executor's output. |
+| **Improver** | required | Drives the optimisation loop — proposes patches to the skill. |
+| **Executor** | optional, defaults to Improver | Runs the skill being tested on each probe. |
+| **Synthesis** | optional, defaults to Improver | Generates evaluation data when using the synthesis workflow. |
 
-If you use Anthropic directly, just give the assistant your
-Anthropic API key — `claude-agent-sdk` uses Anthropic's official
-endpoint by default. **Only when you route through a third-party
-Anthropic-compatible provider** (e.g. DeepSeek) do you need to
-fill the three fields per role: `base_url` (Anthropic-format),
-`api_key`, `model_name`. Example:
+For each role, provide an `api_key` and a LiteLLM `provider/model` name. Add
+`api_base` only when the provider needs a non-default upstream endpoint. Each
+role can use independent credentials and endpoints; omitted optional roles
+reuse the Improver profile.
 
-```ini
-base_url   = https://api.deepseek.com/anthropic
-api_key    = sk-xxx
-model_name = deepseek-v4-pro
-```
-
-Model profiles use LiteLLM's `provider/model` naming. SkillHone starts a
-private local bridge and supplies its Anthropic Messages endpoint to Claude
-Agent SDK automatically—no transport switch or external Anthropic-compatible
-endpoint is needed. This also covers Anthropic models (`anthropic/claude-…`):
+SkillHone starts a loopback-only LiteLLM bridge and supplies its Anthropic
+Messages endpoint to Claude Agent SDK automatically. You do not need to run a
+proxy or find an Anthropic-compatible endpoint. The same configuration covers
+DeepSeek, Anthropic, OpenAI, Gemini, and other LiteLLM providers:
 
 ```jsonc
-{"improver":{"model":"deepseek/deepseek-chat","api_key":"sk-xxx","api_base":"https://api.deepseek.com/v1"}}
+{
+  "improver": {
+    "model": "deepseek/deepseek-chat",
+    "api_key": "sk-xxx"
+  }
+}
 ```
 
 Full schema, multi-identity Forgejo tokens, and the `~/.skillhone/`

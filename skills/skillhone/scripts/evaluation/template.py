@@ -88,11 +88,17 @@ except Exception:
 _CURRENT_DATASET_DIR: Path | None = None
 
 
+def _executor_profile() -> dict:
+    """Return the executor profile, falling back to the improver profile."""
+    if not _cfg:
+        return {}
+    return _cfg.get("executor") or _cfg.get("improver") or {}
+
+
 def _get_api_base() -> str:
-    if _cfg and "executor" in _cfg:
-        v = _cfg["executor"].get("api_base")
-        if v:
-            return v
+    v = _executor_profile().get("api_base")
+    if v:
+        return v
     v = os.environ.get("EXECUTOR_API_BASE", "")
     if v:
         return v
@@ -100,10 +106,9 @@ def _get_api_base() -> str:
 
 
 def _get_model() -> str:
-    if _cfg and "executor" in _cfg:
-        v = _cfg["executor"].get("model")
-        if v:
-            return v
+    v = _executor_profile().get("model")
+    if v:
+        return v
     v = os.environ.get("EXECUTOR_API_MODELS", "")
     if v:
         return v
@@ -112,10 +117,9 @@ def _get_model() -> str:
 
 def _get_model_alias() -> str:
     """SDK model alias (e.g. 'haiku') that maps to the actual model via env."""
-    if _cfg and "executor" in _cfg:
-        v = _cfg["executor"].get("sdk_model_alias")
-        if v:
-            return v
+    v = _executor_profile().get("sdk_model_alias")
+    if v:
+        return v
     return os.environ.get("ANTHROPIC_MODEL", "haiku")
 
 
@@ -135,8 +139,9 @@ def _get_workers() -> int:
     env_v = os.environ.get("EXECUTOR_WORKERS") or os.environ.get("EXECUTOR_API_WORKERS")
     if env_v:
         return int(env_v)
-    if _cfg and "executor" in _cfg:
-        return _cfg["executor"].get("workers", 16)
+    profile = _executor_profile()
+    if profile:
+        return profile.get("workers", 16)
     return 16
 
 
@@ -146,8 +151,9 @@ def _get_timeout() -> int:
     env_v = os.environ.get("EXECUTOR_TIMEOUT")
     if env_v:
         return int(env_v)
-    if _cfg and "executor" in _cfg:
-        return _cfg["executor"].get("timeout", 1800)
+    profile = _executor_profile()
+    if profile:
+        return profile.get("timeout", 1800)
     return 1800
 
 
@@ -156,8 +162,9 @@ def _get_max_turns() -> int | None:
     env_v = os.environ.get("EXECUTOR_MAX_TURNS")
     if env_v:
         return int(env_v) if env_v.lower() not in ("", "none", "0") else None
-    if _cfg and "executor" in _cfg:
-        v = _cfg["executor"].get("max_turns")
+    profile = _executor_profile()
+    if profile:
+        v = profile.get("max_turns")
         return int(v) if v not in (None, 0) else None
     return None
 
@@ -667,8 +674,9 @@ def _passthrough_env_names() -> tuple[str, ...]:
     solver agent. Read from settings.json `executor.passthrough_env` (a list
     of UPPER_CASE names). Empty by default — the harness has no opinion
     about which task-domain credentials a given skill needs."""
-    if _cfg and "executor" in _cfg:
-        names = _cfg["executor"].get("passthrough_env") or []
+    profile = _executor_profile()
+    if profile:
+        names = profile.get("passthrough_env") or []
         if isinstance(names, list):
             return tuple(str(x) for x in names if x)
     return ()
@@ -678,14 +686,15 @@ def _build_agent_env() -> dict[str, str]:
     """Build environment variables for claude-agent-sdk from settings.json,
     plus any allowlisted task-domain credentials present in os.environ
     (controlled by `executor.passthrough_env`)."""
-    if _cfg and "executor" in _cfg and agent_env_for is not None:
-        env = agent_env_for(_cfg["executor"], _cfg.get("api_key", ""))
-    elif (_cfg and "executor" in _cfg
-          and ("/" in _cfg["executor"].get("model", "")
-               or _cfg["executor"].get("provider") == "litellm")):
+    profile = _executor_profile()
+    if profile and agent_env_for is not None:
+        env = agent_env_for(profile, _cfg.get("api_key", "") if _cfg else "")
+    elif (profile
+          and ("/" in profile.get("model", "")
+               or profile.get("provider") == "litellm")):
         raise RuntimeError("LiteLLM adapter not found; reinstall the SkillHone skill bundle")
-    elif _cfg and "executor" in _cfg and "env" in _cfg["executor"]:
-        env = {k: str(v) for k, v in _cfg["executor"]["env"].items()}
+    elif profile and "env" in profile:
+        env = {k: str(v) for k, v in profile["env"].items()}
     else:
         env = {
             "ANTHROPIC_BASE_URL": _get_api_base(),
