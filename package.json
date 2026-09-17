@@ -1,0 +1,55 @@
+{
+  "name": "@skillhone/cli",
+  "private": true,
+  "version": "2.0.0-dev.0",
+  "description": "Agent-friendly local Issue, PR, Wiki, and Skill optimization workflow",
+  "type": "module",
+  "packageManager": "pnpm@11.19.0",
+  "bin": {
+    "skillhone": "dist/cli.js"
+  },
+  "files": [
+    "dist/cli.js",
+    "dist/cli.d.ts",
+    "dist/core",
+    "dist/web",
+    "skills/skillhone",
+    "skills/skillhone-auto-optimization",
+    "skills/skillhone-benchmark-optimization",
+    "docs/install/skillhone.md",
+    "docs/deepseek-harness.md",
+    "docs/benchmark-optimization.md",
+    "docs/benchmark-optimization.zh.md",
+    "README.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "SECURITY.md"
+  ],
+  "scripts": {
+    "build": "node scripts/build-ts.mjs",
+    "test": "npm run build && node --disable-warning=ExperimentalWarning --test dist/test/*.test.js",
+    "prepare": "node scripts/prepare-git.mjs",
+    "pack:check": "npm pack --dry-run"
+  },
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "keywords": [
+    "agent-skills",
+    "skill-optimization",
+    "deepseek-harness",
+    "dsh-plugin",
+    "codex",
+    "claude-code",
+    "cursor"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Tencent/SkillHone.git"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "typescript": "7.0.2"
+  }
+}

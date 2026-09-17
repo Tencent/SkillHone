@@ -192,8 +192,7 @@ def _is_cli_script(py: Path) -> bool:
     """Heuristic: does this .py file look like an executable CLI?
 
     A file is a CLI iff it has `if __name__ == "__main__"` AND either
-    imports argparse or references `sys.argv`. Pure library modules
-    (e.g. forgejo_client.py) are skipped.
+    imports argparse or references `sys.argv`. Pure library modules are skipped.
     """
     try:
         text = py.read_text(encoding="utf-8", errors="ignore")

@@ -1,0 +1,36 @@
+name: Example check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  phoenix-tracing:
+    name: Phoenix tracing fixture
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out SkillHone
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Confirm the public defect is reproducible
+        run: |
+          set -euo pipefail
+          repo="${RUNNER_TEMP}/phoenix-tracing"
+          python3 examples/phoenix-tracing/prepare_fixture.py "$repo"
+          if output="$(python3 "$repo/.test/test_reference_links.py" 2>&1)"; then
+            echo "Expected the public defect, but the fixture passed"
+            exit 1
+          fi
+          for reference in \
+            attributes-messages.md \
+            attributes-metadata.md \
+            attributes-graph.md \
+            attributes-exceptions.md
+          do
+            grep -Fq "$reference" <<<"$output"
+          done

@@ -1,189 +1,273 @@
 ---
 name: skillhone
-description: >
-  SkillHone — toolkit for evaluating, optimizing, and managing agent skills.
-  Use when asked to "evaluate a skill", "run probe", "optimize/iterate a skill",
-  "create a new skill experiment", "seed a skill repo", or "run skill benchmarks";
-  also use when the user mentions a Forgejo-hosted skill repo and wants to
-  measure or improve its quality. Wraps standalone scripts: status, eval,
-  optim, new, seed, serve, synth.
-compatibility: Requires Python 3.10+, git, and access to a Forgejo instance (or local FS).
+description: Local Issue, pull-request, and Wiki workbench for agent skills. Use when a user asks what skill problems, Issues, PRs, repair trajectories, work records, completed optimizations, pending fixes, or pending synchronization exist; when an Agent needs to report a reproducible skill defect; or when the user wants to initialize, inspect, optimize, review, merge, or synchronize a local skill repair. If a managed Skill has a missing referenced file, failing test, or broken command, invoke skillhone-auto-optimization before editing implementation files or installing dependencies. Uses a local SQLite/Git backend and DeepSeek Harness for optimization, with no hosted Git service.
 ---
 
 # SkillHone
 
-SkillHone is a measurement harness plus an optimization toolkit for agent
-skills. The important abstraction is not a fixed workflow; it is the evidence
-trail created when a skill is run against private eval tasks.
+Use SkillHone as the local maintenance layer for Agent-skill repositories. One
+Skill always maps to one Git repository and therefore owns an isolated set of
+Issue numbers, PR numbers, Wiki records, branches, tests, and repair Runs. The Catalog indexes
+those repositories but never combines their state. Any Agent runtime can call
+the CLI. DeepSeek Harness consumes the configured repair queue without a
+per-Issue approval step. User choice is required at Skill ownership and merge
+boundaries.
 
-The harness has these layers:
+## Route the user's intent first
 
-- **Skill repo**: public behavior to improve (`SKILL.md`, scripts, references).
-- **Eval repo**: private measurement contract (datasets, verifier, synthesis
-  contract, task-local validators).
-- **Solver workdirs**: isolated per-item sandboxes containing artifacts and
-  `trajectory.jsonl`.
-- **Observation records**: redacted probe results, trajectory diagnosis,
-  compiler/validator diagnosis, issues, PRs, and wiki pages.
+Treat inspection and synchronization as different operations. Never turn a
+status question into a write:
 
-When improving a skill, identify which layer explains the failure before
-changing code. A score drop may point to skill instructions, but it can also be
-a harness, verifier, compiler, artifact-path, or infrastructure problem.
+- “修好了吗 / did the repair succeed / 测试通过了吗 / 优化到哪了” means inspect
+  only. Run `skillhone --skill <name> --json status`, then inspect the linked
+  Issue, Run, and PR when needed. Report whether repair ran, tests passed, and
+  the PR is open or merged. Do not merge and do not run `sync apply`.
+- “已经同步了吗 / 我现在用的是新版本吗 / 需要同步吗” means inspect copy-back
+  state only. Run `skillhone --json sync status <name>` and interpret the state
+  table below. Do not run `sync apply`.
+- “帮我同步 / 把修复应用回去 / update my installed Skill” explicitly authorizes
+  copy-back. First run `sync status`; run `skillhone sync apply <name>` only
+  when it returns `ready_to_sync` with `can_apply: true`.
 
-Standalone scripts live under `scripts/`. Pick one based on the task in front of you.
+`sync` never merges a PR. A repair can have passed tests while still waiting in
+an open PR, and a merged repair can still be waiting for copy-back.
 
-Before starting a diagnosis, development, PR review, merge, or optimization cycle on a Forgejo-backed repo, run `scripts/status.py` so you know the current issue/PR state and do not duplicate work or merge the wrong PR.
+## Import existing Skills
 
-## Eval Synthesis Contract
+Import one Skill directory or discover the Skills already installed for an
+Agent runtime. Before importing, ask the user which ownership mode they want:
 
-When creating or synthesizing eval data, the task spec / README is the source of
-truth for both prompts and verification. Do not generate verifiers that only
-check the gold answer if the task spec also requires observable output
-properties.
+- `copy` keeps the existing runtime Skill untouched, optimizes a copy under
+  `~/.skillhone/skills/`, and requires a later `sync apply` to copy a merged
+  result back. A timestamped backup is made before applying.
+- `takeover` (legacy alias: `managed`) backs up the existing runtime Skill and replaces it with a link to
+  the repository under `~/.skillhone/skills/`, so all Agents use the centrally
+  optimized copy directly.
 
-If the README says the answer must have a format, file, syntax, parser/compile
-success, render success, required section, count range, banned token, fixed
-style token, palette, local-only dependency, or other deterministic acceptance
-criterion, include a corresponding `scores` key in the verifier. This applies
-whether you use `skillhone-synthesis` or write a small generation script by
-hand.
-
-Subjective requirements may be approximated by deterministic proxies. Truly
-uncheckable preferences should be noted as unverified, not silently ignored.
-
-## Scripts
-
-| Script | Use when the user asks to... | Details |
-|--------|-------------------------------|---------|
-| `scripts/status.py` | inspect the current Forgejo repo's issue/PR state before acting | [references/cli.md](references/cli.md) |
-| `scripts/eval.py` | run a probe / test evaluation on a skill, get a score | [references/evaluation.md](references/evaluation.md) |
-| `scripts/optim.py` | iterate on / optimize / auto-improve a skill | [references/optim.md](references/optim.md) |
-| `scripts/new.py` | create a new skill+eval repo pair (a new experiment) | [references/cli.md](references/cli.md) |
-| `scripts/seed.py` | scaffold SKILL.md / scripts/ for an empty skill repo | [references/seed.md](references/seed.md) |
-| `scripts/synth.py` | synthesise a probe split into the eval repo (calls into `skillhone-synthesis`) | [references/cli.md](references/cli.md) |
-| `scripts/serve.py` | listen for Forgejo webhooks (PR/issue/push) | [references/cli.md](references/cli.md) |
-| `scripts/quality/static_check.py` | validate skill structure and script discoverability | [references/quality_scoring_rubric.md](references/quality_scoring_rubric.md) |
-
-Load the relevant reference file only when you're about to run that specific script. Do not load them up front.
-
-## Upstream binding & sync
-
-The `skillhone` skill is bound to **<https://github.com/Tencent/SkillHone>**;
-the repository is the actual implementation. When the skill is delivered
-through a hub (SkillHub, an internal mirror, any `agentskills.io`-protocol
-runtime), the SKILL.md alone is not enough — the runtime has to pull the
-full upstream repository before the harness scripts can run.
-
-Follow [`references/upstream.md`](references/upstream.md) whenever you need to:
-
-- **Install for the first time** — `~/.skillhone/skills/` is empty.
-- **Refresh / update / pull latest** — refresh existing skill folders.
-
-Both run the same idempotent procedure (shallow clone + `cp -R` into
-`~/.skillhone/skills/<skill>/`). Settings, run history, and the cache stay
-untouched.
-
-## Quick examples
+Never choose `takeover` or replace an existing Skill without the user's answer.
+Also ask whether passing local PRs should wait for review (`review`) or merge
+automatically after their tests pass (`automatic`). Do not infer either choice.
 
 ```bash
-# Status — read-only dashboard of Issues + PRs for the current Forgejo repo
-python3 scripts/status.py
-
-# Evaluate — runs probe split, writes result.json
-python3 scripts/eval.py --skill-dir ./my-skill --eval-dir ./my-skill-eval \
-                        --split probe --output result.json
-
-# Optimize — agent-driven loop (5 iters, stop after 2 with no gain)
-python3 scripts/optim.py --repo http://forgejo/skillhone/my-skill.git \
-                         --iters 5 --patience 2
-
-# New experiment — creates skill-repo + eval-repo on Forgejo
-python3 scripts/new.py deep-research \
-                       --instruction README.md --data-dir ./data --no-run
-
-# Seed an empty skill — generate SKILL.md from a brief
-python3 scripts/seed.py --repo http://forgejo/skillhone/my-skill.git
-
-# Webhook listener
-python3 scripts/serve.py --port 8790
+skillhone init /path/to/my-skill --mode copy --merge review
+skillhone init --from codex --mode takeover --merge review
+skillhone import /path/to/my-skill --mode copy
+skillhone import --from codex --mode takeover
+skillhone import --from cursor --mode copy
+skillhone import --from claude-code --mode copy
+skillhone import --from pi --mode copy
+skillhone import --from zcode --mode copy
+skillhone import --from all --mode copy
+skillhone skills list
+skillhone sync status
+skillhone sync apply my-skill
 ```
 
-## Gotchas
+Use `init` for first-time adoption because it records both choices and imports
+the Skill. Use `import` later when the global choices already exist and only a
+new Skill must be added. `init` without `--mode` or `--merge` deliberately
+returns `choice_required`; present those choices to the user instead of retrying
+with guessed values.
 
-- **`~/.skillhone/settings.json` is required** before any script runs. It holds the Forgejo URL/token and three model profiles: `improver` (drives `optim.py`), `executor` (runs the skill under eval), and optional `synthesis` (used by `synth.py`). See [references/configuration.md](references/configuration.md).
-- **Start with `scripts/status.py` on Forgejo repos.** It is read-only and shows the open/closed Issue and PR state for the current repo; use it before creating issues, developing fixes, reviewing PRs, or merging.
-- **`scripts/eval.py` never writes to the skill repo** — it reads SKILL.md and writes a JSON result. Safe to run read-only.
-- **`scripts/optim.py` spawns subagents** (issue-reporter → developer → reviewer) via the Agent tool. Do *not* add `Agent` / `Task` to `disallowed_tools` in `settings.json.improver` or the loop will no-op.
-- **Eval repo must stay private.** The optimizing agent must never see it. `optim.py` only passes the skill repo path + a redacted probe result into the loop.
-- **Probe ≠ test.** A probe improvement does not guarantee a test improvement. See `references/evaluation.md` → "Probe vs Test".
-- **All state lives under `~/.skillhone/`** (logs, run artifacts, workspaces). Override with `$SKILLHONE_HOME`.
+Interpret `sync status` as follows:
 
-## How this skill composes
+- `awaiting_merge`: repair may be complete, but its PR is still open; inspect it.
+- `ready_to_sync`: merged central copy differs; explicit `sync apply` can apply it.
+- `in_sync`: the copy-mode runtime Skill already has the merged result.
+- `source_changed`: the runtime Skill changed separately; do not overwrite it.
+- `takeover_active`: the runtime already points at SkillHone; no copy-back exists.
+- `source_missing`, `repository_not_ready`, or `takeover_disconnected`: explain
+  the blocking state and stop.
 
+In `copy` mode, `sync apply` creates a timestamped backup and is idempotent. In
+`takeover` mode, a merged default branch is already the runtime version, so a
+sync request should report `already-managed`, not copy files.
+
+Each imported Skill becomes `~/.skillhone/skills/<name>`, an independent Git
+repository with an initial local commit. Re-importing identical content is
+idempotent; a conflicting Skill name is rejected instead of overwritten. The
+importer excludes runtime state and Git metadata and rejects detected secrets
+before creating Git history.
+
+## Inspect work
+
+Run commands in the affected Skill repository, or select an imported Skill by
+name from anywhere. If the user supplies a repository path, that path is
+authoritative: use `--repo <path>` for the entire workflow and do not substitute
+a same-name or byte-identical catalog repository.
+
+```bash
+skillhone status
+skillhone issue list
+skillhone pr list
+skillhone wiki list
+skillhone web --open
+skillhone --skill web-search status
+skillhone --skill web-search issue list
 ```
-skillhone-prd   →  skillhone-synthesis  →  skillhone  →  skillhone-evaluation  →  skillhone-optimization
-(spec the PRD)     (generate eval data)    (eval/optim)    (score + diagnose)       (optimize via PR)
+
+When the user asks to see current Issues, PRs, Wiki work records, repair trajectories, completed
+optimizations, or pending work, prefer `skillhone web --open`. If opening a
+browser is inappropriate, return the JSON form instead:
+
+```bash
+skillhone --json status
+skillhone --json issue view <N>
+skillhone --json pr view <N>
+skillhone --json wiki view <slug>
 ```
 
-`skillhone` is the orchestrator entry point; evaluation and optimization skills
-are loaded on demand inside `optim.py`'s agent loop. VCS operations are provided
-by a separate backend skill such as `forgejo`.
+The Web workbench puts the per-Skill Issue, PR, and Wiki counts on the first
+screen. Status also includes an approval inbox for every open local PR. Its
+four record views are Skills, Issues, Pull Requests, and Wiki.
+Cross-Skill lists are for discovery only and always display the owning Skill.
+Optimization Runs appear inside their linked Issue/PR as a trajectory rather
+than as a separate product concept.
 
-## Orchestration: "synthesise and optimise a skill from <PRD>"
+## Keep work records
 
-When the user asks to "synthesise and optimise a skill from `<path/to/PRD.md>`"
-(typical phrasing for the worked examples under `examples/`), run the four
-scripts below in order. The contract is one persistent skill repo + one
-private eval repo on Forgejo, with a regression-aware synth step gating the
-expensive optim phase.
+Wiki pages are lightweight repository-scoped notes, not another Git repository
+or hosted Wiki service. Agents can create or update them through the CLI:
 
-1. **`scripts/new.py <skill-name> --instruction <PRD.md>`**
-   Creates the public `<skill-name>` and private `<skill-name>-eval` repos
-   on Forgejo. Auto-redacts the PRD's `## ...Evaluation/Verifier/Scoring/
-   Rubric...` section so the public README never exposes the grading rubric
-   to the improver. The unredacted PRD lands in the eval repo.
+```bash
+skillhone wiki create --title "Parser repair" --body "What failed and what changed" --issue 1 --pr 1
+skillhone wiki update parser-repair --body "Tests passed; ready for review."
+skillhone wiki list
+```
 
-2. **`scripts/seed.py --repo <skill-url>`**
-   Reads the redacted public README, generates a real (but unoptimised)
-   `SKILL.md` plus minimal scaffolding, and commits as the seed point. This
-   is the baseline the synth-stage regression scores against — without a
-   real seed, the regression is meaningless. Skip this step ONLY when the
-   PRD has no `## 3.5 Synth-stage acceptance gate` and you are intentionally
-   running an old-style single-shot synth.
+A successful `skillhone optimize <N>` also writes or updates
+`issue-<N>-repair`, linking the Harness Run and local PR. Wiki text is redacted
+before persistence just like Issue and PR text.
 
-3. **`scripts/synth.py --repo <skill-url> --target 10 --splits probe ...`**
-   Synthesises `probe.jsonl` from the eval-side PRD. When the PRD declares
-   a synth-stage acceptance gate (§3.5 in the worked examples), pass
-   `--target-pass-rate-max <X> --max-resynth <N>` (typical: `0.30` and `3`)
-   so synth runs `eval.py --mode seed --split probe` after each draft and
-   redrafts when the seed solves more than X of the probes. Each iteration's
-   observations are written to the eval repo's `synthesis_observations/`
-   directory and pushed alongside the final `probe.jsonl`. Without these
-   flags, synth is single-shot (the historical behaviour).
+## Report a defect
 
-   > **Synth is optional.** If you already have a curated eval set (golden
-   > items from a benchmark, hand-written probes, an exported test bank,
-   > etc.), skip `synth.py` entirely and push your own `probe.jsonl`
-   > (and optionally `test.jsonl`) directly into the eval repo. The
-   > format the rest of the harness expects is documented in
-   > [`references/evaluation.md`](references/evaluation.md). As long as
-   > the verifier contract is satisfied, `optim.py` does not care whether
-   > the data came from `synth.py` or `git push`.
+Create an Issue only for a reproducible target-skill defect. Reject transient
+provider failures, rate limits, user configuration errors, and duplicates.
 
-4. **`scripts/optim.py --repo <skill-url> --iters 3 --patience 2`**
-   The agent-driven PR loop: diagnose probe failures → file Issue → land
-   focused PR → re-evaluate → write `Iteration-N-Observation` wiki page.
-   Each merged PR is one atomic skill change.
+This rule governs the target Skill regardless of the current Agent or working
+directory. In particular, a defect below `~/.skillhone/skills/` must be handed
+to `skillhone-auto-optimization` before the reporting Agent edits production
+files or installs dependencies. If optimization is unavailable, keep the Issue
+queued and report the blocker instead of repairing directly on `main`.
 
-Skip steps 2 + 3's `--target-pass-rate-max` only for prototype runs where you
-explicitly want to see what synth produces without a regression gate. For any
-example whose PRD includes §3.5, skipping the gate defeats the point.
+```bash
+skillhone issue create \
+  --title "Documented parser command is missing" \
+  --body "Safe reproduction and expected behavior"
 
-## References (load on demand)
+skillhone issue test add 1 \
+  --path .test/test_parser.py \
+  --command "python3 .test/test_parser.py"
+```
 
-- [references/evaluation.md](references/evaluation.md) — `eval.py` CLI, output JSON schema, solver architecture. Read before running `eval.py` or interpreting `result.json`.
-- [references/optim.md](references/optim.md) — `optim.py` loop, subagent roles, stop conditions. Read before running `optim.py`.
-- [references/seed.md](references/seed.md) — original SkillHone seed scaffold and validation rules. Read before running `seed.py`.
-- [references/quality_scoring_rubric.md](references/quality_scoring_rubric.md) — rubric used by quality reviewers.
-- [references/configuration.md](references/configuration.md) — `~/.skillhone/settings.json` schema, directory layout, env vars. Read on first setup or when the user asks "where do I configure X?".
-- [references/cli.md](references/cli.md) — flag-by-flag reference for every script. Read when a user asks about a flag you're not sure about.
+The reporting Agent should create the smallest repository-local reproduction
+test it can justify, then attach it to the Issue. SkillHone reruns attached tests
+after Harness repair and does not create a local PR while any test still fails.
+Run Python checks with `PYTHONDONTWRITEBYTECODE=1`, and remove only generated
+Python caches before the final repository-status report.
+
+Issue text must not contain credentials, private prompts, hidden eval data, raw
+trajectories, or absolute local paths. SkillHone applies an additional redaction
+pass before persistence.
+
+## Optimize and review
+
+The default `queued` policy records an Issue as repair work; it does not ask
+for another approval. During an active defect-report workflow, the reporting
+Agent calls the repository's dispatcher directly and lets it consume queued
+Issues serially:
+
+```bash
+skillhone --repo /path/to/skill dispatch
+skillhone pr view <pr-number>
+```
+
+`optimize` creates a `skillhone/issue-<N>-*` branch and invokes DeepSeek Harness
+headless. The repair must reproduce the defect, add focused tests (use
+`.test/` when they should remain hidden), run them, and commit. A
+successful run becomes a local PR only after all Issue-linked tests pass.
+The generated PR description must include the linked Issue, changed files,
+test commands, passed/total counts, observed effect, limits, and the explicit
+review/merge checklist. Do not replace it with a one-line runner summary.
+
+If another Agent already prepared a committed branch, register it manually:
+
+```bash
+skillhone pr create --issue <N> --title "Fix ..." --head <branch> --base main
+```
+
+Choose the merge behavior during `skillhone init` or with `config set`:
+
+```bash
+skillhone config set --merge review
+skillhone pr merge <N> --confirm
+skillhone config set --merge automatic
+```
+
+In the Web workbench, open the PR from the Status approval inbox, review its
+Issue, checks, commits, and changed files, then use the confirmation dialog.
+The dialog never pushes. For a `copy` import, it explicitly confirms both the
+local merge and copy-back, creates a timestamped backup, and shows whether the
+merged Skill is now active in the Agent runtime. If the source changed or a
+copy-back safety check fails, the PR remains merged but the Web page reports
+that synchronization is blocked and offers a separate retry after the conflict
+is resolved. For a `takeover` import, the merge is active immediately. In
+`automatic` mode, SkillHone merges locally only after every linked Issue test
+passes; automatic merges do not silently authorize copy-back.
+
+Never push. Never merge automatically unless the user explicitly saved the
+`automatic` merge policy.
+
+Configure when the repair queue is consumed independently from merge behavior:
+
+```bash
+skillhone config set --trigger queued
+skillhone config set --trigger immediate
+skillhone config set --trigger scheduled --interval-minutes 60
+skillhone dispatch --watch
+```
+
+`queued` leaves work for the next dispatcher call, `immediate` consumes a new
+Issue in the reporting command, and `scheduled` lets a watching dispatcher poll
+at the configured interval. None requires repair approval. Dispatch is serial
+per Skill repository: one Issue gets
+one Harness Session, branch, test gate, PR, and Wiki record before the next
+Issue starts. A repository lock prevents overlapping immediate and scheduled
+repairs, and one failed Issue does not stop later queued Issues.
+
+## State and installation
+
+The Catalog lives at `~/.skillhone/catalog.db`; imported repositories live under
+`~/.skillhone/skills/`; each repository's isolated state lives under
+`~/.skillhone/projects/<project-id>/skillhone.db`. Override the root with
+`SKILLHONE_HOME`. The browser receives no repository path, run-log path, or
+credential. The server binds only to `127.0.0.1`.
+
+Install the TypeScript CLI, then add DeepSeek Harness only when optimization is needed:
+
+```bash
+npm install -g --install-links=true git+https://github.com/Tencent/SkillHone.git#main
+skillhone setup --with-harness
+skillhone doctor
+```
+
+SkillHone is distributed from the GitHub `main` branch, not the NPM Registry.
+A prebuilt `.tgz` from a GitHub Release is also supported.
+
+Detailed CLI usage is in [references/cli.md](references/cli.md). For a defect
+discovered during ordinary Agent work, load `skillhone-auto-optimization`.
+For evaluation-driven improvement, load `skillhone-benchmark-optimization` and
+use `skillhone benchmark`; benchmark failures become ordinary repository-local
+Issues and then use the same Git/PR review boundary. The user must supply the
+separate, committed Eval repository; SkillHone does not synthesize evaluation
+data as part of this workflow.
+The full Benchmark path requires a second, separate Eval Git repository. Probe
+question text is supplied transiently to Harness as reproducible iteration
+feedback; probe verifier/gold data, held-out `pr_val`/`test` inputs, and raw
+results never enter the Skill repository or Harness prompt.
+Read [references/upstream.md](references/upstream.md) only when installing from
+source. An existing evaluation/Evo repository may remain available, but the
+runtime-maintenance path never requires it and never waits for a benchmark
+before recording a reproducible defect. Use `skillhone-benchmark-optimization`
+only when the user explicitly asks to build, run, or diagnose a frozen
+benchmark campaign; never load it for runtime maintenance.

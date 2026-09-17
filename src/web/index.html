@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SkillHone</title>
+    <link rel="stylesheet" href="/assets/styles.css?v=20260824">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" id="home-link" href="#status" aria-label="SkillHone home">
+        <span class="brand-mark">S</span>
+        <span><strong>SkillHone</strong></span>
+      </a>
+      <div class="top-actions">
+        <div class="locale-switch" aria-label="Language">
+          <button type="button" data-locale="en">EN</button>
+          <button type="button" data-locale="zh">中文</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="repo-header" aria-label="Repository context">
+      <div class="repo-name">
+        <span class="icon-slot" data-icon="repo"></span>
+        <strong id="repo-name">Skill repositories</strong>
+        <span class="visibility" data-i18n="local">Local</span>
+      </div>
+      <span id="project" class="repo-summary">Loading</span>
+    </section>
+
+    <main>
+      <section class="workspace" aria-label="SkillHone workbench">
+        <nav class="tabs" aria-label="Work items">
+          <button class="tab active" data-view="status"><span class="status-dot"></span><span data-i18n="status">Status</span></button>
+          <button class="tab" data-view="skills"><span class="icon-slot" data-icon="repo"></span><span id="skills-tab-label" data-i18n="repositories">Repositories</span><span class="counter" id="skill-count">0</span></button>
+          <button class="tab" data-view="issues"><span class="icon-slot" data-icon="issue"></span><span data-i18n="issues">Issues</span><span class="counter" id="issue-count">0</span></button>
+          <button class="tab" data-view="prs"><span class="icon-slot" data-icon="pr"></span><span data-i18n="pullRequests">Pull requests</span><span class="counter" id="pr-count">0</span></button>
+          <button class="tab" data-view="wiki"><span class="icon-slot" data-icon="book"></span><span data-i18n="wiki">Wiki</span><span class="counter" id="wiki-count">0</span></button>
+        </nav>
+        <div id="content" class="content" aria-live="polite"></div>
+      </section>
+    </main>
+    <dialog id="merge-dialog" class="modal approval-dialog" aria-labelledby="merge-dialog-title">
+      <div class="modal-head">
+        <div>
+          <span class="icon-slot" data-icon="merge"></span>
+          <h2 id="merge-dialog-title" data-i18n="confirmMergeTitle">Confirm local merge</h2>
+        </div>
+        <button id="merge-close" class="icon-button" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <strong id="merge-pr-name"></strong>
+        <p id="merge-dialog-body">This creates a merge commit on the local default branch and closes the linked Issue. Nothing is pushed.</p>
+        <p id="merge-error" class="dialog-error" hidden></p>
+        <div class="dialog-actions">
+          <button id="merge-cancel" class="secondary-button" type="button" data-i18n="cancel">Cancel</button>
+          <button id="merge-confirm" class="merge-button" type="button" data-i18n="mergeLocally">Merge locally</button>
+        </div>
+      </div>
+    </dialog>
+    <dialog id="sync-dialog" class="modal approval-dialog" aria-labelledby="sync-dialog-title">
+      <div class="modal-head">
+        <div>
+          <span class="icon-slot" data-icon="repo"></span>
+          <h2 id="sync-dialog-title" data-i18n="confirmSyncTitle">Sync merged Skill</h2>
+        </div>
+        <button id="sync-close" class="icon-button" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="modal-body">
+        <strong id="sync-skill-name"></strong>
+        <p data-i18n="confirmSyncBody">This copies the merged Skill to its Agent runtime directory and creates a backup first.</p>
+        <p id="sync-error" class="dialog-error" hidden></p>
+        <div class="dialog-actions">
+          <button id="sync-cancel" class="secondary-button" type="button" data-i18n="cancel">Cancel</button>
+          <button id="sync-confirm" class="merge-button" type="button" data-i18n="syncNow">Sync to Agent</button>
+        </div>
+      </div>
+    </dialog>
+    <script type="module" src="/assets/app.js?v=20260824"></script>
+  </body>
+</html>
