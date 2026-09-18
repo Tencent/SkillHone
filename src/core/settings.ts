@@ -1,15 +1,18 @@
-import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
 export type TriggerMode = 'queued' | 'immediate' | 'scheduled'
 export type MergeMode = 'review' | 'automatic'
+export type AuditMode = 'standard' | 'signed'
 export interface Policy { mode: TriggerMode; interval_minutes: number; scope: 'default' | 'skill' }
 export interface MergePolicy { mode: MergeMode; scope: 'default' | 'skill' }
+export interface AuditPolicy { mode: AuditMode; scope: 'default' | 'skill' }
 interface StoredPolicy { mode: TriggerMode; interval_minutes: number }
 interface Settings {
   automation: { default: StoredPolicy; skills: Record<string, StoredPolicy> }
   merge: { default: MergeMode; skills: Record<string, MergeMode> }
+  audit: { default: AuditMode; skills: Record<string, AuditMode> }
   harness: { package: string }
 }
 
@@ -18,6 +21,7 @@ export const testedHarnessPackage = '@deepseek-ai/dsh@0.1.5-rc.2'
 const defaults: Settings = {
   automation: { default: { mode: 'queued', interval_minutes: 60 }, skills: {} },
   merge: { default: 'review', skills: {} },
+  audit: { default: 'standard', skills: {} },
   harness: { package: testedHarnessPackage },
 }
 
@@ -31,6 +35,10 @@ function triggerMode(value: unknown): TriggerMode {
 
 function mergeMode(value: unknown): MergeMode {
   return value === 'automatic' ? 'automatic' : 'review'
+}
+
+function auditMode(value: unknown): AuditMode {
+  return value === 'signed' ? 'signed' : 'standard'
 }
 
 export const resolveHome = (home?: string): string => resolve(home ?? process.env.SKILLHONE_HOME ?? join(homedir(), '.skillhone'))
@@ -58,6 +66,10 @@ export function loadSettings(home: string): Settings {
     merge: {
       default: mergeMode(parsed.merge?.default),
       skills: Object.fromEntries(Object.entries(parsed.merge?.skills ?? {}).map(([key, value]) => [key, mergeMode(value)])),
+    },
+    audit: {
+      default: auditMode(parsed.audit?.default),
+      skills: Object.fromEntries(Object.entries(parsed.audit?.skills ?? {}).map(([key, value]) => [key, auditMode(value)])),
     },
     // Harness is part of the tested repair runtime contract. Older settings
     // may contain a movable `@latest` tag; never let it silently change the
@@ -108,6 +120,42 @@ export function setMergePolicy(home: string, mode: MergeMode, project?: string):
   else settings.merge.default = mode
   saveSettings(home, settings)
   return mergePolicy(home, project)
+}
+
+export function auditPolicy(home: string, project?: string): AuditPolicy {
+  const settings = loadSettings(home)
+  const selected = project ? settings.audit.skills[project] : undefined
+  return { mode: selected ?? settings.audit.default, scope: selected ? 'skill' : 'default' }
+}
+
+export function setAuditPolicy(home: string, mode: AuditMode, project?: string): AuditPolicy {
+  if (!['standard', 'signed'].includes(mode)) throw new Error('audit mode must be standard or signed')
+  const settings = loadSettings(home)
+  if (project) settings.audit.skills[project] = mode
+  else settings.audit.default = mode
+  saveSettings(home, settings)
+  // A later opt-in establishes a fresh trusted baseline. Retaining a seal
+  // while standard mode permits unsigned host changes would create a false
+  // tamper alert when signed mode is enabled again.
+  if (mode === 'standard') {
+    if (project) rmSync(join(home, 'projects', project, 'audit-integrity.json'), { force: true })
+    else {
+      const projects = join(home, 'projects')
+      if (existsSync(projects)) for (const entry of readdirSync(projects)) {
+        rmSync(join(projects, entry, 'audit-integrity.json'), { force: true })
+      }
+    }
+  }
+  return auditPolicy(home, project)
+}
+
+export function clearAuditPolicy(home: string, project: string): AuditPolicy {
+  const settings = loadSettings(home)
+  delete settings.audit.skills[project]
+  saveSettings(home, settings)
+  const selected = auditPolicy(home, project)
+  if (selected.mode === 'standard') rmSync(join(home, 'projects', project, 'audit-integrity.json'), { force: true })
+  return selected
 }
 
 export function clearPolicy(home: string, project: string): Policy {

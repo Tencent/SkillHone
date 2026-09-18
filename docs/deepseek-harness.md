@@ -46,13 +46,29 @@ repository as its writable workspace. For every repair, SkillHone also:
 - creates the PR, Wiki record, and final Run state only after Harness exits;
 - verifies SQLite integrity and reports the result in CLI/Web status.
 
-This answers the identity concern in
-[Issue #9](https://github.com/Tencent/SkillHone/issues/9): the change author and
-the audit writer are separate runtime authorities even when one local user
-starts both processes. The boundary protects against repair tools rewriting
-their own trail. It is not an OS-level defense against the machine owner or a
-root process deliberately editing files after SkillHone exits; use a separate
-OS account or sandbox when that stronger threat model is required.
+The default `standard` mode prevents the repair process from changing its
+active records. Users who also want later offline edits to be detectable can
+enable the optional signed audit mode globally or for one Skill:
+
+```sh
+skillhone config set --audit signed
+skillhone --skill web-search config set --audit signed
+```
+
+Signed mode keeps an HMAC key in the Host credential directory (mode `0600`),
+outside every Skill repository and outside the Harness environment. Each Host
+mutation reseals the repository-scoped Issue, PR, Run, Wiki, test, and
+evaluation state. A missing or mismatched seal makes `audit.integrity` fail and
+blocks further audit writes. `skillhone config set --audit standard` disables
+the optional seal; enabling it again accepts the then-current state as a new
+trusted baseline.
+
+Together, the always-on runtime lock and optional signed history address the
+audit-author concern raised in
+[Issue #9](https://github.com/Tencent/SkillHone/issues/9) without giving the
+repair Agent an Issue/PR credential. Signed mode is tamper-evident, not an
+OS-level security boundary: use a separate OS account or sandbox if the machine
+owner or a privileged process is part of the threat model.
 
 ## Why Harness owns repair
 
