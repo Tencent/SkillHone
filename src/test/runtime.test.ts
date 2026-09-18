@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { mkdtemp, rm } from 'node:fs/promises'
+import { DatabaseSync } from 'node:sqlite'
 import test from 'node:test'
 
 import { Catalog } from '../core/catalog.js'
@@ -16,8 +17,8 @@ import {
 } from '../core/benchmark.js'
 import { main } from '../cli.js'
 import {
-  benchmarkHarnessHome, configureHarness, evaluatorHarnessHome, evaluatorPatchPath, harnessHome,
-  loadSettings, mergePolicy, policy, setMergePolicy, setPolicy, testedHarnessPackage,
+  auditPolicy, benchmarkHarnessHome, configureHarness, evaluatorHarnessHome, evaluatorPatchPath, harnessHome,
+  loadSettings, mergePolicy, policy, setAuditPolicy, setMergePolicy, setPolicy, testedHarnessPackage,
 } from '../core/settings.js'
 import { Tracker, type WorkRow } from '../core/tracker.js'
 import { run } from '../core/util.js'
@@ -286,7 +287,14 @@ test('Init requires explicit ownership and merge choices before importing', asyn
     assert.equal(initialized.import_mode, 'copy')
     assert.equal((initialized.merge as Record<string, unknown>).mode, 'review')
     assert.equal((initialized.trigger as Record<string, unknown>).mode, 'queued')
+    assert.equal((initialized.audit as Record<string, unknown>).mode, 'standard')
     assert.equal((initialized.skills as Array<Record<string, unknown>>)[0]?.import_status, 'imported')
+
+    assert.equal(await main(['--home', home, '--json', 'config', 'set', '--audit', 'signed']), 0)
+    const configured = JSON.parse(String(output.shift())) as Record<string, unknown>
+    assert.equal((configured.audit as Record<string, unknown>).mode, 'signed')
+    const importedId = String((initialized.skills as Array<Record<string, unknown>>)[0]?.id)
+    assert.equal(existsSync(join(home, 'projects', importedId, 'audit-integrity.json')), true)
   } finally {
     console.log = originalLog
     await rm(root, { recursive: true, force: true })
@@ -370,8 +378,51 @@ test('Harness configuration is written to Harness-owned files without leaking in
     assert.equal(evaluator.role, 'evaluator')
     assert.deepEqual(policy(root), { mode: 'queued', interval_minutes: 60, scope: 'default' })
     assert.deepEqual(mergePolicy(root), { mode: 'review', scope: 'default' })
+    assert.deepEqual(auditPolicy(root), { mode: 'standard', scope: 'default' })
     assert.equal(setPolicy(root, 'scheduled', 15).mode, 'scheduled')
   } finally { await rm(root, { recursive: true, force: true }) }
+})
+
+test('Optional signed audit mode detects offline record edits and fails closed', async () => {
+  const value = await fixture()
+  try {
+    const project = new Tracker(value.repo, value.home)
+    const projectId = project.project().id
+    project.close()
+    assert.deepEqual(setAuditPolicy(value.home, 'signed', projectId), { mode: 'signed', scope: 'skill' })
+
+    const tracker = new Tracker(value.repo, value.home)
+    tracker.createIssue('Signed audit contract', 'Host-authored records must remain tamper evident.')
+    assert.deepEqual(tracker.auditStatus(), {
+      integrity: 'verified', mode: 'signed', authority: 'skillhone-host', runner_writes: 'blocked-during-run',
+    })
+    const dbPath = tracker.dbPath
+    const sealPath = join(tracker.dataDir, 'audit-integrity.json')
+    tracker.close()
+    assert.equal(existsSync(join(value.home, 'credentials', 'audit-integrity.key')), true)
+    assert.equal(existsSync(sealPath), true)
+
+    const db = new DatabaseSync(dbPath)
+    db.exec("UPDATE issue SET status='closed'")
+    db.close()
+
+    const reopened = new Tracker(value.repo, value.home)
+    assert.equal(reopened.auditStatus().integrity, 'failed')
+    assert.throws(
+      () => reopened.createIssue('Must be rejected', 'Signed state no longer matches.'),
+      /signed audit trail verification failed/,
+    )
+    reopened.close()
+
+    setAuditPolicy(value.home, 'standard', projectId)
+    const standard = new Tracker(value.repo, value.home)
+    standard.createIssue('Accepted baseline change', 'The user explicitly disabled signed history.')
+    standard.close()
+    setAuditPolicy(value.home, 'signed', projectId)
+    const resealed = new Tracker(value.repo, value.home)
+    assert.equal(resealed.auditStatus().integrity, 'verified')
+    resealed.close()
+  } finally { await rm(value.root, { recursive: true, force: true }) }
 })
 
 test('Harness installation uses one immutable tested package across old and empty homes', async () => {
@@ -461,7 +512,9 @@ process.exit(existsSync('audit-guard-fixed.txt') ? 0 : 1)
 `)
     const probe = new Tracker(value.repo, value.home)
     const dbPath = probe.dbPath
+    const projectId = probe.project().id
     probe.close()
+    setAuditPolicy(value.home, 'signed', projectId)
 
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
@@ -501,6 +554,7 @@ git commit -m 'fix: satisfy audit guard test'
     assert.equal(tracker.issue(1).status, 'open')
     assert.equal(tracker.listPrs('open').length, 1)
     assert.equal(tracker.auditStatus().integrity, 'verified')
+    assert.equal(tracker.auditStatus().mode, 'signed')
     assert.equal(tracker.auditStatus().runner_writes, 'blocked-during-run')
     const runRecord = tracker.listRuns()[0] as Record<string, unknown>
     assert.match(readFileSync(String(runRecord.log_path), 'utf8'), /AUDIT_WRITE_BLOCKED/)

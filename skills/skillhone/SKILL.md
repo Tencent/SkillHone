@@ -218,6 +218,18 @@ passes; automatic merges do not silently authorize copy-back.
 Never push. Never merge automatically unless the user explicitly saved the
 `automatic` merge policy.
 
+The default audit mode keeps repair-time records Host-owned and locked. If the
+user explicitly asks for tamper-evident history, enable signed records globally
+or for one Skill; do not enable the optional mode without that request:
+
+```bash
+skillhone config set --audit signed
+skillhone --skill web-search config set --audit signed
+```
+
+If `status` reports failed signed integrity, stop. Do not reset the mode or
+accept a new baseline on the user's behalf.
+
 Configure when the repair queue is consumed independently from merge behavior:
 
 ```bash

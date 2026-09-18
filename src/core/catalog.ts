@@ -5,7 +5,7 @@ import { basename, join, relative, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { status as harnessStatus } from './harness.js'
-import { mergePolicy, policy, loadSettings, resolveHome } from './settings.js'
+import { auditPolicy, mergePolicy, policy, loadSettings, resolveHome } from './settings.js'
 import { Tracker, type WorkRow } from './tracker.js'
 import { gitRoot, now, projectId, redact, run, slug } from './util.js'
 
@@ -443,6 +443,7 @@ export class Catalog {
     for (const skill of skills) {
       skill.automation = policy(this.home, String(skill.id))
       skill.merge_policy = mergePolicy(this.home, String(skill.id))
+      skill.audit_policy = auditPolicy(this.home, String(skill.id))
     }
     const approvals = prs.filter(item => item.decision_state === 'awaiting_approval').map(item => ({
       skill: item.skill,
@@ -451,10 +452,12 @@ export class Catalog {
       title: item.title,
       state: 'awaiting_approval',
     }))
+    const auditModes = new Set(skills.filter(skill => skill.available !== false).map(skill => String((skill.audit as WorkRow | undefined)?.mode ?? 'standard')))
     return {
       skills, issues, pull_requests: prs, runs, wiki,
       audit: {
         integrity: skills.every(skill => (skill.audit as WorkRow | undefined)?.integrity === 'verified') ? 'verified' : 'failed',
+        mode: auditModes.size > 1 ? 'mixed' : (auditModes.values().next().value ?? auditPolicy(this.home).mode),
         authority: 'skillhone-host', runner_writes: 'blocked-during-run',
       },
       notifications: {

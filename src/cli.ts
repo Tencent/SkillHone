@@ -11,8 +11,8 @@ import {
 import { install as installHarness, installedBinary, diagnoseFailure, probe as probeHarness, repairPrompt, runRepair, runWeb, status as harnessStatus } from './core/harness.js'
 import { repairPrBody } from './core/pr-description.js'
 import {
-  clearPolicy, configureHarness, loadSettings, mergePolicy, policy, saveSettings,
-  setMergePolicy, setPolicy, type MergeMode, type TriggerMode,
+  auditPolicy, clearAuditPolicy, clearPolicy, configureHarness, loadSettings, mergePolicy, policy, saveSettings,
+  setAuditPolicy, setMergePolicy, setPolicy, type AuditMode, type MergeMode, type TriggerMode,
 } from './core/settings.js'
 import { Tracker, type WorkRow } from './core/tracker.js'
 import { redact, slug } from './core/util.js'
@@ -25,7 +25,7 @@ const help = `SkillHone — local Agent-friendly Issue, PR, Wiki, and Skill opti
 Usage: skillhone [--home PATH] [--repo PATH] [--skill NAME] [--json] COMMAND
 
 Commands:
-  init [PATH|--from RUNTIME] --mode copy|takeover --merge review|automatic
+  init [PATH|--from RUNTIME] --mode copy|takeover --merge review|automatic [--audit standard|signed]
                                            Initialize and import Skills with explicit ownership choices
   setup [--with-harness] [--agent RUNTIME]
                                            Initialize SkillHone and connect an Agent
@@ -42,7 +42,7 @@ Commands:
   benchmark init|status|run|optimize
                                            Evaluation-driven Issue discovery and repair
   dispatch                                Consume queued repairs serially
-  config show|set|reset                    Configure queued/immediate/scheduled triggers and merge policy
+  config show|set|reset                    Configure trigger, merge, and optional signed-audit policy
   doctor [--probe]                        Check configuration; optionally verify native tool execution
   harness configure|status|web             Manage optimizer and evaluator models
   runs                                    List optimization trajectories
@@ -87,6 +87,11 @@ function triggerMode(value: string | undefined): TriggerMode | undefined {
 
 function selectedMergeMode(value: string | undefined): MergeMode | undefined {
   if (value === 'review' || value === 'automatic') return value
+  return undefined
+}
+
+function selectedAuditMode(value: string | undefined): AuditMode | undefined {
+  if (value === 'standard' || value === 'signed') return value
   return undefined
 }
 
@@ -298,11 +303,12 @@ function selectedAgent(args: string[]): AgentRuntime | undefined {
 
 function executeInit(global: Globals, catalog: Catalog): number {
   const runtime = option(global.args, '--from')
-  const positional = positionals(global.args, ['--from', '--name', '--mode', '--merge', '--trigger', '--interval-minutes', '--agent'])
+  const positional = positionals(global.args, ['--from', '--name', '--mode', '--merge', '--audit', '--trigger', '--interval-minutes', '--agent'])
   if (runtime && positional.length) throw new Error('provide either a Skill path or --from codex|cursor|claude-code|pi|zcode|all')
   const requestedMode = option(global.args, '--mode')
   const mode = importMode(requestedMode)
   const merge = selectedMergeMode(option(global.args, '--merge'))
+  const audit = selectedAuditMode(option(global.args, '--audit') ?? 'standard')
   if (!mode || !merge) {
     emit({
       initialized: false,
@@ -325,18 +331,26 @@ function executeInit(global: Globals, catalog: Catalog): number {
     }, global.json)
     return 2
   }
+  if (!audit) throw new Error('--audit must be standard or signed')
   if (runtime && !agentRuntimes.has(runtime as AgentRuntime)) throw new Error('--from must be codex, cursor, claude-code, pi, zcode, or all')
   const configuredTrigger = triggerMode(option(global.args, '--trigger') ?? 'queued')
   if (!configuredTrigger) throw new Error('--trigger must be queued, immediate, or scheduled')
   const settings = loadSettings(catalog.home); saveSettings(catalog.home, settings)
   const agent = selectedAgent(global.args)
   const source = positional[0] ?? global.repo
+  const selectedAudit = setAuditPolicy(catalog.home, audit)
+  const skills = runtime ? catalog.importRuntime(runtime, mode) : [catalog.importPath(source, option(global.args, '--name'), 'path', mode)]
+  if (audit === 'signed') for (const skill of skills) {
+    const tracker = catalog.tracker(String(skill.id))
+    try { tracker.auditStatus() } finally { tracker.close() }
+  }
   emit({
     home: catalog.home,
     import_mode: requestedMode === 'takeover' ? 'takeover' : mode,
     trigger: setPolicy(catalog.home, configuredTrigger, Number(option(global.args, '--interval-minutes') ?? 60)),
     merge: setMergePolicy(catalog.home, merge),
-    skills: runtime ? catalog.importRuntime(runtime, mode) : [catalog.importPath(source, option(global.args, '--name'), 'path', mode)],
+    audit: selectedAudit,
+    skills,
     harness: flag(global.args, '--with-harness') ? installHarness(catalog.home) : harnessStatus(catalog.home),
     ...(agent ? { agent_skills: installAgentSkills(agent) } : {}),
   }, global.json)
@@ -364,7 +378,7 @@ function executeDoctor(global: Globals, catalog: Catalog): number {
     ok: probe?.ok ?? true, ready_for_optimization: harness.installed && harness.model_configured && (probe?.ok ?? true),
     connectivity_verified: probe?.ok ?? false, ...(probe ? { probe } : {}),
     node: { available: true, version: process.version }, harness,
-    trigger: policy(catalog.home), merge: mergePolicy(catalog.home), configuration: guide(catalog.home),
+    trigger: policy(catalog.home), merge: mergePolicy(catalog.home), audit: auditPolicy(catalog.home), configuration: guide(catalog.home),
   }, global.json)
   return probe && !probe.ok ? 1 : 0
 }
@@ -434,23 +448,34 @@ function selectedProject(global: Globals, catalog: Catalog): string | undefined 
 function executeConfigSet(global: Globals, catalog: Catalog, project: string | undefined): void {
   const requestedTrigger = option(global.args, '--trigger')
   const requestedMerge = option(global.args, '--merge')
-  if (!requestedTrigger && !requestedMerge) throw new Error('config set requires --trigger or --merge')
+  const requestedAudit = option(global.args, '--audit')
+  if (!requestedTrigger && !requestedMerge && !requestedAudit) throw new Error('config set requires --trigger, --merge, or --audit')
   const selectedTrigger = requestedTrigger ? triggerMode(requestedTrigger) : undefined
   const selectedMerge = requestedMerge ? selectedMergeMode(requestedMerge) : undefined
+  const selectedAudit = requestedAudit ? selectedAuditMode(requestedAudit) : undefined
   if (requestedTrigger && !selectedTrigger) throw new Error('--trigger must be queued, immediate, or scheduled')
   if (requestedMerge && !selectedMerge) throw new Error('--merge must be review or automatic')
+  if (requestedAudit && !selectedAudit) throw new Error('--audit must be standard or signed')
+  const configuredAudit = selectedAudit ? setAuditPolicy(catalog.home, selectedAudit, project) : auditPolicy(catalog.home, project)
+  if (selectedAudit === 'signed') {
+    const trackers = project
+      ? [global.skill ? catalog.tracker(global.skill) : new Tracker(global.repo, global.home)]
+      : catalog.listSkills().map(item => catalog.tracker(String(item.id)))
+    for (const tracker of trackers) try { tracker.auditStatus() } finally { tracker.close() }
+  }
   emit({
     trigger: selectedTrigger ? setPolicy(catalog.home, selectedTrigger, Number(option(global.args, '--interval-minutes') ?? 60), project) : policy(catalog.home, project),
     merge: selectedMerge ? setMergePolicy(catalog.home, selectedMerge, project) : mergePolicy(catalog.home, project),
+    audit: configuredAudit,
   }, global.json)
 }
 
 function executeConfig(global: Globals, catalog: Catalog): number {
   const action = global.args[0]
   const project = selectedProject(global, catalog)
-  if (action === 'show') emit({ trigger: policy(catalog.home, project), merge: mergePolicy(catalog.home, project) }, global.json)
+  if (action === 'show') emit({ trigger: policy(catalog.home, project), merge: mergePolicy(catalog.home, project), audit: auditPolicy(catalog.home, project) }, global.json)
   else if (action === 'set') executeConfigSet(global, catalog, project)
-  else if (action === 'reset' && project) emit(clearPolicy(catalog.home, project), global.json)
+  else if (action === 'reset' && project) emit({ trigger: clearPolicy(catalog.home, project), audit: clearAuditPolicy(catalog.home, project) }, global.json)
   else if (action === 'reset') throw new Error('global trigger policy cannot be reset; set it explicitly')
   else throw new Error('config requires show, set, or reset')
   return 0

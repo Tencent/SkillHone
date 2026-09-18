@@ -1,11 +1,12 @@
-import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs'
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, isAbsolute, join, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { DatabaseSync } from 'node:sqlite'
 
 import { gitRoot, now, projectId, redact, run, sha256, slug } from './util.js'
-import { resolveHome } from './settings.js'
+import { auditPolicy, resolveHome, type AuditMode } from './settings.js'
 import { repairPrBody } from './pr-description.js'
 
 export type WorkRow = Record<string, unknown>
@@ -31,6 +32,8 @@ export class Tracker {
   readonly dbPath: string
   readonly logsDir: string
   private readonly db: DatabaseSync
+  private readonly auditMode: AuditMode
+  private auditVerified = true
 
   constructor(root = '.', home?: string) {
     this.root = gitRoot(root)
@@ -42,9 +45,67 @@ export class Tracker {
     this.db = new DatabaseSync(this.dbPath)
     this.db.exec('PRAGMA foreign_keys = ON')
     this.initialize()
+    this.auditMode = auditPolicy(this.home, this.project().id).mode
+    this.initializeAuditSeal()
   }
 
   close(): void { this.db.close() }
+
+  private auditKeyPath(): string { return join(this.home, 'credentials', 'audit-integrity.key') }
+  private auditSealPath(): string { return join(this.dataDir, 'audit-integrity.json') }
+
+  private auditPayload(): string {
+    const tables = ['project', 'issue', 'pull_request', 'run', 'wiki_entry', 'issue_test', 'evaluation_gate']
+    return JSON.stringify(Object.fromEntries(tables.map(table => [table, this.db.prepare(`SELECT * FROM ${table} ORDER BY rowid`).all()])))
+  }
+
+  private auditDigest(): string {
+    return createHmac('sha256', readFileSync(this.auditKeyPath())).update(this.auditPayload()).digest('hex')
+  }
+
+  private writeAuditSeal(): void {
+    const path = this.auditSealPath()
+    const temporary = `${path}.tmp`
+    writeFileSync(temporary, `${JSON.stringify({ version: 1, algorithm: 'hmac-sha256', digest: this.auditDigest() }, null, 2)}\n`, { mode: 0o600 })
+    chmodSync(temporary, 0o600)
+    renameSync(temporary, path)
+    this.auditVerified = true
+  }
+
+  private verifyAuditSeal(): boolean {
+    try {
+      const stored = JSON.parse(readFileSync(this.auditSealPath(), 'utf8')) as { digest?: string }
+      const expected = Buffer.from(this.auditDigest(), 'hex')
+      const actual = Buffer.from(String(stored.digest ?? ''), 'hex')
+      return expected.length === actual.length && timingSafeEqual(expected, actual)
+    } catch { return false }
+  }
+
+  private initializeAuditSeal(): void {
+    if (this.auditMode !== 'signed') return
+    const keyPath = this.auditKeyPath()
+    if (!existsSync(keyPath)) {
+      mkdirSync(join(this.home, 'credentials'), { recursive: true })
+      writeFileSync(keyPath, randomBytes(32), { mode: 0o600 })
+      chmodSync(keyPath, 0o600)
+    }
+    if (!existsSync(this.auditSealPath())) this.writeAuditSeal()
+    else this.auditVerified = this.verifyAuditSeal()
+  }
+
+  private assertAuditWritable(): void {
+    if (this.auditMode === 'signed' && (!this.auditVerified || !this.verifyAuditSeal())) {
+      this.auditVerified = false
+      throw new Error('signed audit trail verification failed; refusing to modify Issue, PR, Run, Wiki, or test records')
+    }
+  }
+
+  private auditMutation<T>(work: () => T): T {
+    this.assertAuditWritable()
+    const result = work()
+    if (this.auditMode === 'signed') this.writeAuditSeal()
+    return result
+  }
 
   private initialize(): void {
     this.db.exec(`
@@ -130,12 +191,17 @@ export class Tracker {
     // an external repair runtime is active. A nested SkillHone process (or any
     // other SQLite client) can read the trail, but cannot rewrite or close the
     // records that describe the repair it is currently authoring.
+    this.assertAuditWritable()
     this.db.exec('BEGIN IMMEDIATE')
     try {
       const result = work()
       const check = this.db.prepare('PRAGMA quick_check').get() as Record<string, unknown> | undefined
       if (!check || !Object.values(check).includes('ok')) throw new Error('SkillHone audit database integrity check failed')
       this.db.exec('COMMIT')
+      if (this.auditMode === 'signed' && !this.verifyAuditSeal()) {
+        this.auditVerified = false
+        throw new Error('signed audit trail changed while the repair runtime was active')
+      }
       return result
     } catch (error) {
       try { this.db.exec('ROLLBACK') } catch { /* preserve the original failure */ }
@@ -145,8 +211,11 @@ export class Tracker {
 
   auditStatus(): WorkRow {
     const check = this.db.prepare('PRAGMA quick_check').get() as Record<string, unknown> | undefined
+    const sqliteVerified = Boolean(check && Object.values(check).includes('ok'))
+    if (this.auditMode === 'signed') this.auditVerified = this.auditVerified && this.verifyAuditSeal()
     return {
-      integrity: check && Object.values(check).includes('ok') ? 'verified' : 'failed',
+      integrity: sqliteVerified && this.auditVerified ? 'verified' : 'failed',
+      mode: this.auditMode,
       authority: 'skillhone-host',
       runner_writes: 'blocked-during-run',
     }
@@ -181,9 +250,9 @@ export class Tracker {
     const existing = this.db.prepare("SELECT * FROM issue WHERE fingerprint=? AND status='open'").get(fingerprint)
     if (existing) return { issue: row(existing), created: false }
     const timestamp = now()
-    const result = this.db.prepare(
+    const result = this.auditMutation(() => this.db.prepare(
       'INSERT INTO issue(title,body,fingerprint,status,created_at,updated_at) VALUES (?,?,?,?,?,?)',
-    ).run(safeTitle, safeBody, fingerprint, 'open', timestamp, timestamp)
+    ).run(safeTitle, safeBody, fingerprint, 'open', timestamp, timestamp))
     return { issue: this.issue(Number(result.lastInsertRowid)), created: true }
   }
 
@@ -201,11 +270,12 @@ export class Tracker {
 
   closeIssue(number: number): WorkRow {
     this.issue(number)
-    this.db.prepare("UPDATE issue SET status='closed',updated_at=? WHERE number=?").run(now(), number)
+    this.auditMutation(() => this.db.prepare("UPDATE issue SET status='closed',updated_at=? WHERE number=?").run(now(), number))
     return this.issue(number)
   }
 
   createPr(input: { title: string; head: string; base?: string; issueNumber?: number; body?: string }): WorkRow {
+    this.assertAuditWritable()
     const issue = input.issueNumber === undefined ? undefined : this.issue(input.issueNumber)
     this.git(['rev-parse', '--verify', input.head])
     const base = input.base ?? this.project().default_branch
@@ -221,9 +291,9 @@ export class Tracker {
       tests: this.listIssueTests(Number(issue.number)),
     }) : '')
     const timestamp = now()
-    const result = this.db.prepare(
+    const result = this.auditMutation(() => this.db.prepare(
       "INSERT INTO pull_request(issue_number,title,body,head,base,base_commit,status,created_at,updated_at) VALUES (?,?,?,?,?,?,'open',?,?)",
-    ).run(input.issueNumber ?? null, redact(input.title).slice(0, 240), redact(body).slice(0, 12000), input.head, base, baseCommit, timestamp, timestamp)
+    ).run(input.issueNumber ?? null, redact(input.title).slice(0, 240), redact(body).slice(0, 12000), input.head, base, baseCommit, timestamp, timestamp))
     return this.pr(Number(result.lastInsertRowid))
   }
 
@@ -243,6 +313,7 @@ export class Tracker {
   }
 
   mergePr(number: number, confirm: boolean): WorkRow {
+    this.assertAuditWritable()
     if (!confirm) throw new Error('merge requires --confirm')
     const item = this.pr(number)
     if (item.status !== 'open') throw new Error(`PR #${number} is ${String(item.status)}`)
@@ -250,8 +321,10 @@ export class Tracker {
     this.git(['checkout', String(item.base)])
     this.git(['merge', '--no-ff', String(item.head), '-m', `Merge SkillHone PR #${number}: ${String(item.title)}`])
     const timestamp = now()
-    this.db.prepare("UPDATE pull_request SET status='merged',updated_at=? WHERE number=?").run(timestamp, number)
-    if (item.issue_number !== null) this.db.prepare("UPDATE issue SET status='closed',updated_at=? WHERE number=?").run(timestamp, Number(item.issue_number))
+    this.auditMutation(() => {
+      this.db.prepare("UPDATE pull_request SET status='merged',updated_at=? WHERE number=?").run(timestamp, number)
+      if (item.issue_number !== null) this.db.prepare("UPDATE issue SET status='closed',updated_at=? WHERE number=?").run(timestamp, Number(item.issue_number))
+    })
     return this.pr(number)
   }
 
@@ -266,14 +339,14 @@ export class Tracker {
       sequence += 1
     }
     const logPath = join(this.logsDir, `${id}.log`)
-    this.db.prepare('INSERT INTO run(id,issue_number,runner,status,branch,log_path,started_at,finished_at,tool_call_count) VALUES (?,?,?,?,?,?,?,NULL,NULL)').run(
+    this.auditMutation(() => this.db.prepare('INSERT INTO run(id,issue_number,runner,status,branch,log_path,started_at,finished_at,tool_call_count) VALUES (?,?,?,?,?,?,?,NULL,NULL)').run(
       id, issueNumber, runnerName, 'running', branch, logPath, now(),
-    )
+    ))
     return this.runRecord(id)
   }
 
   finishRun(id: string, status: string, toolCalls?: number): WorkRow {
-    this.db.prepare('UPDATE run SET status=?,finished_at=?,tool_call_count=COALESCE(?,tool_call_count) WHERE id=?').run(status, now(), toolCalls ?? null, id)
+    this.auditMutation(() => this.db.prepare('UPDATE run SET status=?,finished_at=?,tool_call_count=COALESCE(?,tool_call_count) WHERE id=?').run(status, now(), toolCalls ?? null, id))
     return this.runRecord(id)
   }
 
@@ -317,9 +390,9 @@ export class Tracker {
     if (existing) return row(existing)
     if (!existsSync(absolute)) throw new Error(`Issue test does not exist: ${normalizedPath}`)
     const timestamp = now()
-    this.db.prepare("INSERT OR IGNORE INTO issue_test(issue_number,path,command,status,created_at,updated_at) VALUES (?,?,?,'pending',?,?)").run(
+    this.auditMutation(() => this.db.prepare("INSERT OR IGNORE INTO issue_test(issue_number,path,command,status,created_at,updated_at) VALUES (?,?,?,'pending',?,?)").run(
       issueNumber, normalizedPath, safeCommand, timestamp, timestamp,
-    )
+    ))
     const value = this.db.prepare('SELECT * FROM issue_test WHERE issue_number=? AND path=? AND command=?').get(issueNumber, normalizedPath, safeCommand)
     return row(value)
   }
@@ -330,6 +403,7 @@ export class Tracker {
   }
 
   runIssueTests(issueNumber: number): { passed: boolean; tests: WorkRow[] } {
+    this.assertAuditWritable()
     const tests = this.listIssueTests(issueNumber)
     const results: WorkRow[] = []
     const openPr = this.db.prepare("SELECT head FROM pull_request WHERE issue_number=? AND status='open' ORDER BY number DESC LIMIT 1").get(issueNumber) as { head?: string } | undefined
@@ -362,7 +436,7 @@ export class Tracker {
           encoding: 'utf8', timeout: 5 * 60_000, maxBuffer: 4 * 1024 * 1024,
         })
         const status = result.status === 0 ? 'passing' : 'failing'
-        this.db.prepare('UPDATE issue_test SET status=?,updated_at=? WHERE id=?').run(status, now(), Number(test.id))
+        this.auditMutation(() => this.db.prepare('UPDATE issue_test SET status=?,updated_at=? WHERE id=?').run(status, now(), Number(test.id)))
         results.push({ ...this.db.prepare('SELECT * FROM issue_test WHERE id=?').get(Number(test.id)) as WorkRow, exit_code: result.status ?? 1, output: redact(`${result.stdout ?? ''}${result.stderr ?? ''}`).slice(-4000) })
       }
     } finally {
@@ -393,7 +467,7 @@ export class Tracker {
     const normalizedPath = path.replaceAll('\\', '/').replace(/^\.\//, '')
     const value = this.db.prepare('SELECT * FROM issue_test WHERE issue_number=? AND path=?').get(issueNumber, normalizedPath) as WorkRow | undefined
     if (!value) throw new Error(`Issue #${issueNumber} has no linked test at ${normalizedPath}`)
-    this.db.prepare('UPDATE issue_test SET status=?,updated_at=? WHERE id=?').run(passed ? 'passing' : 'failing', now(), Number(value.id))
+    this.auditMutation(() => this.db.prepare('UPDATE issue_test SET status=?,updated_at=? WHERE id=?').run(passed ? 'passing' : 'failing', now(), Number(value.id)))
     return row(this.db.prepare('SELECT * FROM issue_test WHERE id=?').get(Number(value.id)))
   }
 
@@ -412,7 +486,7 @@ export class Tracker {
     this.issue(input.issueNumber)
     if (!['probe', 'pr_val'].includes(input.split)) throw new Error('evaluation gate split must be probe or pr_val')
     const timestamp = now()
-    this.db.prepare(`
+    this.auditMutation(() => this.db.prepare(`
       INSERT INTO evaluation_gate(
         issue_number,eval_commit,split,status,baseline_score,baseline_passed,baseline_total,
         candidate_score,candidate_passed,candidate_total,created_at,updated_at
@@ -427,7 +501,7 @@ export class Tracker {
       input.baselineScore, input.baselinePassed, input.baselineTotal,
       input.candidateScore ?? null, input.candidatePassed ?? null, input.candidateTotal ?? null,
       timestamp, timestamp,
-    )
+    ))
     return row(this.db.prepare('SELECT * FROM evaluation_gate WHERE issue_number=? AND eval_commit=? AND split=?').get(
       input.issueNumber, input.evalCommit, input.split,
     ))
@@ -446,9 +520,9 @@ export class Tracker {
     if (input.prNumber !== undefined) this.pr(input.prNumber)
     const timestamp = now()
     try {
-      this.db.prepare('INSERT INTO wiki_entry(slug,title,body,issue_number,pr_number,created_at,updated_at) VALUES (?,?,?,?,?,?,?)').run(
+      this.auditMutation(() => this.db.prepare('INSERT INTO wiki_entry(slug,title,body,issue_number,pr_number,created_at,updated_at) VALUES (?,?,?,?,?,?,?)').run(
         key, title, redact(input.body ?? '').slice(0, 24000), input.issueNumber ?? null, input.prNumber ?? null, timestamp, timestamp,
-      )
+      ))
     } catch (error) {
       if (String(error).includes('UNIQUE')) throw new Error(`wiki entry ${JSON.stringify(key)} already exists`)
       throw error
@@ -465,7 +539,7 @@ export class Tracker {
     const prNumber = input.prNumber ?? (current.pr_number as number | null)
     if (issueNumber !== null) this.issue(issueNumber)
     if (prNumber !== null) this.pr(prNumber)
-    this.db.prepare('UPDATE wiki_entry SET title=?,body=?,issue_number=?,pr_number=?,updated_at=? WHERE slug=?').run(title, body, issueNumber, prNumber, now(), String(current.slug))
+    this.auditMutation(() => this.db.prepare('UPDATE wiki_entry SET title=?,body=?,issue_number=?,pr_number=?,updated_at=? WHERE slug=?').run(title, body, issueNumber, prNumber, now(), String(current.slug)))
     return this.wiki(String(current.slug))
   }
 

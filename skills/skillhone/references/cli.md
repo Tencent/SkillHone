@@ -233,6 +233,19 @@ skillhone config set --merge review
 skillhone config set --merge automatic
 ```
 
+Optional tamper-evident audit history is disabled by default. Enable it only
+when the user requests the stronger local verification boundary:
+
+```bash
+skillhone config set --audit signed
+skillhone --skill web-search config set --audit signed
+```
+
+Signed mode stores its key in the Host credential directory, never in a Skill
+repository or Harness environment. A signature mismatch blocks further audit
+writes. Return to the default with `config set --audit standard`; reenabling
+signed mode later establishes a new baseline from the current Host records.
+
 ## State
 
 Catalog metadata lives at `~/.skillhone/catalog.db`. Managed repositories live
