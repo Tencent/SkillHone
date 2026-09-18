@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use SkillHone, please cite the paper below."
+title: "SkillHone"
+type: software
+license: MIT
+version: "2.0.0-dev"
+url: "https://github.com/Tencent/SkillHone"
+repository-code: "https://github.com/Tencent/SkillHone"
+authors:
+  - family-names: Li
+    given-names: Zhiwei
+  - family-names: Hu
+    given-names: Yong
+preferred-citation:
+  type: article
+  title: "SkillHone: A Harness for Continual Agent Skill Evolution Through Persistent Decision History"
+  authors:
+    - family-names: Li
+      given-names: Zhiwei
+    - family-names: Hu
+      given-names: Yong
+  year: 2026
+  url: "https://arxiv.org/abs/2606.08671"

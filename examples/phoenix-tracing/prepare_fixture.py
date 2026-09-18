@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+"""Prepare the GitHub Phoenix tracing Skill before its broken links were fixed."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+
+UPSTREAM = "https://github.com/github/awesome-copilot.git"
+COMMIT = "11deaef5976fad9a1e325762cb55810b2d94baff"
+SKILL_PATH = Path("skills/phoenix-tracing")
+SKILL_TREE = "96519bebd52b18eb394cac908bded3c1cc38e3ba"
+LICENSE_BLOB = "89bc5e962c9944cdb050887062afdaaf89be504a"
+ORIGINAL_SKILL_SHA256 = "bb291aaa0c562ef6bd912bca8dc29dd18d9ef439ba3f9c4ec56e380314acb7c2"
+APACHE_LICENSE_SHA256 = "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+APACHE_LICENSE_SOURCE = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+
+
+def run(*args: str, cwd: Path | None = None, timeout: int = 120) -> None:
+    try:
+        subprocess.run(args, cwd=cwd, check=True, timeout=timeout)
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(
+            f"{args[0]} did not finish within {timeout} seconds"
+        ) from error
+
+
+def capture(*args: str, cwd: Path | None = None) -> str:
+    try:
+        return subprocess.run(
+            args,
+            cwd=cwd,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        ).stdout.strip()
+    except subprocess.TimeoutExpired as error:
+        raise RuntimeError(f"{args[0]} did not finish within 120 seconds") from error
+
+
+def materialize_tree(checkout: Path, destination: Path) -> None:
+    """Fetch a pinned tree and copy regular blobs without checking it out."""
+    run("git", "init", "-q", "--template=", str(checkout))
+    run("git", "remote", "add", "origin", UPSTREAM, cwd=checkout)
+    run(
+        "git", "fetch", "-q", "--depth", "1", "--no-tags",
+        "--filter=blob:none", "origin", COMMIT, cwd=checkout,
+    )
+
+    fetched_commit = capture("git", "rev-parse", "FETCH_HEAD", cwd=checkout)
+    if fetched_commit != COMMIT:
+        raise RuntimeError(f"unexpected upstream commit: {fetched_commit}")
+    fetched_tree = capture(
+        "git", "rev-parse", f"FETCH_HEAD:{SKILL_PATH.as_posix()}", cwd=checkout
+    )
+    if fetched_tree != SKILL_TREE:
+        raise RuntimeError(f"unexpected Skill tree: {fetched_tree}")
+    license_blob = capture("git", "rev-parse", "FETCH_HEAD:LICENSE", cwd=checkout)
+    if license_blob != LICENSE_BLOB:
+        raise RuntimeError(f"unexpected upstream license blob: {license_blob}")
+
+    listing = subprocess.run(
+        ["git", "ls-tree", "-r", "-z", "FETCH_HEAD", "--", SKILL_PATH.as_posix()],
+        cwd=checkout,
+        check=True,
+        capture_output=True,
+    )
+    destination.mkdir()
+    prefix = f"{SKILL_PATH.as_posix()}/"
+    found = False
+    for record in listing.stdout.split(b"\0"):
+        if not record:
+            continue
+        metadata, raw_name = record.split(b"\t", 1)
+        mode, object_type, object_id = metadata.decode("ascii").split(" ", 2)
+        name = raw_name.decode("utf-8", errors="surrogateescape")
+        if object_type != "blob" or mode not in {"100644", "100755"}:
+            raise RuntimeError(f"unsupported upstream Git entry: {mode} {name}")
+        if not name.startswith(prefix):
+            raise RuntimeError(f"unexpected upstream Git path: {name}")
+        relative = Path(name.removeprefix(prefix))
+        if not relative.parts or relative.is_absolute() or ".." in relative.parts:
+            raise RuntimeError(f"unsafe upstream Git path: {name}")
+        target = destination / relative
+        if not target.resolve().is_relative_to(destination.resolve()):
+            raise RuntimeError(f"upstream Git path escapes destination: {name}")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        content = subprocess.run(
+            ["git", "cat-file", "blob", object_id],
+            cwd=checkout,
+            check=True,
+            capture_output=True,
+        ).stdout
+        target.write_bytes(content)
+        target.chmod(0o755 if mode == "100755" else 0o644)
+        found = True
+
+    if not found:
+        raise RuntimeError("verified Skill tree contains no files")
+    license_text = subprocess.run(
+        ["git", "cat-file", "blob", LICENSE_BLOB],
+        cwd=checkout,
+        check=True,
+        capture_output=True,
+    ).stdout
+    (destination / "LICENSE.upstream").write_bytes(license_text)
+    skill_text = (destination / "SKILL.md").read_text(encoding="utf-8")
+    if "\nlicense: Apache-2.0\n" not in skill_text:
+        raise RuntimeError("expected the pinned Skill to declare Apache-2.0")
+    apache_license = Path(__file__).with_name("LICENSE.apache-2.0").read_bytes()
+    if hashlib.sha256(apache_license).hexdigest() != APACHE_LICENSE_SHA256:
+        raise RuntimeError("bundled Apache-2.0 license text failed verification")
+    (destination / "LICENSE.apache-2.0").write_bytes(apache_license)
+    # Tests and provenance generated by SkillHone remain covered by SkillHone's
+    # own repository license, which is preserved separately from upstream.
+    shutil.copyfile(
+        Path(__file__).resolve().parents[2] / "LICENSE",
+        destination / "LICENSE.skillhone",
+    )
+
+
+def write_contract_test(destination: Path) -> None:
+    tests = destination / ".test"
+    tests.mkdir()
+    (tests / "test_reference_links.py").write_text(
+        '''"""All local Markdown links in SKILL.md must resolve inside the Skill."""
+import hashlib
+from pathlib import Path
+from urllib.parse import unquote, urlsplit
+import re
+
+ROOT = Path(__file__).resolve().parents[1]
+LINK = re.compile(r"\\[[^]\\n]+\\]\\(([^)\\n]+)\\)")
+ORIGINAL_SKILL_SHA256 = "__ORIGINAL_SKILL_SHA256__"
+CHANGE_NOTICE = re.compile(r"(?im)^>\\s*\\*\\*Modification notice:\\*\\*\\s*\\S")
+
+
+def main():
+    text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if digest != ORIGINAL_SKILL_SHA256:
+        assert CHANGE_NOTICE.search(text), (
+            "modified SKILL.md must include a visible "
+            "'> **Modification notice:** ...' statement"
+        )
+    missing = []
+    for raw_target in LINK.findall(text):
+        target = raw_target.strip().split(maxsplit=1)[0].strip("<>")
+        parsed = urlsplit(target)
+        if parsed.scheme or parsed.netloc or not parsed.path:
+            continue
+        relative = Path(unquote(parsed.path))
+        if relative.is_absolute() or ".." in relative.parts:
+            missing.append(f"unsafe local reference: {target}")
+            continue
+        resolved = (ROOT / relative).resolve()
+        if not resolved.is_relative_to(ROOT.resolve()) or not resolved.is_file():
+            missing.append(target)
+    assert not missing, "missing local references: " + ", ".join(missing)
+
+
+if __name__ == "__main__":
+    main()
+'''.replace("__ORIGINAL_SKILL_SHA256__", ORIGINAL_SKILL_SHA256),
+        encoding="utf-8",
+    )
+
+
+def write_provenance(destination: Path) -> None:
+    (destination / "PROVENANCE.md").write_text(
+        f"""# Fixture provenance
+
+- Upstream: {UPSTREAM}
+- Commit: `{COMMIT}`
+- Skill tree: `{SKILL_TREE}`
+- Skill metadata license declaration: Apache-2.0
+- Apache-2.0 text: `LICENSE.apache-2.0`, copied from {APACHE_LICENSE_SOURCE}
+- Apache-2.0 text SHA-256: `{APACHE_LICENSE_SHA256}`
+- Upstream repository root license: MIT; retained verbatim in `LICENSE.upstream`
+- SkillHone fixture additions: MIT; retained in `LICENSE.skillhone`
+- Public report: https://github.com/github/awesome-copilot/issues/2567
+- Upstream fix: https://github.com/github/awesome-copilot/pull/2568
+
+`prepare_fixture.py` verifies the commit, Skill tree, and license object IDs. It
+accepts only regular Git blobs and materializes them without checking out or
+executing upstream code.
+
+The baseline copies upstream Skill files unchanged. SkillHone adds the license
+copies, this provenance document, and `.test/test_reference_links.py`. If a
+repair changes `SKILL.md`, the regression test requires a visible modification
+notice.
+""",
+        encoding="utf-8",
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("destination", type=Path)
+    args = parser.parse_args()
+    destination = args.destination.resolve()
+    if destination.exists():
+        print(f"ERROR: destination already exists: {destination}", file=sys.stderr)
+        return 2
+
+    with tempfile.TemporaryDirectory(prefix="skillhone-phoenix-tracing-") as tmp:
+        checkout = Path(tmp) / "source"
+        materialized = Path(tmp) / "verified-skill"
+        materialize_tree(checkout, materialized)
+        shutil.copytree(materialized, destination)
+
+    write_contract_test(destination)
+    write_provenance(destination)
+    run("git", "init", "-q", "-b", "main", cwd=destination)
+    run("git", "config", "user.name", "SkillHone", cwd=destination)
+    run("git", "config", "user.email", "skillhone@example.invalid", cwd=destination)
+    run("git", "add", ".", cwd=destination)
+    run("git", "commit", "-q", "-m", "fixture: reproduce phoenix-tracing broken references", cwd=destination)
+    print(f"Created fixture: {destination}")
+    print("Expected baseline: python3 .test/test_reference_links.py -> failure")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

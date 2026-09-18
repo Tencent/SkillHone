@@ -1,339 +1,133 @@
-<h1 align="center">
-  <img src="docs/assets/skillhone-logo-64.png" alt="SkillHone Logo" width="36" style="vertical-align: middle;">
-  &nbsp;SkillHone-Skills
-</h1>
+<div align="center">
 
-<h3 align="center">
-  Continual Agent Skill Evolution<br>
-  Through Persistent Decision History
-</h3>
+# SkillHone
 
-<p align="center">
-  <a href="https://arxiv.org/abs/2606.08671"><img src="https://img.shields.io/badge/arXiv-2606.08671-b31b1b?style=flat-square&logo=arxiv&logoColor=white" alt="arXiv"></a>
-  <img src="https://img.shields.io/badge/Runtime-Claude%20Code%20%7C%20Codex%20%7C%20OpenClaw%20%7C%20Hermes-21b998?style=flat-square" alt="Runtimes">
-</p>
+### Turn the Skill failures your Agents encounter into lasting improvements.
 
-<p align="center">
-  <strong>English</strong> &bull;
-  <a href="./docs/README.zh.md">简体中文</a>
-</p>
+Skills break in real work: a referenced script is missing, an API changes, or an
+instruction stops producing the right result. That evidence usually disappears
+inside a chat. SkillHone captures the failure while the Agent is working, repairs
+the complete Skill repository, runs the regression test, and leaves a local PR
+for review.
 
-<p align="center">
-  <a href="https://arxiv.org/abs/2606.08671">Paper</a> &bull;
-  <a href="#news">News</a> &bull;
-  <a href="#why-skillhone">Why SkillHone</a> &bull;
-  <a href="#vs-other-skill-evolution-projects">Compare</a> &bull;
-  <a href="#install">Install</a> &bull;
-  <a href="#usage">Usage</a> &bull;
-  <a href="#whole-skill-optimisation">Whole-Skill Optimisation</a> &bull;
-  <a href="#observability">Observability</a> &bull;
-  <a href="#one-harness-across-major-runtimes">Runtimes</a> &bull;
-  <a href="#evalskill-split">Eval / Skill Split</a> &bull;
-  <a href="#skills-in-this-bundle">Bundle</a> &bull;
-  <a href="#configure">Configure</a>
-</p>
+*Continual Agent Skill Evolution Through Persistent Decision History*
 
+[![Paper](https://img.shields.io/badge/Paper-EMNLP%202026%20Industry-8b1a1a)](https://arxiv.org/abs/2606.08671)
+[![Gitleaks](https://github.com/Tencent/SkillHone/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/Tencent/SkillHone/actions/workflows/gitleaks.yml)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-<table align="center">
-  <tr>
-    <td align="center">
-      <b>Overview Video</b><br>
-      <video src="https://github.com/user-attachments/assets/1433fd49-fffd-4c55-8b90-ab6f14967446" controls width="390"></video>
-    </td>
-    <td align="center">
-      <b>Demo Video</b><br>
-      <video src="https://github.com/user-attachments/assets/ecab6d56-b2c1-4c2b-a584-e15e4fdf21d7" controls width="390"></video>
-    </td>
-  </tr>
-</table>
+[Install](docs/install/skillhone.md) ·
+[中文](docs/README.zh.md) ·
+[Example](examples/phoenix-tracing/) ·
+[Paper](https://arxiv.org/abs/2606.08671) ·
+[Security](SECURITY.md)
 
----
+</div>
 
 ## News
 
-- **[2026-08-08] Unified LiteLLM gateway.** SkillHone now accepts one
-  `provider/model` configuration across Anthropic, DeepSeek, OpenAI, Gemini,
-  and other LiteLLM providers—no external Anthropic-compatible endpoint or
-  transport switch required. Improver, executor, and synthesis can each use
-  independent credentials and endpoints.
-
----
+- **[2026-09-18] Runtime feedback is now an optimization input.** Coding Agents
+  can record reproducible Skill problems as they work. SkillHone queues the
+  repair, verifies it, and puts the resulting local PR in the approval inbox.
+- **[2026-08-21] Accepted at EMNLP 2026 Industry Track.** The paper,
+  *SkillHone: A Harness for Continual Agent Skill Evolution Through Persistent Decision
+  History*, has been accepted to the Industry Track.
 
 ## Why SkillHone
 
-> **The unit of change is a skill folder, not a prompt string. Every decision is a Git artifact.**
-
-SkillHone-Skills abstracts the SkillHone harness described in the paper
-into a bundle of standard agent skills — install it into any
-skill-supporting runtime to run the full optimisation loop. Two things
-set it apart from "let an LLM rewrite the `SKILL.md` string" projects:
-
-- **Whole-skill optimisation.** Each merged PR can rewrite
-  `SKILL.md`, add a new helper under `scripts/`, *and* drop a
-  reference page under `references/` — in one atomic change,
-  gated by the regression suite. Detail and a real PR-diff table
-  in the [Whole-Skill Optimisation](#whole-skill-optimisation)
-  section below.
-- **GitHub-style observability, local.** Every step lands as a real
-  issue, branch, commit, PR, or wiki entry on a Git server that can run
-  entirely on your machine (Forgejo by default). Open the UI a reviewer
-  already knows how to read, and the whole decision path is right there.
-
-Supporting properties that make the above viable in practice:
-
-- A hard **eval / skill split** enforced by code paths and filesystem
-  permissions rather than by prompt convention, which makes accidental
-  probe leakage into skill instructions much harder.
-- **No runtime adapter to maintain.** SkillHone is just a bundle of skills
-  following the [agentskills.io](https://agentskills.io) standard. Any
-  agent runtime that already supports skills supports SkillHone — for
-  example Claude Code, Codex, OpenClaw, Hermes, and any future runtime
-  that speaks the same protocol.
-
-## vs. Other Skill-Evolution Projects
-
-| Capability | [microsoft/SkillOpt](https://github.com/microsoft/SkillOpt) | [NousResearch/hermes-agent-self-evolution](https://github.com/NousResearch/hermes-agent-self-evolution) | **SkillHone** |
-|---|:---:|:---:|:---:|
-| Evolves agent skills automatically                                            | ✅ | ✅ | ✅ |
-| Open source, Python implementation                                            | ✅ | ✅ | ✅ |
-| Held-out validation before adopting a change                                  | ✅ | ✅ | ✅ |
-| **Patches the entire skill folder** — `SKILL.md` + `scripts/` + `references/` | ❌ | ❌ | ✅ |
-| **GitHub-style audit trail** — every step is a git issue / PR / commit / wiki | ❌ | ❌ | ✅ |
-
-## Install
-
-Copy the prompt below and send it to any skill-capable AI assistant —
-Claude Code, Codex, OpenClaw, Lighthouse, Kimi, and so on. The assistant
-fetches the install guide, detects your runtime, and puts SkillHone in the
-right place.
-
-> Please install SkillHone by following the instructions at
-> `https://raw.githubusercontent.com/Tencent/SkillHone/main/docs/install/skillhone.md`.
-> Detect my agent runtime, install the `skillhone` skill into its skills
-> directory, and then ask me for the model credentials needed to finish
-> configuration.
-
-To update later, re-send the same prompt and ask the assistant to refresh
-the install.
-
-> **Execution notice.** Some SkillHone-Skills workflows may use Claude Code bypass mode and local command execution, such as `exec` / subprocess calls, for validation or optimization. Run them only in an isolated workspace, sandbox, container, virtual machine, or disposable clean clone. Avoid directories containing secrets, credentials, production data, private files, or unrelated repositories.
-
-## Usage
-
-Once installed, invoke skills the way your runtime invokes any
-[agentskills.io](https://agentskills.io) skill — by slash command
-(`/skillhone`) or by intent. The top-level `skillhone` skill is the
-recommended entry; it dispatches to the right sub-skill (see
-[Skills in this Bundle](#skills-in-this-bundle) below).
-
-Paste any of these into your agent:
-
-> `/skillhone` optimize my `travel-qa` skill for 5 iterations.
-
-> Use skillhone to evaluate my `travel-qa` skill against the latest
-> probe split.
-
-> Use skillhone-prd to draft a PRD for a new "code-review" skill, then
-> use skillhone to seed and run a first optimisation pass.
-
-Each sub-skill's `SKILL.md` lists its full trigger surface.
-
-<p align="center">
-  <img src="docs/assets/skillhone-framework.jpg" alt="SkillHone framework — agent runtime dispatches role-bounded optimisation and evaluation subagents over a skill repo and a skill-eval repo, recording every step into a persistent decision history" width="100%">
-</p>
-
-## Whole-Skill Optimisation
-
-A skill is not a single file — it is a folder, containing `SKILL.md`,
-`scripts/`, `references/`, and `assets/`. Mainstream skill-evolution
-work today only edits one of those files, `SKILL.md`. **Editing one
-file out of many cannot fix failures that live in the helper scripts
-or the reference pages, and a non-trivial fraction of real failures
-live exactly there.** The optimisation is structurally incomplete —
-the surface available to it is one file, the surface where the
-failures actually live is the whole folder.
-
-A genuine skill is a **folder**. Alongside `SKILL.md` it carries
-`scripts/` (executable helpers the agent calls — Python, shell,
-anything), `references/` (schemas, lookup tables, format cheat-sheets
-the agent reads on demand), and `assets/` (fixtures and templates).
-SkillHone's optimisation loop reaches into all of these: diagnose a
-probe failure → decide whether the fix belongs in the prose, in a new
-helper script, in a reference page, or in any combination of those —
-and land it as a single atomic PR gated by a regression eval. **The
-whole-folder edit is the practical-value differentiator** — it is
-where SkillHone stops being theoretical and starts paying for itself.
-
-The table below lists the merged PRs from one `travel-qa` smoke run.
-Each row is one merge; each diff column shows what that single PR
-changed across the skill folder.
-
-| PR | Issue it closes | Skill-folder diff (one merge) |
-|---:|---|---|
-| **#2** | **#1** matrix-routing 404 — 36 failures across 5 executors | `SKILL.md` +116 / −19 · `scripts/tomtom_api.py` ➕ 243 (new file) · `scripts/tsp_solver.py` ➕ 184 (new file) |
-| **#4** | **#3** wrong statistic — used mean where the question asked for median | `SKILL.md` +62 / −5 |
-| **#6** | **#5** model invented tool syntax + `tomtom_api.py` HTTP 403 | `SKILL.md` +27 · `scripts/tomtom_api.py` +27 / −4 ⚠ |
-| **#7** | regression caught after #6 merged | `SKILL.md` 0 / −27 · `scripts/tomtom_api.py` +4 / −27 (revert) |
-
-A prompt-only optimiser could not land PR #2: even with the prose
-saying "use matrix routing", the agent still has no
-`tomtom_api.py` and reproduces the same 404 in a different shape.
-
-Full per-PR walkthrough lives in the
-[`travel-qa` example](examples/travel-qa/README.md).
-
-## Observability
-
-Other skill-evolution projects typically persist optimisation
-trajectories as flat text files on disk. SkillHone instead writes every
-decision into the standard artifacts of a self-hosted Git server —
-Issues, branches, pull requests, wiki pages — so the entire optimisation
-process is presented in a UI any reviewer already understands. The
-server (Forgejo by default) runs locally — a single `docker compose up -d`
-is sufficient.
-
-The screenshots below are taken from our own Forgejo on the
-`travel-qa` skill. Each diagnosis corresponds to an Issue, each
-revision to a Pull Request, and each iteration's observations to a
-Wiki page.
-
-<p align="center">
-  <img src="docs/assets/issue.png" alt="Forgejo Issues view — failures that drove each revision" width="100%">
-  <br>
-  <em>Issues — the failures that drove each revision.</em>
-</p>
-
-<p align="center">
-  <img src="docs/assets/pr.png" alt="Forgejo Pull requests view — merged skill changes" width="100%">
-  <br>
-  <em>Pull requests — the skill changes themselves.</em>
-</p>
-
-<p align="center">
-  <img src="docs/assets/wiki.png" alt="Forgejo Wiki view — per-iteration observations" width="100%">
-  <br>
-  <em>Wiki — per-iteration observations that later runs read.</em>
-</p>
-
-## One Harness Across Major Runtimes
-
-Drop the same bundle into any skill-supporting runtime —
-`~/.claude/skills/`, `~/.codex/skills/`, and so on — and SkillHone is live.
-For example: **Claude Code, Codex, OpenClaw, Hermes, …**
-
-## Eval / Skill Split
-
-The public skill repo and the private eval repo are isolated by code and
-filesystem permissions, not by prompts. By default the engine reads probes
-without copying them into skill instructions, and gold labels stay in the
-eval repo.
-
-## Skills in this Bundle
-
-| Skill | What it does |
+| Advantage | What you get |
 |---|---|
-| **`skillhone`** | Top-level entry — wraps the CLI (`status`, `eval`, `optim`, `new`, `seed`, `synth`, `serve`). |
-| **`skillhone-optimization`** | Optimisation orchestrator — diagnoses failures, plans changes, lands focused PRs on the skill repo. |
-| **`skillhone-evaluation`** | Runs and interprets evaluations — eval / probe / PR-validation, regression checks, trajectory diagnosis. |
-| **`skillhone-prd`** | Interactive PRD builder — pins down a new skill's goal, tools, and scoring rubric before optimisation begins. |
-| **`skillhone-synthesis`** *(experimental — data-synthesis skill)* | **Experimental** skill for synthesising closed-form, automatically verifiable benchmark Q/A by exploring tool environments. Used to bootstrap eval datasets; not part of the core measurement / optimisation loop and may change without notice. |
-| **`forgejo`** | REST-API toolkit for the default Git backend — issues, PRs, wikis, repos, branches. |
+| **Learns from real work** | Codex, Claude Code, Cursor, Pi, ZCode, or any CLI-capable Agent can report a reproducible failure at the moment it happens. You do not need to build a benchmark first. |
+| **Repairs the whole Skill** | SkillHone can update `SKILL.md`, scripts, references, assets, and repository tests in one change. It is not limited to rewriting a prompt. |
+| **Proves the fix** | Every repair is tied to an Issue, a regression test, a Git diff, a run record, and a local PR. Failed or untested changes do not enter the review queue. |
+| **Keeps the history useful** | Each Skill has its own repository and decision history, so the next Agent can see what failed, what changed, and why a candidate was accepted or rejected. |
+| **Leaves control with you** | Review mode waits for your merge decision. Automatic local merge is opt-in and still requires the linked tests to pass. SkillHone never pushes a Skill for you. |
 
-## Configure
+For larger optimization jobs, SkillHone also retains the paper's
+evaluation-driven workflow with a separate frozen Eval repository.
 
-All SkillHone really needs from you is model credentials. Give the
-assistant these values when you install — it will write the right
-`~/.skillhone/settings.json` for you.
+## Install with one prompt
 
-| Role | Required? | What it does |
-|---|---|---|
-| **Improver** | required | Drives the optimisation loop — proposes patches to the skill. |
-| **Executor** | optional, defaults to Improver | Runs the skill being tested on each probe. |
-| **Synthesis** | optional, defaults to Improver | Generates evaluation data when using the synthesis workflow. |
+Give this to your coding Agent:
 
-For each role, provide an `api_key` and a LiteLLM `provider/model` name. Add
-`api_base` only when the provider needs a non-default upstream endpoint. Each
-role can use independent credentials and endpoints; omitted optional roles
-reuse the Improver profile.
+> Install SkillHone from the `main` branch of
+> `https://github.com/Tencent/SkillHone`. Follow
+> `docs/install/skillhone.md`, make the SkillHone Skills and CLI available to
+> this Agent, and verify the installation without changing unrelated files.
+> Use the documented `--install-links=true` Git installation command.
 
-SkillHone starts a loopback-only LiteLLM bridge and supplies its Anthropic
-Messages endpoint to Claude Agent SDK automatically. You do not need to run a
-proxy or find an Anthropic-compatible endpoint. The same configuration covers
-DeepSeek, Anthropic, OpenAI, Gemini, and other LiteLLM providers:
+SkillHone installs directly from GitHub. There is no package registry account
+to configure and no hosted service to deploy.
 
-```jsonc
-{
-  "improver": {
-    "model": "deepseek/deepseek-chat",
-    "api_key": "sk-xxx"
-  }
-}
+## See it fix a public issue
+
+[![SkillHone workbench showing per-Skill Issues, repair runs, local PRs, and approval state](docs/assets/skillhone-workbench-e2e.png)](examples/phoenix-tracing/)
+
+**[Run the example](examples/phoenix-tracing/)** to see an Agent discover a
+Skill problem during normal work, record the evidence, and return a tested
+local PR in the SkillHone workbench.
+
+The reproducible example uses a real public defect in GitHub's Phoenix tracing
+Skill. Its index referenced four documents that did not exist, making the
+promised guidance unavailable to Agents. See the public
+[Issue #2567](https://github.com/github/awesome-copilot/issues/2567), the merged
+[fix #2568](https://github.com/github/awesome-copilot/pull/2568), and the pinned
+[`examples/phoenix-tracing`](examples/phoenix-tracing/) fixture.
+
+## Choose the right mode
+
+| Mode | Start with | Best for | Result |
+|---|---|---|---|
+| **Quick** | A reproducible failure found during Agent work | Missing files, broken scripts, stale instructions, API drift | Issue, regression test, focused repair, local PR |
+| **Full** | A frozen dataset and verifier in a separate Eval repository | Broader capability or quality improvements | Baseline, candidate iterations, validation gates, local PR |
+
+Quick mode removes the benchmark-building tax from everyday maintenance. Full
+mode remains available when a representative evaluation set is worth the
+investment. Both modes keep the change and its evidence reviewable.
+
+## What gets improved
+
+SkillHone improves the complete Skill repository:
+
+```text
+my-skill/
+├── SKILL.md
+├── scripts/
+├── references/
+├── assets/
+└── .test/
 ```
 
-Full schema, multi-identity Forgejo tokens, and the `~/.skillhone/`
-directory layout live in
-[`skills/skillhone/references/configuration.md`](./skills/skillhone/references/configuration.md).
+SkillHone can repair executable helpers, update instructions and references,
+add hidden regression tests, and package the result as one atomic PR. This is
+why it can fix problems that prompt-only optimizers cannot, such as a missing
+script or a broken parser.
 
-## About This Repo
+## See every decision
 
-SkillHone-Skills is a bundle of standard agent skills built around
-the ideas in the paper "**SkillHone: A Harness for Continual Agent
-Skill Evolution Through Persistent Decision History**"
-([arXiv:2606.08671](https://arxiv.org/abs/2606.08671), 2026).
+The local workbench shows every Skill's Issues, tests, repair runs, commits,
+changed files, PRs, approval state, and Wiki records. The Agent making the
+repair cannot rewrite that history while it works. You can inspect the failure,
+the test, the exact diff, and the result before deciding whether to merge.
 
-The SkillHone harness in the paper is built on an enterprise-internal
-agent framework with no current plans for open-source release. For
-the convenience of community adoption, we packaged its ideas as a
-bundle of standard agent skills following the
-[agentskills.io](https://agentskills.io) protocol, with
-`claude-agent-sdk` as the default agent backend and Forgejo as the
-default Git server. The bundle runs on any agent runtime supporting
-the protocol — Claude Code, Codex, OpenClaw, Hermes, …
+Each repair stays local until the saved merge policy allows it. Pushing remains
+a separate user action.
 
-The core methodology remains identical: each development step is
-recorded as a `(diagnosis, candidate revision, redacted evidence,
-outcome)` tuple — the **persistent decision history**;
-role-separated optimisation and evaluation subagents prevent
-practice feedback from leaking into skill instructions; and the
-eval / skill split is enforced by code paths and filesystem
-permissions. Due to differences between agent frameworks, there are
-some implementation-level distinctions (e.g., role separation is
-enforced through skill mount boundaries and code paths instead of
-framework-native subagent policies).
+## Research
 
-## Star History
+SkillHone preserves the diagnoses, revisions, evidence, outcomes, and rejected
+alternatives that are normally lost between optimization runs. The next Agent
+continues from that decision history instead of rediscovering the same failure.
 
-<a href="https://www.star-history.com/#Tencent/SkillHone&Date">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Tencent/SkillHone&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Tencent/SkillHone&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Tencent/SkillHone&type=Date" />
-  </picture>
-</a>
+In the paper's open-web evaluation, evolved Skills improved over the reported
+commercial-retrieval research Agent by **15.8 points on GAIA** and **3.2 points
+on WebWalkerQA-EN**. The current repository keeps that evaluation-driven method
+and adds runtime feedback as a faster source of repair evidence.
 
-## Citation
+> Zhiwei Li and Yong Hu. **SkillHone: A Harness for Continual Agent Skill
+> Evolution Through Persistent Decision History.** EMNLP 2026 Industry Track.
+> [arXiv:2606.08671](https://arxiv.org/abs/2606.08671)
 
-```bibtex
-@misc{li2026skillhoneharnesscontinualagent,
-  title         = {SkillHone: A Harness for Continual Agent Skill Evolution Through Persistent Decision History},
-  author        = {Zhiwei Li and Yong Hu},
-  year          = {2026},
-  eprint        = {2606.08671},
-  archivePrefix = {arXiv},
-  primaryClass  = {cs.LG},
-  url           = {https://arxiv.org/abs/2606.08671},
-}
-```
-
-## License
-
-SkillHone is released under the [MIT License](./LICENSE).
-
----
-
-<p align="center">
-  <sub>
-    Open-source agent skills built on the ideas of the SkillHone harness. <br>
-    Demo video rendered with <a href="https://github.com/heygen-com/hyperframes">HyperFrames</a>.
-  </sub>
-</p>
+SkillHone is released under the [MIT License](LICENSE). Third-party components
+and their licenses are listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

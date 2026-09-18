@@ -1,172 +1,160 @@
 # Install SkillHone
 
-> You are an AI assistant being asked to install **SkillHone** into the
-> user's local agent-runtime environment. Follow the steps below and ask
-> the user only what's needed; the rest is shell work you can run yourself.
+The global CLI needs Node.js 22.19+ and Git. The CLI, local backend, and Web
+workbench are compiled from the same TypeScript package. DeepSeek Harness is an
+optional optimizer, not a prerequisite for recording or reviewing work.
 
-Repository: https://github.com/Tencent/SkillHone
+## Install
 
----
+### Ask your coding Agent
 
-## Step 1 — Detect the active agent runtime
+Paste this into Codex, Claude Code, or another coding Agent:
 
-Probe the user's home directory for known skill folders and pick the runtime
-they're using. Check in this order:
+```text
+Install SkillHone from https://github.com/Tencent/SkillHone. Follow docs/install/skillhone.md, run the installer, make SkillHone available to this coding agent, and verify `skillhone --version`. Do not change unrelated files.
+```
 
-| Runtime         | Skill directory               |
-|-----------------|-------------------------------|
-| Claude Code     | `~/.claude/skills/`           |
-| Codex           | `~/.codex/skills/`            |
-| OpenClaw        | `~/.openclaw/skills/`         |
-| Hermes          | `~/.hermes/skills/`           |
-| Lighthouse      | `~/.lighthouse/skills/`       |
-| Kimi            | `~/.kimi/skills/`             |
-| Other           | any directory containing `skills/` that follows the [agentskills.io](https://agentskills.io) protocol |
+The Agent should inspect this guide and `package.json`, install the GitHub
+`main` branch or a release `.tgz`, and report the verification result. It does
+not need an API key to install, import Skills, record Issues, or open the
+workbench.
 
-- If **exactly one** of the above exists, use it.
-- If **multiple** exist, ask the user which one to install into.
-- If **none** exist, ask the user which runtime they're using and what its
-  skills directory is.
-
-Call this directory `$SKILLS_DIR` below.
-
-## Step 2 — Check for an existing install
-
-If `$SKILLS_DIR/skillhone/SKILL.md` already exists, **skip Step 3** — the
-skill is already installed. Tell the user and continue to Step 4 to make
-sure configuration is in place.
-
-## Step 3 — Copy the skill in
+### GitHub main branch
 
 ```bash
-set -e
-TMPDIR=$(mktemp -d)
-git clone --depth=1 https://github.com/Tencent/SkillHone.git "$TMPDIR/SkillHone"
-cp -r "$TMPDIR/SkillHone/skills/skillhone" "$SKILLS_DIR/"
-rm -rf "$TMPDIR"
-
-# Install the skill's Python runtime dependencies (GitPython, PyYAML,
-# requests, httpx, claude-agent-sdk, …). Without this step the scripts
-# under skills/skillhone/scripts/ will fail at first import.
-python3 -m pip install -r "$SKILLS_DIR/skillhone/assets/requirements.txt"
+npm install -g --install-links=true \
+  git+https://github.com/Tencent/SkillHone.git#main
 ```
 
-> Use `cp -r`, not `ln -sf`. Other skills may already live under
-> `$SKILLS_DIR/` and a symlinked directory would clash with them.
+This is the official installation path. SkillHone is not published to the NPM
+Registry; `npm` is only the local Node.js installer here. It clones the GitHub
+`main` branch, installs the build dependencies, runs the TypeScript `prepare`
+script, and links the resulting `skillhone` binary globally.
+`--install-links=true` is required for Git dependencies: it makes npm pack the
+prepared checkout into the global prefix instead of leaving a link to npm's
+temporary clone directory. The Git installation runs SkillHone's TypeScript
+`prepare` build outside any Agent sandbox, so review the repository and target
+branch before installing.
 
-> The `pip install` step is **required** — `new.py`, `seed.py`,
-> `optim.py`, and the eval scripts import `git`, `yaml`, etc. at
-> module load time. If the user prefers an isolated environment,
-> run the `pip install` line inside a `python3 -m venv` first;
-> the absolute path to that interpreter must then be used for all
-> SkillHone scripts.
-
-> **Also required on the default Anthropic path:** the `claude` CLI
-> (Node.js, installed via `npm install -g @anthropic-ai/claude-code`).
-> `claude-agent-sdk` is a thin Python wrapper that shells out to this
-> binary, so a missing `claude` CLI does **not** surface at
-> `pip install` time but crashes `optim.py` / `synth.py` / the eval
-> solver at first run with `FileNotFoundError: claude`. Verify with
-> `command -v claude`; if it's missing, install Node.js 18+ first,
-> then `npm install -g @anthropic-ai/claude-code`.
-
-After this step, `$SKILLS_DIR/skillhone/SKILL.md` must exist. Verify it.
-
-## Step 4 — Configure
-
-SkillHone reads `~/.skillhone/settings.json` for its model credentials.
-The only thing you actually need from the user is **one set of model
-credentials** for the optimisation loop.
-
-Ask for the provider API key and a LiteLLM `provider/model` identifier. Add an
-upstream `api_base` only when the provider does not use LiteLLM's default
-endpoint:
-
-| Required | Optional |
-|---|---|
-| **Improver** — `api_key`, `model` (`provider/model`). | **Executor** and **Synthesis** — independent `api_key`, `model`, and optional `api_base`. Omitted roles reuse the Improver profile. |
-
-SkillHone starts and stops a loopback-only LiteLLM proxy automatically. The
-user does not need to run LiteLLM or supply an Anthropic-compatible endpoint.
-Anthropic uses the same schema with an `anthropic/claude-...` model name:
-
-```jsonc
-{
-  "improver": {
-    "model": "deepseek/deepseek-chat",
-    "api_key": "<improver api key>",
-    "api_base": "<optional improver endpoint>"
-  },
-  "executor": {
-    "model": "openai/gpt-5-mini",
-    "api_key": "<executor api key>",
-    "api_base": "<optional executor endpoint>"
-  }
-}
-```
-
-Then write `~/.skillhone/settings.json` yourself, following the schema in
-[`skills/skillhone/references/configuration.md`](../../skills/skillhone/references/configuration.md).
-
-Minimum JSON (improver only):
-
-```jsonc
-{
-  "improver": {
-    "api_key":  "<improver api key>",
-    "api_base": "<optional upstream endpoint>",
-    "model":    "<provider/model>"
-  }
-}
-```
-
-If the user provides an Executor LLM, add a parallel `"executor"` section. If not,
-omit `"executor"` and SkillHone will reuse `improver`. Do not invent any other
-fields — leave Forgejo and other sections out unless the user asked for a
-self-hosted Git backend (see Step 5).
-
-## Step 5 — Optional self-hosted Forgejo
-
-This step is **only** needed if the user explicitly asked for a self-hosted
-Git server. Otherwise skip it.
-
-1. Start Forgejo: `docker compose up -d` using the file at
-   `skills/skillhone/assets/docker-compose.yml`.
-2. Have the user create an admin account at `http://localhost:3000`,
-   create a dedicated `skillhone` user, and mint a Personal Access Token
-   with `repo` + `issue` + `pull-request` read/write scopes.
-3. Add the resulting block to `~/.skillhone/settings.json`:
-   ```jsonc
-   "forgejo": {
-     "url":   "http://localhost:3000",
-     "owner": "skillhone",
-     "token": "<the PAT>"
-   }
-   ```
-
-## Step 6 — Verify and report
-
-Report back to the user:
-
-- The install path: `$SKILLS_DIR/skillhone/`
-- Whether `~/.skillhone/settings.json` was written, and which sections
-  it contains (`improver` only, or `improver` + `test`, with or without
-  `forgejo`).
-- A one-line next step they can try in their runtime, for example:
-  *"Open Claude Code and ask it to use the `skillhone` skill on an
-  existing skill repo."*
-
----
-
-## Updating
-
-To update an existing install, re-run **Step 3**. The `cp -r` overwrites
-`$SKILLS_DIR/skillhone/` in place.
-
-## Uninstalling
+Then verify:
 
 ```bash
-rm -rf $SKILLS_DIR/skillhone
-# settings.json is left in place; remove it manually if you want a clean uninstall:
-# rm ~/.skillhone/settings.json
+skillhone --help
+skillhone setup --agent codex
 ```
+
+Replace `codex` with `cursor`, `claude-code`, `pi`, or `zcode` for the Agent performing
+the installation. Use `--agent all` only when the user wants all five runtimes
+connected. The installer links the two bundled Agent Skills from the globally
+installed GitHub package and adds one small, marked routing rule to the selected
+Agent's global instruction file. The rule only tells the Agent when to invoke
+the auto-optimization Skill; the workflow remains in the Skill itself. Existing
+runtime Skills are never overwritten; SkillHone stops and asks the Agent to
+back them up first.
+
+### Prebuilt GitHub Release package
+
+Tagged releases attach `skillhone-cli-<version>.tgz`. Download the package and
+install it without running a source build:
+
+```bash
+npm install -g --ignore-scripts ./skillhone-cli-<version>.tgz
+```
+
+The archive contains precompiled JavaScript, type declarations, Web assets,
+the two runtime Agent Skills, and the optional Benchmark Skill. It is built by
+`.github/workflows/release-package.yml`.
+`--ignore-scripts` is intentional: the archive is already built, so installation
+does not need to authorize or invoke a TypeScript compiler.
+
+## Configure DeepSeek Harness
+
+Issue/PR/Wiki/Web usage needs no model credential. For optimization, explicitly
+install the Harness backend, then configure a supported provider plus default
+model in its own settings:
+
+```bash
+skillhone setup --with-harness
+skillhone harness configure --provider deepseek --model your-model-id
+# Enter the credential at the hidden terminal prompt.
+
+# Optional: keep benchmark scoring on a separate Harness model.
+skillhone harness configure --role evaluator --provider my-evaluator \
+  --model my-model --base-url https://example.com/v1 --protocol openai-completions
+```
+
+This edits Harness's own `settings.yaml` and credential store with mode `0600`.
+For DeepSeek, the headless native Web Search provider is wired to the same
+credential reference without writing the secret into profile configuration;
+it does not start a Web process. DeepSeek, Anthropic, OpenAI, and custom
+providers use Harness's model routes and schema. Repairs use the headless
+profile. SkillHone does not store or translate their credentials.
+
+When requested, SkillHone installs the tested `@deepseek-ai/dsh@0.1.5-rc.2` release into its private runtime and uses
+that launcher for repairs. It deliberately does not prefer an arbitrary global `dsh`, because
+Harness changes quickly and an older global executable can silently change the
+CLI or session-event contract. The package is resolved from the official
+`https://registry.npmjs.org` registry rather than inheriting a machine-wide
+mirror setting.
+
+## First use
+
+Import one directory or discover Skills already installed for Codex, Cursor, and Claude
+Code. Every imported Skill becomes an independent managed Git repository:
+
+```bash
+skillhone init --from codex --mode copy --merge review
+skillhone init --from cursor --mode copy --merge review
+skillhone init --from claude-code --mode takeover --merge automatic
+skillhone skills list
+skillhone web --open
+```
+
+The Agent must ask two questions before running `init`. First, `copy` leaves the
+original runtime Skill in place and later applies a merged result with
+`skillhone sync apply <name>`, while `takeover` backs up the original and links
+that runtime directly to `~/.skillhone/skills/<name>`, so a merged fix is usable
+immediately. Second, `review` leaves passing PRs in the approval inbox, while
+`automatic` allows a passing PR to merge locally without another prompt. Both paths create
+one independent Git repository per Skill; neither silently moves or overwrites
+the user's existing files, and neither ever pushes.
+
+Then target a repository by Skill name from any directory:
+
+```bash
+skillhone --skill web-search issue create \
+  --title "Missing command" --body "Safe reproduction"
+skillhone --skill web-search optimize 1
+```
+
+Set `SKILLHONE_HOME` to change the local state root. No external database, Git
+server, token, or webhook configuration is required.
+
+## Connect another Agent runtime
+
+SkillHone does not embed Codex, Cursor, or Claude Code. All runtimes discover
+the same two standard skills and invoke the same `skillhone` executable.
+
+The setup command resolves the bundled Skills from the installed CLI package,
+not from `$PWD`:
+
+```bash
+skillhone setup --agent codex
+skillhone setup --agent cursor
+skillhone setup --agent claude-code
+skillhone setup --agent pi
+skillhone setup --agent zcode
+```
+
+Restart the selected Agent, then ask it to use the affected skill normally. If that work
+exposes a reproducible skill defect, the auto-optimization skill tells Codex to
+create or reuse a sanitized local Issue. The saved trigger policy decides
+whether the next dispatcher, the reporting command, or a scheduled dispatcher
+consumes the repair queue. Repair does not wait for per-Issue approval; merge
+follows the independently saved policy.
+
+Cursor and Claude Code use the same CLI contract and per-Skill repository
+mapping. Harness keeps provider credentials in its own store, and optimization
+starts in a separate Harness process according to the saved trigger policy.
+Agent-specific configuration ends at skill discovery; the Issue database and
+repair behavior remain identical.

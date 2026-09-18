@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "24"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: npm install --global pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: python -m pip install -r skills/skillhone/assets/requirements.txt
+      - run: python skills/skillhone/scripts/quality/static_check.py skills/skillhone
+      - run: python skills/skillhone/scripts/quality/static_check.py skills/skillhone-auto-optimization
+      - run: node dist/cli.js --help
+      - run: npm pack --dry-run
+      - name: Install the Git source package without leaking build dependencies
+        run: |
+          set -euo pipefail
+          prefix="${RUNNER_TEMP}/skillhone-install"
+          home="${RUNNER_TEMP}/skillhone-home"
+          npm install -g --prefix "$prefix" --install-links=true \
+            "git+file://${GITHUB_WORKSPACE}#${GITHUB_SHA}"
+          test -x "$prefix/bin/skillhone"
+          test -f "$prefix/lib/node_modules/@skillhone/cli/dist/cli.js"
+          test ! -e "$prefix/bin/tsc"
+          test ! -d "$prefix/lib/node_modules/typescript"
+          HOME="$home" "$prefix/bin/skillhone" --version
+          HOME="$home" "$prefix/bin/skillhone" setup --agent codex
+          HOME="$home" "$prefix/bin/skillhone" doctor

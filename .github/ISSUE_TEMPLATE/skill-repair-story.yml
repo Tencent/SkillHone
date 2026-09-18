@@ -1,0 +1,38 @@
+name: Skill repair story
+description: Share a real skill defect that SkillHone found and repaired
+title: "[Repair story]: "
+labels: [showcase]
+body:
+  - type: input
+    id: skill
+    attributes:
+      label: Skill
+      placeholder: owner/repository@skill
+    validations:
+      required: true
+  - type: textarea
+    id: defect
+    attributes:
+      label: What the Agent discovered
+      description: Describe the reproducible defect without private data.
+    validations:
+      required: true
+  - type: textarea
+    id: repair
+    attributes:
+      label: What changed
+      description: Tests, files, and behavior changed by the repair.
+    validations:
+      required: true
+  - type: input
+    id: evidence
+    attributes:
+      label: Public evidence
+      placeholder: Link to a sanitized diff, test output, or reproduction
+  - type: checkboxes
+    id: consent
+    attributes:
+      label: Publication check
+      options:
+        - label: This report contains no credentials, private prompts, or confidential code.
+          required: true
