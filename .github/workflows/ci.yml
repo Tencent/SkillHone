@@ -23,6 +23,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
       - run: python -m pip install -r skills/skillhone/assets/requirements.txt
+      - run: python .test/test_static_check_name.py
       - run: python skills/skillhone/scripts/quality/static_check.py skills/skillhone
       - run: python skills/skillhone/scripts/quality/static_check.py skills/skillhone-auto-optimization
       - run: node dist/cli.js --help
