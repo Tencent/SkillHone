@@ -38,7 +38,7 @@ MAX_NAME_LEN = 64
 MAX_DESC_LEN = 1024
 MAX_COMPAT_LEN = 500
 RECOMMENDED_BODY_LINES = 500
-NAME_RE = re.compile(r"^[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
+NAME_RE = re.compile(r"^(?!.*--)[a-z0-9]([a-z0-9-]*[a-z0-9])?$")
 ALLOWED_FRONTMATTER = {
     "name", "description", "license",
     "allowed-tools", "metadata", "compatibility",
