@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 import { realpathSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { basename, resolve } from 'node:path'
 
 export type Json = null | boolean | number | string | Json[] | { [key: string]: Json }
 export type Row = Record<string, unknown>
@@ -38,7 +38,7 @@ export function gitRoot(path = '.'): string {
 }
 
 export function projectId(root: string): string {
-  return `${root.split('/').filter(Boolean).at(-1) ?? 'skill'}-${sha256(root).slice(0, 12)}`
+  return `${basename(root) || 'skill'}-${sha256(root).slice(0, 12)}`
 }
 
 export function slug(value: string, limit = 80): string {
