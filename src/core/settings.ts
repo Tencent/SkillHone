@@ -264,7 +264,47 @@ interface ProfileEntry {
   config?: { start: number; end: number; indent: number; inline: boolean }
 }
 
-function indentOf(line: string): number { return line.match(/^\s*/)?.[0].length ?? 0 }
+const lineTerminator = /[\r\n\u2028\u2029]/
+
+function isWhitespace(char: string | undefined): boolean {
+  return char !== undefined && /\s/.test(char)
+}
+
+function skipWhitespace(line: string, start: number): number {
+  let cursor = start
+  while (cursor < line.length && isWhitespace(line[cursor])) cursor += 1
+  return cursor
+}
+
+function indentOf(line: string): number {
+  let indent = 0
+  while (indent < line.length && isWhitespace(line[indent])) indent += 1
+  return indent
+}
+
+interface MappingField { indent: number; key: string; value: string }
+
+// Parse a YAML mapping line without overlapping repetitions. `.*` in the old
+// patterns could not cross a line terminator, so reject separators left in the
+// trimmed value instead of letting a regex engine backtrack over them.
+function mappingField(line: string): MappingField | undefined {
+  const indent = indentOf(line)
+  const colon = line.indexOf(':', indent)
+  if (colon <= indent) return undefined
+  const key = line.slice(indent, colon)
+  if (!/^[A-Za-z0-9_.-]+$/.test(key)) return undefined
+  const value = line.slice(skipWhitespace(line, colon + 1)).trimEnd()
+  if (lineTerminator.test(value)) return undefined
+  return { indent, key, value }
+}
+
+function listItem(line: string): { indent: number; content: string } | undefined {
+  const indent = indentOf(line)
+  if (line[indent] !== '-') return undefined
+  const content = line.slice(skipWhitespace(line, indent + 1))
+  if (lineTerminator.test(content)) return undefined
+  return { indent, content }
+}
 
 function unquote(value: string): string | undefined {
   const text = value.trim()
@@ -277,26 +317,26 @@ function unquote(value: string): string | undefined {
 }
 
 function mappingValue(lines: string[], key: string): string | undefined {
-  const match = lines.map(line => line.match(new RegExp(`^\\s*${key}:\\s*(.*?)\\s*$`))).find(Boolean)
-  return match ? unquote(match[1] ?? '') : undefined
+  for (const line of lines) {
+    const field = mappingField(line)
+    if (field?.key === key) return unquote(field.value)
+  }
+  return undefined
 }
 
 function profileEntries(lines: string[]): ProfileEntry[] {
-  const starts: number[] = []
+  const starts: Array<{ index: number; item: { indent: number; content: string } }> = []
   let base = -1
   for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index] ?? ''
-    const match = line.match(/^(\s*)-\s*(.*)$/)
-    if (!match) continue
-    const indent = match[1]?.length ?? 0
-    if (base < 0) base = indent
-    if (indent === base) starts.push(index)
+    const item = listItem(lines[index] ?? '')
+    if (!item) continue
+    if (base < 0) base = item.indent
+    if (item.indent === base) starts.push({ index, item })
   }
-  return starts.map((start, count) => {
-    const end = starts[count + 1] ?? lines.length
-    const head = lines[start] ?? ''
-    let contentIndent = (head.match(/^\s*/)?.[0].length ?? 0) + 2
-    if (!head.replace(/^\s*-\s*/, '').trim()) {
+  return starts.map(({ index: start, item }, count) => {
+    const end = starts[count + 1]?.index ?? lines.length
+    let contentIndent = item.indent + 2
+    if (!item.content.trim()) {
       for (let index = start + 1; index < end; index += 1) {
         const line = lines[index] ?? ''
         if (line.trim() && !/^\s*#/.test(line)) { contentIndent = indentOf(line); break }
@@ -308,17 +348,12 @@ function profileEntries(lines: string[]): ProfileEntry[] {
     for (let index = start; index < end; index += 1) {
       const line = lines[index] ?? ''
       if (index > start && indentOf(line) !== contentIndent) continue
-      const field = index === start ? line.replace(/^\s*-\s*/, '') : line
-      if (id === undefined) {
-        const idMatch = field.match(/^\s*id:\s*(.*?)\s*$/)
-        if (idMatch) id = unquote(idMatch[1] ?? '')
-      }
-      if (/^\s*insert:\s*(?:.*)$/.test(field)) insert = true
-      if (config !== undefined) continue
-      const configMatch = field.match(/^(\s*)config:\s*(.*?)\s*$/)
-      if (!configMatch) continue
-      const indent = index === start ? contentIndent : (configMatch[1]?.length ?? contentIndent)
-      const tail = configMatch[2] ?? ''
+      const field = mappingField(index === start ? item.content : line)
+      if (id === undefined && field?.key === 'id') id = unquote(field.value)
+      if (field?.key === 'insert') insert = true
+      if (config !== undefined || field?.key !== 'config') continue
+      const indent = index === start ? contentIndent : field.indent
+      const tail = field.value
       if (tail && !tail.startsWith('#')) {
         config = { start: index, end: index + 1, indent, inline: true }
       } else {
@@ -406,8 +441,8 @@ function legacySections(text: string): Array<{ id: string; body: string[] }> {
   const lines = text.split(/\r?\n/)
   const sections: Array<{ id: string; body: string[] }> = []
   for (let index = 0; index < lines.length; index += 1) {
-    const match = (lines[index] ?? '').match(/^([A-Za-z0-9_.-]+):\s*(.*?)\s*$/)
-    if (!match) continue
+    const field = mappingField(lines[index] ?? '')
+    if (!field || field.indent !== 0) continue
     let end = lines.length
     for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
       const line = lines[cursor] ?? ''
@@ -418,7 +453,7 @@ function legacySections(text: string): Array<{ id: string; body: string[] }> {
       if (!line.trim()) return ''
       return indentOf(line) >= 2 ? line.slice(2) : line
     })
-    if (body.some(line => line.trim())) sections.push({ id: legacyProfileIds[match[1] ?? ''] ?? match[1] ?? '', body })
+    if (body.some(line => line.trim())) sections.push({ id: legacyProfileIds[field.key] ?? field.key, body })
     index = end - 1
   }
   return sections
