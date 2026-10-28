@@ -107,6 +107,11 @@ in `~/.skillhone/harness/home/`. It does not upgrade, downgrade, or reconfigure
 your global `dsh`. A custom `--home` or `SKILLHONE_HOME` relocates this private
 runtime; the child process receives its own `DSH_HOME`.
 
+The managed root also receives narrow dependency overrides for the minimum
+patched zod v4, undici v8, fflate, and `@modelcontextprotocol/client` releases.
+They are limited to the affected ranges, leave zod v3 consumers and unrelated
+root configuration alone, and are the same policy used by the dependency audit.
+
 ## First use
 
 Import one directory or discover Skills already installed for Codex, Cursor, and Claude

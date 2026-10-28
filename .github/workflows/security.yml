@@ -26,15 +26,10 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm audit --audit-level=low --registry=https://registry.npmjs.org/
       - run: npm audit signatures --registry=https://registry.npmjs.org/
-      - name: Audit the pinned Harness dependency tree without running lifecycle scripts
+      - name: Audit the managed Harness dependency policy without running lifecycle scripts
         run: |
-          mkdir "${RUNNER_TEMP}/dsh-audit"
-          pnpm add --dir "${RUNNER_TEMP}/dsh-audit" --save-exact --ignore-scripts \
-            @deepseek-ai/dsh@0.2.1-rc.2
-          pnpm --dir "${RUNNER_TEMP}/dsh-audit" audit \
-            --audit-level=low --registry=https://registry.npmjs.org/
-          npm audit signatures --prefix "${RUNNER_TEMP}/dsh-audit" \
-            --registry=https://registry.npmjs.org/
+          pnpm build
+          node scripts/audit-harness-dependencies.mjs
       - run: python -m pip install pip-audit==2.10.1
       - run: python -m pip_audit -r skills/skillhone/assets/requirements.txt
 

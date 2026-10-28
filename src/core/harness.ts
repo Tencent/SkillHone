@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { join } from 'node:path'
 
 import { storedCredentialReferences } from './credentials.js'
+import { applyManagedHarnessDependencyPolicy, managedHarnessDependencyPolicy } from './harness-dependencies.js'
 import { credentialStorePresent, harnessHome, harnessRoot, loadSettings, modelConfigured } from './settings.js'
 import { redact, run } from './util.js'
 
@@ -72,7 +73,8 @@ export function install(home: string): HarnessStatus {
   if (!installer) throw new Error('DeepSeek Harness requires pnpm >=10.4 or npm; the detected pnpm cannot approve dependency builds')
   const root = harnessRoot(home)
   mkdirSync(root, { recursive: true })
-  const packageName = loadSettings(home).harness.package
+  applyManagedHarnessDependencyPolicy(root)
+  const packageName = managedHarnessDependencyPolicy.package
   const args = compatiblePnpm ? [
     'add', '--dir', root, '--save-prod',
     '--allow-build=@deepseek-ai/dsh-subprocess-local',

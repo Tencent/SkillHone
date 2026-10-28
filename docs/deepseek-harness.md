@@ -33,6 +33,12 @@ for its child processes. Installation and upgrades do not replace a globally
 installed `dsh` or change the configuration of an independently used Harness.
 A custom SkillHone home moves these private directories together.
 
+The private installation root also carries a narrow, source-controlled dependency
+override policy for the pinned DSH tree. It selects the minimum patched releases
+of zod v4, undici v8, fflate, and `@modelcontextprotocol/client` without
+replacing zod v3 consumers or any global Harness configuration. The installer
+and the dependency-audit workflow read the same policy.
+
 Run `skillhone harness configure` when provider or default-model settings need
 to change. It updates the active headless profile's Cordis patch and Harness
 credential store from the terminal; it does not start Web. Repair jobs use the
