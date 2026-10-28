@@ -18,7 +18,7 @@ import { Tracker, type WorkRow } from './core/tracker.js'
 import { redact, slug } from './core/util.js'
 import { serve } from './core/web.js'
 
-const version = '2.0.0-dev.0'
+const version = '2.0.0-rc.1'
 
 const help = `SkillHone — local Agent-friendly Issue, PR, Wiki, and Skill optimization workflow
 

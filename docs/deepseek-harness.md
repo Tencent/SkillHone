@@ -19,7 +19,7 @@ SkillHone then records a local PR and Wiki work record for review.
 Repair processes explicitly use Harness `workspace-write` permissions and
 native tools, regardless of broader interactive defaults.
 
-SkillHone installs the tested `@deepseek-ai/dsh@0.1.5-rc.2` release into its private runtime and uses
+SkillHone installs the tested `@deepseek-ai/dsh@0.2.1-rc.2` release into its private runtime and uses
 that launcher for every repair. It does not silently reuse an arbitrary global `dsh`, since
 the Harness CLI and event contracts are evolving quickly. Resolution uses the
 official `registry.npmjs.org` host rather than an ambient package mirror. The Status page
@@ -27,8 +27,11 @@ reports whether this managed runner is available and whether any recorded
 repair is currently running.
 
 Run `skillhone harness configure` when provider or default-model settings need
-to change. It updates Harness's own settings and credential files from the
-terminal; it does not start Web. Repair jobs use the headless profile.
+to change. It updates the active headless profile's Cordis patch and Harness
+credential store from the terminal; it does not start Web. Repair jobs use the
+headless profile. A legacy `settings.yaml` from an earlier Harness release is
+still recognized and is safely retired after its sections are merged into the
+profile.
 
 Every Skill remains a separate Git repository with separate Issue, PR, Run, and
 Wiki state. The Web workbench provides one index without changing ownership or

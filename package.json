@@ -1,7 +1,7 @@
 {
   "name": "@skillhone/cli",
   "private": true,
-  "version": "2.0.0-dev.0",
+  "version": "2.0.0-rc.1",
   "description": "Agent-friendly local Issue, PR, Wiki, and Skill optimization workflow",
   "type": "module",
   "packageManager": "pnpm@11.19.0",
@@ -21,9 +21,13 @@
     "docs/benchmark-optimization.md",
     "docs/benchmark-optimization.zh.md",
     "README.md",
+    "docs/README.zh.md",
+    "docs/assets",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md",
-    "SECURITY.md"
+    "SECURITY.md",
+    "CITATION.cff",
+    "docs/skillhone.bib"
   ],
   "scripts": {
     "build": "node scripts/build-ts.mjs",

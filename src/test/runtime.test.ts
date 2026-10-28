@@ -4,7 +4,7 @@ import { once } from 'node:events'
 import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs'
 import { get, request as httpRequest } from 'node:http'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { DatabaseSync } from 'node:sqlite'
@@ -18,7 +18,8 @@ import {
 import { main } from '../cli.js'
 import {
   auditPolicy, benchmarkHarnessHome, configureHarness, evaluatorHarnessHome, evaluatorPatchPath, harnessHome,
-  loadSettings, mergePolicy, policy, setAuditPolicy, setMergePolicy, setPolicy, testedHarnessPackage,
+  loadSettings, mergePolicy, modelConfigured, policy, profilePatchPath, setAuditPolicy, setMergePolicy, setPolicy,
+  testedHarnessPackage,
 } from '../core/settings.js'
 import { Tracker, type WorkRow } from '../core/tracker.js'
 import { run } from '../core/util.js'
@@ -325,10 +326,9 @@ test('Harness configuration is written to Harness-owned files without leaking in
   try {
     assert.equal(benchmarkHarnessHome(root), harnessHome(root))
     const result = configureHarness(root, { provider: 'deepseek', model: 'optimizer-model-a', secret: 'test-secret-credential' })
-    const settings = readFileSync(join(harnessHome(root), 'settings.yaml'), 'utf8')
     const credentials = readFileSync(join(harnessHome(root), '.credentials.yaml'), 'utf8')
-    const profilePatch = readFileSync(join(harnessHome(root), 'profiles', 'headless', 'cordis.patch.yml'), 'utf8')
-    assert.match(settings, /provider: "deepseek-official"/)
+    const profilePatch = readFileSync(profilePatchPath(root), 'utf8')
+    assert.match(profilePatch, /id: agent-default-model\n {2}config:\n {4}provider: "deepseek-official"\n {4}model: "optimizer-model-a"/)
     assert.match(profilePatch, /id: web-search-deepseek\n {2}config:\n {4}apiKeyEnv: SKILLHONE_DEEPSEEK_CREDENTIAL/)
     assert.doesNotMatch(profilePatch, /test-secret-credential/)
     assert.match(credentials, /test-secret-credential/)
@@ -337,20 +337,22 @@ test('Harness configuration is written to Harness-owned files without leaking in
     assert.doesNotMatch(JSON.stringify(result), /test-secret-credential/)
     configureHarness(root, { provider: 'deepseek', model: 'optimizer-model-b', secret: 'replacement-secret' })
     const updatedCredentials = readFileSync(join(harnessHome(root), '.credentials.yaml'), 'utf8')
-    const updatedProfilePatch = readFileSync(join(harnessHome(root), 'profiles', 'headless', 'cordis.patch.yml'), 'utf8')
+    const updatedProfilePatch = readFileSync(profilePatchPath(root), 'utf8')
     assert.match(updatedCredentials, /replacement-secret/)
     assert.doesNotMatch(updatedCredentials, /test-secret-credential/)
     assert.equal((updatedCredentials.match(/SKILLHONE_DEEPSEEK_CREDENTIAL:/g) ?? []).length, 1)
     assert.equal((updatedProfilePatch.match(/id: web-search-deepseek/g) ?? []).length, 1)
+    assert.equal((updatedProfilePatch.match(/id: agent-default-model/g) ?? []).length, 1)
     assert.doesNotMatch(updatedCredentials, /^SKILLHONE_DEEPSEEK_CREDENTIAL:/m)
     const evaluator = configureHarness(root, {
       role: 'evaluator', provider: 'evaluator-provider', model: 'evaluator-model', secret: 'evaluator-secret',
       baseUrl: 'https://example.invalid/compatible-mode/v1', protocol: 'openai-completions',
     })
-    const evaluatorSettings = readFileSync(join(harnessHome(root), 'settings.yaml'), 'utf8')
+    const evaluatorSettings = readFileSync(profilePatchPath(root), 'utf8')
     const evaluatorPatch = readFileSync(evaluatorPatchPath(root), 'utf8')
     const evaluatorCredentials = readFileSync(join(harnessHome(root), '.credentials.yaml'), 'utf8')
-    const evaluatorRoleSettings = readFileSync(join(evaluatorHarnessHome(root), 'settings.yaml'), 'utf8')
+    const evaluatorRoleProfile = join(evaluatorHarnessHome(root), 'profiles', 'headless', 'cordis.patch.yml')
+    const evaluatorRoleSettings = readFileSync(evaluatorRoleProfile, 'utf8')
     const evaluatorRoleCredentials = readFileSync(join(evaluatorHarnessHome(root), '.credentials.yaml'), 'utf8')
     const evaluatorRolePatch = readFileSync(join(evaluatorHarnessHome(root), 'skillhone', 'evaluator.patch.yml'), 'utf8')
     assert.match(evaluatorSettings, /evaluator-provider:/)
@@ -367,9 +369,9 @@ test('Harness configuration is written to Harness-owned files without leaking in
     assert.equal(benchmarkHarnessHome(root), evaluatorHarnessHome(root))
     await rm(evaluatorHarnessHome(root), { recursive: true, force: true })
     assert.equal(benchmarkHarnessHome(root), evaluatorHarnessHome(root))
-    assert.match(readFileSync(join(evaluatorHarnessHome(root), 'settings.yaml'), 'utf8'), /model: "evaluator-model"/)
+    assert.match(readFileSync(evaluatorRoleProfile, 'utf8'), /model: "evaluator-model"/)
     configureHarness(root, { provider: 'deepseek', model: 'optimizer-model-c', secret: 'latest-optimizer-secret' })
-    const resyncedRoleSettings = readFileSync(join(evaluatorHarnessHome(root), 'settings.yaml'), 'utf8')
+    const resyncedRoleSettings = readFileSync(evaluatorRoleProfile, 'utf8')
     const resyncedRoleCredentials = readFileSync(join(evaluatorHarnessHome(root), '.credentials.yaml'), 'utf8')
     assert.match(resyncedRoleSettings, /provider: "evaluator-provider"/)
     assert.match(resyncedRoleSettings, /model: "evaluator-model"/)
@@ -380,6 +382,85 @@ test('Harness configuration is written to Harness-owned files without leaking in
     assert.deepEqual(mergePolicy(root), { mode: 'review', scope: 'default' })
     assert.deepEqual(auditPolicy(root), { mode: 'standard', scope: 'default' })
     assert.equal(setPolicy(root, 'scheduled', 15).mode, 'scheduled')
+  } finally { await rm(root, { recursive: true, force: true }) }
+})
+
+test('Harness profile updates preserve unrelated entries and environment references', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'skillhone-ts-harness-profile-'))
+  try {
+    const profile = profilePatchPath(root)
+    mkdirSync(dirname(profile), { recursive: true })
+    writeFileSync(profile, [
+      '- id: mcp-server',
+      '  config:',
+      '    apiKeyEnv: EXTERNAL_MCP_KEY',
+      '    enabled: true',
+      '- id: llm-pi-ai',
+      '  config:',
+      '    providers:',
+      '      existing-provider:',
+      '        apiKeyEnv: EXISTING_PROVIDER_KEY',
+      '        api: openai-completions',
+      '        baseURL: "https://existing.invalid/v1"',
+      '        models:',
+      '          - id: "existing-model"',
+      '',
+    ].join('\n'))
+    configureHarness(root, { provider: 'deepseek', model: 'optimizer-model', secret: 'optimizer-secret' })
+    let text = readFileSync(profile, 'utf8')
+    assert.match(text, /id: mcp-server\n {2}config:\n {4}apiKeyEnv: EXTERNAL_MCP_KEY\n {4}enabled: true/)
+    assert.match(text, /existing-provider:\n {8}apiKeyEnv: EXISTING_PROVIDER_KEY/)
+    assert.doesNotMatch(text, /optimizer-secret/)
+    configureHarness(root, {
+      provider: 'added-provider', model: 'added-model', secret: 'added-secret',
+      baseUrl: 'https://added.invalid/v1', protocol: 'openai-completions',
+    })
+    text = readFileSync(profile, 'utf8')
+    assert.match(text, /existing-provider:\n {8}apiKeyEnv: EXISTING_PROVIDER_KEY/)
+    assert.match(text, /added-provider:\n {8}apiKeyEnv: SKILLHONE_ADDED_PROVIDER_CREDENTIAL/)
+    assert.match(text, /model: "added-model"/)
+    assert.doesNotMatch(text, /added-secret/)
+  } finally { await rm(root, { recursive: true, force: true }) }
+})
+
+test('Legacy Harness settings are recognized and safely migrated into the profile', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'skillhone-ts-harness-legacy-'))
+  try {
+    const dshHome = harnessHome(root)
+    mkdirSync(dshHome, { recursive: true })
+    writeFileSync(join(dshHome, 'settings.yaml'), [
+      'version: 1',
+      'agent-default-model:',
+      '  provider: legacy-provider',
+      '  model: legacy-model',
+      'llm-deepseek:',
+      '  apiKeyEnv: LEGACY_ENV_KEY',
+      '',
+    ].join('\n'))
+    assert.equal(modelConfigured(root), true)
+    configureHarness(root, { provider: 'deepseek', model: 'migrated-model', secret: 'migrated-secret' })
+    const profile = readFileSync(profilePatchPath(root), 'utf8')
+    assert.match(profile, /id: agent-default-model\n {2}config:\n {4}provider: "deepseek-official"\n {4}model: "migrated-model"/)
+    assert.match(profile, /id: llm-deepseek-api-key\n {2}config:\n {4}apiKeyEnv: SKILLHONE_DEEPSEEK_CREDENTIAL/)
+    assert.equal(existsSync(join(dshHome, 'settings.yaml')), false)
+    assert.match(readFileSync(join(dshHome, 'settings.yaml.imported'), 'utf8'), /legacy-model/)
+  } finally { await rm(root, { recursive: true, force: true }) }
+})
+
+test('Harness uses the installed DSH base entry id for DeepSeek credentials', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'skillhone-ts-harness-entry-'))
+  try {
+    const base = join(root, 'harness', 'node_modules', '@deepseek-ai', 'dsh-base', 'cordis.patch.yml')
+    mkdirSync(dirname(base), { recursive: true })
+    writeFileSync(base, [
+      '- id: llm-deepseek',
+      "  name: '@deepseek-ai/dsh-llm-deepseek-api-key'",
+      '',
+    ].join('\n'))
+    configureHarness(root, { provider: 'deepseek', model: 'installed-model', secret: 'installed-secret' })
+    const profile = readFileSync(profilePatchPath(root), 'utf8')
+    assert.match(profile, /id: llm-deepseek\n {2}config:\n {4}apiKeyEnv: SKILLHONE_DEEPSEEK_CREDENTIAL/)
+    assert.doesNotMatch(profile, /id: llm-deepseek-api-key/)
   } finally { await rm(root, { recursive: true, force: true }) }
 })
 

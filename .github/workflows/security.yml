@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir "${RUNNER_TEMP}/dsh-audit"
           pnpm add --dir "${RUNNER_TEMP}/dsh-audit" --save-exact --ignore-scripts \
-            @deepseek-ai/dsh@0.1.5-rc.2
+            @deepseek-ai/dsh@0.2.1-rc.2
           pnpm --dir "${RUNNER_TEMP}/dsh-audit" audit \
             --audit-level=low --registry=https://registry.npmjs.org/
           npm audit signatures --prefix "${RUNNER_TEMP}/dsh-audit" \

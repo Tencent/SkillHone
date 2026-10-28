@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560" role="img" aria-labelledby="title desc">
+  <title id="title">SkillHone — Accepted at EMNLP 2026 Industry Track</title>
+  <desc id="desc">Improve complete Agent Skills, preserve decision history, and review changes with evidence.</desc>
+  <rect width="1400" height="560" rx="18" fill="#24292f"/>
+  <g font-family="Arial,Helvetica,sans-serif">
+    <text x="64" y="153" font-size="101" font-weight="700" letter-spacing="-5" fill="#ffffff">SkillHone</text>
+    <text x="68" y="236" font-size="43" font-weight="700" letter-spacing="-1.2" fill="#ffffff">Skills improve.</text>
+    <text x="68" y="293" font-size="43" font-weight="700" letter-spacing="-1.2" fill="#93dda3">The knowledge stays.</text>
+    <path d="M934 76V337" stroke="#63866e" stroke-width="2"/>
+    <text x="978" y="111" font-size="25" fill="#bdddc5">Accepted at</text>
+    <text x="974" y="192" font-size="75" font-weight="700" letter-spacing="-3" fill="#ffffff">EMNLP</text>
+    <text x="974" y="277" font-size="88" font-weight="700" letter-spacing="-4" fill="#93dda3">2026</text>
+    <text x="978" y="327" font-size="29" fill="#ffffff">Industry Track</text>
+    <path d="M68 385H1332" stroke="#54645a"/>
+    <text x="68" y="447" font-size="27" font-weight="700" fill="#ffffff">Whole-Skill repair</text>
+    <text x="68" y="490" font-size="22" fill="#c4cec7">Instructions, tools, references, tests</text>
+    <text x="520" y="447" font-size="27" font-weight="700" fill="#ffffff">Persistent decisions</text>
+    <text x="520" y="490" font-size="22" fill="#c4cec7">Build on what prior Agents learned</text>
+    <text x="978" y="447" font-size="27" font-weight="700" fill="#ffffff">Evidence you can review</text>
+    <text x="978" y="490" font-size="22" fill="#c4cec7">Tests, diffs, runs and local PRs</text>
+  </g>
+</svg>

@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
+import { storedCredentialReferences } from './credentials.js'
 import { credentialStorePresent, harnessHome, harnessRoot, loadSettings, modelConfigured } from './settings.js'
 import { redact, run } from './util.js'
 
@@ -47,7 +48,16 @@ export function status(home: string): HarnessStatus {
 }
 
 export function environment(home: string): NodeJS.ProcessEnv {
-  return { ...process.env, npm_config_registry: registry, DSH_HOME: harnessHome(home) }
+  // DSH headless disables the interactive credential service: one-shot jobs
+  // receive credentials at launch. The protected store wins over ambient
+  // variables, matching DSH's own lookup precedence, and never mutates the
+  // parent process environment.
+  return {
+    ...process.env,
+    ...storedCredentialReferences(home),
+    npm_config_registry: registry,
+    DSH_HOME: harnessHome(home),
+  }
 }
 
 export function install(home: string): HarnessStatus {

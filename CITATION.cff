@@ -3,7 +3,7 @@ message: "If you use SkillHone, please cite the paper below."
 title: "SkillHone"
 type: software
 license: MIT
-version: "2.0.0-dev"
+version: "2.0.0-rc.1"
 url: "https://github.com/Tencent/SkillHone"
 repository-code: "https://github.com/Tencent/SkillHone"
 authors:
@@ -12,7 +12,7 @@ authors:
   - family-names: Hu
     given-names: Yong
 preferred-citation:
-  type: article
+  type: conference-paper
   title: "SkillHone: A Harness for Continual Agent Skill Evolution Through Persistent Decision History"
   authors:
     - family-names: Li
@@ -20,4 +20,10 @@ preferred-citation:
     - family-names: Hu
       given-names: Yong
   year: 2026
-  url: "https://arxiv.org/abs/2606.08671"
+  collection-title: "Proceedings of the 2026 Conference on Empirical Methods in Natural Language Processing: Industry Track"
+  collection-type: proceedings
+  start: 1819
+  end: 1829
+  publisher:
+    name: "Association for Computational Linguistics"
+  url: "https://aclanthology.org/2026.emnlp-industry.105/"
