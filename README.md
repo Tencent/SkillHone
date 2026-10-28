@@ -42,9 +42,9 @@ for installation, provider configuration, and verification.
 
 ## SkillHone in 35 seconds
 
-![SkillHone film: EMNLP 2026 acceptance, paper results, complete Skill repair and the current workbench](docs/assets/skillhone-tour.gif)
+[![Watch SkillHone: EMNLP 2026 acceptance, paper results and the current workbench](docs/assets/skillhone-promo-poster.png)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
 
-35-second silent loop. Shows the current workbench and actual local repair records; benchmark gains are from the paper.
+[Watch / download the 35-second MP4](https://github.com/zwliJay/SkillHone/releases/download/v2.0.0-rc.1/skillhone-launch.mp4), in 1080p with original music. The film and GIF are distributed separately as release assets.
 
 <details>
 <summary>Inspect the current workbench</summary>

@@ -10,6 +10,8 @@ node_modules/
 # Video projects and renders are stored outside the repository and published as
 # external GitHub attachments after review.
 videos/
-docs/assets/skillhone-*-demo.gif
+docs/assets/*.gif
 *.mp4
 *.mov
+*.webm
+*.mkv

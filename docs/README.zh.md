@@ -38,9 +38,9 @@ Skill 仓库**，再交付经过测试的本地 PR。Issue、回归测试、Diff
 
 ## 35 秒了解 SkillHone
 
-![SkillHone 宣传片：EMNLP 2026 接收、论文实验提升、完整 Skill 修复和新版工作台](assets/skillhone-tour.gif)
+[![观看 SkillHone 宣传片：EMNLP 2026 接收、论文实验提升和新版工作台](assets/skillhone-promo-poster.png)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
 
-35 秒循环预览，无声。展示新版工作台与真实本地修复记录；实验提升来自论文。
+[观看／下载 35 秒 MP4](https://github.com/zwliJay/SkillHone/releases/download/v2.0.0-rc.1/skillhone-launch.mp4)，1080p，配原创音乐。宣传片与 GIF 单独放在 Release 附件中。
 
 <details>
 <summary>展开查看当前工作台完整截图</summary>
