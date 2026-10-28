@@ -26,7 +26,7 @@ npm install -g --install-links=true \
   git+https://github.com/Tencent/SkillHone.git#main
 ```
 
-This is the official installation path. SkillHone is not published to the NPM
+This is the Git installation path for this repository. SkillHone is not published to the NPM
 Registry; `npm` is only the local Node.js installer here. It clones the GitHub
 `main` branch, installs the build dependencies, runs the TypeScript `prepare`
 script, and links the resulting `skillhone` binary globally.
@@ -83,19 +83,34 @@ skillhone harness configure --role evaluator --provider my-evaluator \
   --model my-model --base-url https://example.com/v1 --protocol openai-completions
 ```
 
-This edits Harness's own `settings.yaml` and credential store with mode `0600`.
+This edits the active headless profile patch
+(`profiles/headless/cordis.patch.yml`) and credential store with mode `0600`.
 For DeepSeek, the headless native Web Search provider is wired to the same
 credential reference without writing the secret into profile configuration;
 it does not start a Web process. DeepSeek, Anthropic, OpenAI, and custom
 providers use Harness's model routes and schema. Repairs use the headless
-profile. SkillHone does not store or translate their credentials.
+profile. SkillHone does not store or translate their credentials. A legacy
+`settings.yaml` from an earlier Harness release remains supported: its sections
+are merged into the profile and the retired file is preserved with an
+`.imported` suffix.
 
-When requested, SkillHone installs the tested `@deepseek-ai/dsh@0.1.5-rc.2` release into its private runtime and uses
+When requested, SkillHone installs the tested `@deepseek-ai/dsh@0.2.1-rc.2` release into its private runtime and uses
 that launcher for repairs. It deliberately does not prefer an arbitrary global `dsh`, because
 Harness changes quickly and an older global executable can silently change the
 CLI or session-event contract. The package is resolved from the official
 `https://registry.npmjs.org` registry rather than inheriting a machine-wide
 mirror setting.
+
+This pin controls only SkillHone's private copy: packages are installed under
+`~/.skillhone/harness/node_modules/`, with separate configuration and credentials
+in `~/.skillhone/harness/home/`. It does not upgrade, downgrade, or reconfigure
+your global `dsh`. A custom `--home` or `SKILLHONE_HOME` relocates this private
+runtime; the child process receives its own `DSH_HOME`.
+
+The managed root also receives narrow dependency overrides for the minimum
+patched zod v4, undici v8, fflate, and `@modelcontextprotocol/client` releases.
+They are limited to the affected ranges, leave zod v3 consumers and unrelated
+root configuration alone, and are the same policy used by the dependency audit.
 
 ## First use
 

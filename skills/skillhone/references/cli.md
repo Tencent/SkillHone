@@ -185,14 +185,16 @@ credentials. Tool-call protocol failures require checking the Harness provider
 configuration; SkillHone never switches models or protocols automatically.
 
 Plain `setup` initializes CLI state only. `setup --with-harness` installs the
-tested `@deepseek-ai/dsh@0.1.5-rc.2` release into SkillHone's private runtime.
+tested `@deepseek-ai/dsh@0.2.1-rc.2` release into SkillHone's private runtime.
 `setup --agent <runtime>` links the bundled `skillhone` and
 `skillhone-auto-optimization` Skills into that Agent's standard discovery
 directory. It resolves them from the installed CLI package rather than the
 current working directory and refuses to overwrite an existing Skill.
 `configure` takes the provider and model as flags, reads the API key with
-hidden terminal input, and updates Harness's own `settings.yaml` and
-`.credentials.yaml`. For DeepSeek, it also points the headless profile's native
+hidden terminal input, and updates Harness's active headless profile patch
+(`profiles/headless/cordis.patch.yml`) and `.credentials.yaml`. A legacy
+`settings.yaml` is recognized and safely retired after its sections are merged
+into the profile. For DeepSeek, it also points the headless profile's native
 Web Search provider at the same Harness credential reference; the key itself is
 never copied into the profile patch. `--role optimizer` is the default and
 selects the model used to edit a Skill. `--role evaluator` registers a second

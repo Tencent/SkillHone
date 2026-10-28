@@ -19,12 +19,19 @@ jobs:
       - run: npm install --global pnpm@11.19.0
       - run: pnpm install --frozen-lockfile
       - run: pnpm test
-      - run: npm pack --pack-destination release
+      - name: Verify release version
+        if: github.event_name == 'release'
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: node -e 'const v = JSON.parse(require("fs").readFileSync("package.json")).version; if (process.env.RELEASE_TAG !== `v${v}`) throw Error("Release tag and package version differ")'
+      - run: mkdir -p release && npm pack --pack-destination release
       - run: |
           mkdir install-root
           npm install -g --ignore-scripts --prefix "$PWD/install-root" ./release/skillhone-cli-*.tgz
           "$PWD/install-root/bin/skillhone" --version
-          "$PWD/install-root/bin/skillhone" doctor
+          test "$("$PWD/install-root/bin/skillhone" --version)" = "skillhone $(node -p 'JSON.parse(require("fs").readFileSync("package.json")).version')"
+          "$PWD/install-root/bin/skillhone" --home "$PWD/smoke-home" doctor
+      - run: cd release && sha256sum *.tgz > PACKAGE-SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: skillhone-installation-bundle
@@ -44,4 +51,11 @@ jobs:
       - name: Attach the verified package to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${GITHUB_REF_NAME}" release/* --clobber
+          GH_REPO: ${{ github.repository }}
+        run: |
+          package="$(basename release/*.tgz)"
+          if [ "$(gh release view "${GITHUB_REF_NAME}" --json assets --jq ".assets | any(.name == \"$package\")")" = true ]; then
+            echo "A verified package is already attached; preserving the existing package and checksums."
+          else
+            gh release upload "${GITHUB_REF_NAME}" release/*
+          fi

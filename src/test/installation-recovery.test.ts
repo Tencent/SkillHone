@@ -6,6 +6,7 @@ import test from 'node:test'
 import { main } from '../cli.js'
 import { Catalog } from '../core/catalog.js'
 import { install } from '../core/harness.js'
+import { managedHarnessDependencyPolicy, managedHarnessPnpmWorkspace } from '../core/harness-dependencies.js'
 import { harnessHome, setPolicy } from '../core/settings.js'
 import { Tracker } from '../core/tracker.js'
 import { run } from '../core/util.js'
@@ -47,6 +48,102 @@ test('install falls back from pnpm 9 to npm and retains pnpm 11 build approval f
     executable(join(bin, 'pnpm'), `[ "$1" = "--version" ] && { echo 11.19.0; exit 0; }; printf '%s\\n' "$@" > '${value.root}/installer-args'`)
     install(value.home)
     assert.match(readFileSync(join(value.root, 'installer-args'), 'utf8'), /--allow-build=node-pty/)
+  } finally { process.env.PATH = path; rmSync(value.root, { recursive: true, force: true }) }
+})
+
+test('both managed Harness installer routes apply the shared patched dependency policy', () => {
+  const value = fixture(), path = process.env.PATH
+  const root = join(value.home, 'harness')
+  try {
+    assert.deepEqual(managedHarnessDependencyPolicy, {
+      package: '@deepseek-ai/dsh@0.2.1-rc.2',
+      overrides: {
+        'zod@>=4.0.0 <4.6.6': '4.6.6',
+        'undici@>=8.0.0 <8.12.2': '8.12.2',
+        'fflate@>=0.8.0 <0.8.3': '0.8.3',
+        '@modelcontextprotocol/client@>=2.0.0 <2.3.0': '2.3.0',
+      },
+    })
+    const bin = join(value.root, 'bin'); mkdirSync(bin)
+    writeFileSync(join(root, 'package.json'), JSON.stringify({
+      name: 'existing-managed-harness',
+      private: true,
+      untouched: { keep: true },
+      overrides: { 'unrelated@^1.0.0': '1.2.3' },
+    }, null, 2))
+    writeFileSync(join(root, 'pnpm-workspace.yaml'), [
+      'packages:',
+      '  - apps/*',
+      '',
+      'overrides:',
+      '  "unrelated@^1.0.0": "1.2.3"',
+      '',
+      'catalog:',
+      '  react: 19.0.0',
+      '',
+    ].join('\n'))
+    executable(join(bin, 'pnpm'), [
+      '[ "$1" = "--version" ] && { echo 11.19.0; exit 0; }',
+      `printf '%s\\n' "$@" > '${value.root}/installer-args'`,
+      `cp '${root}/package.json' '${value.root}/pnpm-saw-package.json'`,
+      `cp '${root}/pnpm-workspace.yaml' '${value.root}/pnpm-saw-workspace.yaml'`,
+    ].join('\n'))
+    executable(join(bin, 'npm'), [
+      `printf '%s\\n' "$@" > '${value.root}/installer-args'`,
+      `cp '${root}/package.json' '${value.root}/npm-saw-package.json'`,
+      `cp '${root}/pnpm-workspace.yaml' '${value.root}/npm-saw-workspace.yaml'`,
+    ].join('\n'))
+    executable(value.binary, 'echo test-version')
+    process.env.PATH = `${bin}:${path}`
+
+    const pnpmInstall = install(value.home)
+    assert.equal(pnpmInstall.installed, true)
+    assert.equal(pnpmInstall.package, managedHarnessDependencyPolicy.package)
+    const pnpmArgs = readFileSync(join(value.root, 'installer-args'), 'utf8')
+    assert.match(pnpmArgs, /^add\n--dir\n/)
+    assert.match(pnpmArgs, /@deepseek-ai\/dsh@0\.2\.1-rc\.2$/m)
+    for (const seen of ['pnpm-saw-package.json', 'pnpm-saw-workspace.yaml']) {
+      const text = readFileSync(join(value.root, seen), 'utf8')
+      for (const [key, version] of Object.entries(managedHarnessDependencyPolicy.overrides)) {
+        assert.ok(text.includes(`${JSON.stringify(key)}: ${JSON.stringify(version)}`), `${seen} must contain ${key}`)
+      }
+      assert.match(text, /unrelated@\^1\.0\.0/)
+    }
+    const workspace = readFileSync(join(root, 'pnpm-workspace.yaml'), 'utf8')
+    assert.match(workspace, /packages:\n {2}- apps\/\*/)
+    assert.match(workspace, /catalog:\n {2}react: 19\.0\.0/)
+    assert.match(workspace, /"unrelated@\^1\.0\.0": "1\.2\.3"/)
+    const inlineWorkspace = managedHarnessPnpmWorkspace('overrides: {"unrelated@^1.0.0": "1.2.3"}\n')
+    assert.match(inlineWorkspace, /"unrelated@\^1\.0\.0": "1\.2\.3"/)
+    for (const [key, version] of Object.entries(managedHarnessDependencyPolicy.overrides)) {
+      assert.ok(inlineWorkspace.includes(`${JSON.stringify(key)}: ${JSON.stringify(version)}`), `inline overrides must contain ${key}`)
+    }
+    const emptyWorkspace = managedHarnessPnpmWorkspace('packages:\n  - apps/*\n\noverrides: {}\n')
+    assert.match(emptyWorkspace, /packages:\n {2}- apps\/\*/)
+    for (const [key, version] of Object.entries(managedHarnessDependencyPolicy.overrides)) {
+      assert.ok(emptyWorkspace.includes(`${JSON.stringify(key)}: ${JSON.stringify(version)}`), `empty inline overrides must contain ${key}`)
+    }
+
+    executable(join(bin, 'pnpm'), '[ "$1" = "--version" ] && { echo 9.15.9; exit 0; }; exit 91')
+    const npmInstall = install(value.home)
+    assert.equal(npmInstall.installed, true)
+    assert.equal(npmInstall.package, managedHarnessDependencyPolicy.package)
+    const npmArgs = readFileSync(join(value.root, 'installer-args'), 'utf8')
+    assert.match(npmArgs, /^install\n--prefix\n/)
+    assert.match(npmArgs, /@deepseek-ai\/dsh@0\.2\.1-rc\.2$/m)
+    for (const seen of ['npm-saw-package.json', 'npm-saw-workspace.yaml']) {
+      const text = readFileSync(join(value.root, seen), 'utf8')
+      for (const [key, version] of Object.entries(managedHarnessDependencyPolicy.overrides)) {
+        assert.ok(text.includes(`${JSON.stringify(key)}: ${JSON.stringify(version)}`), `${seen} must contain ${key}`)
+      }
+    }
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')) as Record<string, any>
+    assert.equal(pkg.name, 'existing-managed-harness')
+    assert.deepEqual(pkg.untouched, { keep: true })
+    assert.equal(pkg.overrides['unrelated@^1.0.0'], '1.2.3')
+    for (const [key, version] of Object.entries(managedHarnessDependencyPolicy.overrides)) {
+      assert.equal(pkg.overrides[key], version)
+    }
   } finally { process.env.PATH = path; rmSync(value.root, { recursive: true, force: true }) }
 })
 

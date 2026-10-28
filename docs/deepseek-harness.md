@@ -19,16 +19,32 @@ SkillHone then records a local PR and Wiki work record for review.
 Repair processes explicitly use Harness `workspace-write` permissions and
 native tools, regardless of broader interactive defaults.
 
-SkillHone installs the tested `@deepseek-ai/dsh@0.1.5-rc.2` release into its private runtime and uses
+SkillHone installs the tested `@deepseek-ai/dsh@0.2.1-rc.2` release into its private runtime and uses
 that launcher for every repair. It does not silently reuse an arbitrary global `dsh`, since
 the Harness CLI and event contracts are evolving quickly. Resolution uses the
 official `registry.npmjs.org` host rather than an ambient package mirror. The Status page
 reports whether this managed runner is available and whether any recorded
 repair is currently running.
 
+The version pin applies only to SkillHone's managed runtime. By default its
+packages live in `~/.skillhone/harness/node_modules/`, and its configuration and
+credentials live in `~/.skillhone/harness/home/`. SkillHone sets `DSH_HOME` only
+for its child processes. Installation and upgrades do not replace a globally
+installed `dsh` or change the configuration of an independently used Harness.
+A custom SkillHone home moves these private directories together.
+
+The private installation root also carries a narrow, source-controlled dependency
+override policy for the pinned DSH tree. It selects the minimum patched releases
+of zod v4, undici v8, fflate, and `@modelcontextprotocol/client` without
+replacing zod v3 consumers or any global Harness configuration. The installer
+and the dependency-audit workflow read the same policy.
+
 Run `skillhone harness configure` when provider or default-model settings need
-to change. It updates Harness's own settings and credential files from the
-terminal; it does not start Web. Repair jobs use the headless profile.
+to change. It updates the active headless profile's Cordis patch and Harness
+credential store from the terminal; it does not start Web. Repair jobs use the
+headless profile. A legacy `settings.yaml` from an earlier Harness release is
+still recognized and is safely retired after its sections are merged into the
+profile.
 
 Every Skill remains a separate Git repository with separate Issue, PR, Run, and
 Wiki state. The Web workbench provides one index without changing ownership or

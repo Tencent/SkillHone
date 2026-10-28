@@ -2,6 +2,8 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, re
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
+import { managedHarnessDependencyPolicy } from './harness-dependencies.js'
+
 export type TriggerMode = 'queued' | 'immediate' | 'scheduled'
 export type MergeMode = 'review' | 'automatic'
 export type AuditMode = 'standard' | 'signed'
@@ -16,7 +18,7 @@ interface Settings {
   harness: { package: string }
 }
 
-export const testedHarnessPackage = '@deepseek-ai/dsh@0.1.5-rc.2'
+export const testedHarnessPackage = managedHarnessDependencyPolicy.package
 
 const defaults: Settings = {
   automation: { default: { mode: 'queued', interval_minutes: 60 }, skills: {} },
@@ -166,23 +168,6 @@ export function clearPolicy(home: string, project: string): Policy {
 }
 
 function quote(value: string): string { return JSON.stringify(value) }
-function section(text: string, key: string, block: string[]): string {
-  const lines = text.split(/\r?\n/)
-  const start = lines.indexOf(`${key}:`)
-  if (start >= 0) {
-    let end = lines.length
-    for (let index = start + 1; index < lines.length; index += 1) {
-      const line = lines[index] ?? ''
-      if (line && !/^[ \t#]/.test(line)) { end = index; break }
-    }
-    lines.splice(start, end - start, ...block)
-  } else {
-    if (lines.at(-1) !== '') lines.push('')
-    lines.push(...block)
-  }
-  return `${lines.join('\n').trim()}\n`
-}
-
 function piProvider(text: string, provider: string, body: string[]): string {
   const lines = text.split(/\r?\n/)
   let top = lines.indexOf('llm-pi-ai:')
@@ -269,25 +254,270 @@ function webSearchCredentialPatch(text: string, ref: string): string {
   return `${lines.join('\n').trim()}\n`
 }
 
+export function profilePatchPath(home: string): string {
+  return join(harnessHome(home), 'profiles', 'headless', 'cordis.patch.yml')
+}
+
+interface ProfileEntry {
+  start: number
+  end: number
+  id?: string
+  insert: boolean
+  config?: { start: number; end: number; indent: number; inline: boolean }
+}
+
+const lineTerminator = /[\r\n\u2028\u2029]/
+
+function isWhitespace(char: string | undefined): boolean {
+  return char !== undefined && /\s/.test(char)
+}
+
+function skipWhitespace(line: string, start: number): number {
+  let cursor = start
+  while (cursor < line.length && isWhitespace(line[cursor])) cursor += 1
+  return cursor
+}
+
+function indentOf(line: string): number {
+  let indent = 0
+  while (indent < line.length && isWhitespace(line[indent])) indent += 1
+  return indent
+}
+
+interface MappingField { indent: number; key: string; value: string }
+
+// Parse a YAML mapping line without overlapping repetitions. `.*` in the old
+// patterns could not cross a line terminator, so reject separators left in the
+// trimmed value instead of letting a regex engine backtrack over them.
+function mappingField(line: string): MappingField | undefined {
+  const indent = indentOf(line)
+  const colon = line.indexOf(':', indent)
+  if (colon <= indent) return undefined
+  const key = line.slice(indent, colon)
+  if (!/^[A-Za-z0-9_.-]+$/.test(key)) return undefined
+  const value = line.slice(skipWhitespace(line, colon + 1)).trimEnd()
+  if (lineTerminator.test(value)) return undefined
+  return { indent, key, value }
+}
+
+function listItem(line: string): { indent: number; content: string } | undefined {
+  const indent = indentOf(line)
+  if (line[indent] !== '-') return undefined
+  const content = line.slice(skipWhitespace(line, indent + 1))
+  if (lineTerminator.test(content)) return undefined
+  return { indent, content }
+}
+
+function unquote(value: string): string | undefined {
+  const text = value.trim()
+  if (!text || text.startsWith('#')) return undefined
+  if (text.startsWith('"') && text.endsWith('"')) {
+    try { return String(JSON.parse(text)) } catch { return text.slice(1, -1) }
+  }
+  if (text.startsWith("'") && text.endsWith("'")) return text.slice(1, -1).replaceAll("''", "'")
+  return text
+}
+
+function mappingValue(lines: string[], key: string): string | undefined {
+  for (const line of lines) {
+    const field = mappingField(line)
+    if (field?.key === key) return unquote(field.value)
+  }
+  return undefined
+}
+
+function profileEntries(lines: string[]): ProfileEntry[] {
+  const starts: Array<{ index: number; item: { indent: number; content: string } }> = []
+  let base = -1
+  for (let index = 0; index < lines.length; index += 1) {
+    const item = listItem(lines[index] ?? '')
+    if (!item) continue
+    if (base < 0) base = item.indent
+    if (item.indent === base) starts.push({ index, item })
+  }
+  return starts.map(({ index: start, item }, count) => {
+    const end = starts[count + 1]?.index ?? lines.length
+    let contentIndent = item.indent + 2
+    if (!item.content.trim()) {
+      for (let index = start + 1; index < end; index += 1) {
+        const line = lines[index] ?? ''
+        if (line.trim() && !/^\s*#/.test(line)) { contentIndent = indentOf(line); break }
+      }
+    }
+    let id: string | undefined
+    let insert = false
+    let config: ProfileEntry['config']
+    for (let index = start; index < end; index += 1) {
+      const line = lines[index] ?? ''
+      if (index > start && indentOf(line) !== contentIndent) continue
+      const field = mappingField(index === start ? item.content : line)
+      if (id === undefined && field?.key === 'id') id = unquote(field.value)
+      if (field?.key === 'insert') insert = true
+      if (config !== undefined || field?.key !== 'config') continue
+      const indent = index === start ? contentIndent : field.indent
+      const tail = field.value
+      if (tail && !tail.startsWith('#')) {
+        config = { start: index, end: index + 1, indent, inline: true }
+      } else {
+        let configEnd = end
+        for (let cursor = index + 1; cursor < end; cursor += 1) {
+          const next = lines[cursor] ?? ''
+          if (next.trim() && !/^\s*#/.test(next) && indentOf(next) <= indent) { configEnd = cursor; break }
+        }
+        config = { start: index, end: configEnd, indent, inline: false }
+      }
+    }
+    return { start, end, id, insert, config }
+  })
+}
+
+function entryBody(lines: string[], entry: ProfileEntry): string[] {
+  if (!entry.config || entry.config.inline) return []
+  const base = entry.config.indent + 2
+  return lines.slice(entry.config.start + 1, entry.config.end).map(line => {
+    if (!line.trim() || indentOf(line) < base) return line
+    return line.slice(base)
+  })
+}
+
+function profileSelection(text: string): { provider: string; model: string } | undefined {
+  const lines = text.split(/\r?\n/)
+  for (const entry of profileEntries(lines).reverse()) {
+    if (entry.id !== 'agent-default-model' || entry.insert) continue
+    const body = entryBody(lines, entry)
+    const provider = mappingValue(body, 'provider')
+    const model = mappingValue(body, 'model')
+    if (provider && model) return { provider, model }
+  }
+  return undefined
+}
+
+function appendProfileEntry(text: string, id: string, body: string[]): string {
+  const lines = text.split(/\r?\n/).filter(line => !/^\s*\[\]\s*(?:#.*)?$/.test(line))
+  while (lines.length && !lines[0]?.trim()) lines.shift()
+  while (lines.length && !lines.at(-1)?.trim()) lines.pop()
+  if (lines.length) lines.push('')
+  lines.push(`- id: ${id}`, '  config:', ...body.map(line => (line ? `    ${line}` : '')))
+  return `${lines.join('\n')}\n`
+}
+
+export function updateProfileConfig(text: string, id: string, body: string[]): string {
+  const lines = (text.trim() ? text : '[]\n').split(/\r?\n/)
+  const entries = profileEntries(lines)
+  const entry = entries.reverse().find(item => item.id === id && !item.insert)
+  if (!entry) return appendProfileEntry(text, id, body)
+  const configIndent = entry.config?.indent ?? (() => {
+    const head = lines[entry.start] ?? ''
+    if (head.replace(/^\s*-\s*/, '').trim()) return (head.match(/^\s*/)?.[0].length ?? 0) + 2
+    for (let index = entry.start + 1; index < entry.end; index += 1) {
+      const line = lines[index] ?? ''
+      if (line.trim() && !/^\s*#/.test(line)) return indentOf(line)
+    }
+    return (head.match(/^\s*/)?.[0].length ?? 0) + 2
+  })()
+  const block = [
+    `${' '.repeat(configIndent)}config:`,
+    ...body.map(line => (line ? `${' '.repeat(configIndent + 2)}${line}` : '')),
+  ]
+  if (entry.config) {
+    lines.splice(entry.config.start, entry.config.end - entry.config.start, ...block)
+  } else {
+    let at = entry.start + 1
+    for (let index = entry.start + 1; index < entry.end; index += 1) {
+      const line = lines[index] ?? ''
+      if (line.trim() && !/^\s*#/.test(line) && indentOf(line) === configIndent) at = index + 1
+    }
+    lines.splice(at, 0, ...block)
+  }
+  while (lines.length && !lines.at(-1)?.trim()) lines.pop()
+  return `${lines.join('\n')}\n`
+}
+
+const legacyProfileIds: Record<string, string> = {
+  'ui-developer-tools': 'ui-settings',
+  'ui-onboarding': 'ui-settings-general',
+  shell: process.platform === 'win32' ? 'pwsh-sandbox' : 'bash-sandbox',
+}
+
+function legacySections(text: string): Array<{ id: string; body: string[] }> {
+  const lines = text.split(/\r?\n/)
+  const sections: Array<{ id: string; body: string[] }> = []
+  for (let index = 0; index < lines.length; index += 1) {
+    const field = mappingField(lines[index] ?? '')
+    if (!field || field.indent !== 0) continue
+    let end = lines.length
+    for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+      const line = lines[cursor] ?? ''
+      if (!line.trim() || /^\s*#/.test(line)) continue
+      if (!/^\s/.test(line)) { end = cursor; break }
+    }
+    const body = lines.slice(index + 1, end).map(line => {
+      if (!line.trim()) return ''
+      return indentOf(line) >= 2 ? line.slice(2) : line
+    })
+    if (body.some(line => line.trim())) sections.push({ id: legacyProfileIds[field.key] ?? field.key, body })
+    index = end - 1
+  }
+  return sections
+}
+
+function mergeLegacyProfile(text: string, legacy: string): string {
+  const present = new Set(profileEntries(text.split(/\r?\n/)).map(entry => entry.id).filter(Boolean))
+  let merged = text
+  for (const section of legacySections(legacy)) {
+    if (!section.id || present.has(section.id)) continue
+    merged = updateProfileConfig(merged, section.id, section.body)
+    present.add(section.id)
+  }
+  return merged
+}
+
+function retireLegacySettings(path: string): void {
+  if (!existsSync(path)) return
+  const imported = `${path}.imported`
+  if (existsSync(imported)) {
+    let suffix = 1
+    while (existsSync(`${imported}.${suffix}`)) suffix += 1
+    renameSync(imported, `${imported}.${suffix}`)
+  }
+  renameSync(path, imported)
+}
+
+function deepseekEntryId(home: string): string {
+  const modules = join(harnessRoot(home), 'node_modules')
+  const patches = [join(modules, '@deepseek-ai', 'dsh-base', 'cordis.patch.yml')]
+  const virtual = join(modules, '.pnpm')
+  if (existsSync(virtual)) {
+    for (const entry of readdirSync(virtual)) {
+      if (entry.startsWith('@deepseek-ai+dsh-base@')) {
+        patches.push(join(virtual, entry, 'node_modules', '@deepseek-ai', 'dsh-base', 'cordis.patch.yml'))
+      }
+    }
+  }
+  for (const patch of patches) {
+    if (!existsSync(patch)) continue
+    const text = readFileSync(patch, 'utf8')
+    if (/^\s*-\s*id:\s*["']?llm-deepseek-api-key["']?\s*$/m.test(text)) return 'llm-deepseek-api-key'
+    if (/^\s*-\s*id:\s*["']?llm-deepseek["']?\s*$/m.test(text)) return 'llm-deepseek'
+  }
+  const profile = join(harnessHome(home), 'profiles', 'headless', 'cordis.patch.yml')
+  if (existsSync(profile)) {
+    const ids = new Set(profileEntries(readFileSync(profile, 'utf8').split(/\r?\n/)).map(entry => entry.id))
+    if (ids.has('llm-deepseek')) return 'llm-deepseek'
+  }
+  return 'llm-deepseek-api-key'
+}
+
 function evaluatorSelection(home: string): { provider: string; model: string } | undefined {
   const path = evaluatorPatchPath(home)
   if (!existsSync(path)) return undefined
-  const text = readFileSync(path, 'utf8')
-  const provider = text.match(/^\s{4}provider:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1]
-  const model = text.match(/^\s{4}model:\s*["']?([^"'\s]+)["']?\s*$/m)?.[1]
-  return provider && model ? { provider, model } : undefined
+  return profileSelection(readFileSync(path, 'utf8'))
 }
 
 function syncEvaluatorHarness(home: string, settings: string, credentials: string): void {
   const selection = evaluatorSelection(home)
   if (!selection) return
   const target = evaluatorHarnessHome(home)
-  const roleSettings = section(settings, 'agent-default-model', [
-    'agent-default-model:', `  provider: ${quote(selection.provider)}`, `  model: ${quote(selection.model)}`,
-  ])
-  atomic(join(target, 'settings.yaml'), roleSettings)
-  atomic(join(target, '.credentials.yaml'), credentials)
-  atomic(join(target, 'skillhone', 'evaluator.patch.yml'), readFileSync(evaluatorPatchPath(home), 'utf8'))
   const sourceProfile = join(harnessHome(home), 'profiles', 'headless')
   const targetProfile = join(target, 'profiles', 'headless')
   if (existsSync(sourceProfile)) {
@@ -295,20 +525,34 @@ function syncEvaluatorHarness(home: string, settings: string, credentials: strin
     mkdirSync(dirname(targetProfile), { recursive: true })
     cpSync(sourceProfile, targetProfile, { recursive: true })
   }
+  const roleSettings = updateProfileConfig(settings, 'agent-default-model', [
+    `provider: ${quote(selection.provider)}`, `model: ${quote(selection.model)}`,
+  ])
+  atomic(join(targetProfile, 'cordis.patch.yml'), roleSettings)
+  atomic(join(target, '.credentials.yaml'), credentials)
+  atomic(join(target, 'skillhone', 'evaluator.patch.yml'), readFileSync(evaluatorPatchPath(home), 'utf8'))
+  retireLegacySettings(join(target, 'settings.yaml'))
 }
 
 export function benchmarkHarnessHome(home: string): string {
   const roleHome = evaluatorHarnessHome(home)
-  if (existsSync(join(roleHome, 'settings.yaml'))) return roleHome
+  const roleProfile = join(roleHome, 'profiles', 'headless', 'cordis.patch.yml')
+  const roleLegacy = join(roleHome, 'settings.yaml')
+  if (existsSync(roleProfile) || existsSync(roleLegacy)) return roleHome
   const mainHome = harnessHome(home)
-  const settingsPath = join(mainHome, 'settings.yaml')
+  const mainProfile = join(mainHome, 'profiles', 'headless', 'cordis.patch.yml')
+  const mainLegacy = join(mainHome, 'settings.yaml')
   const credentialsPath = join(mainHome, '.credentials.yaml')
-  if (existsSync(settingsPath) && existsSync(credentialsPath) && evaluatorSelection(home)) {
+  if (existsSync(credentialsPath) && evaluatorSelection(home)) {
     // Existing installations predate role-isolated Harness homes. Migrate on
     // first benchmark use without asking the user to re-enter credentials.
-    syncEvaluatorHarness(home, readFileSync(settingsPath, 'utf8'), readFileSync(credentialsPath, 'utf8'))
+    if (existsSync(mainProfile)) {
+      syncEvaluatorHarness(home, readFileSync(mainProfile, 'utf8'), readFileSync(credentialsPath, 'utf8'))
+    } else if (existsSync(mainLegacy)) {
+      syncEvaluatorHarness(home, mergeLegacyProfile('', readFileSync(mainLegacy, 'utf8')), readFileSync(credentialsPath, 'utf8'))
+    }
   }
-  return existsSync(join(roleHome, 'settings.yaml')) ? roleHome : mainHome
+  return existsSync(roleProfile) || existsSync(roleLegacy) ? roleHome : mainHome
 }
 
 export function configureHarness(home: string, input: {
@@ -322,24 +566,33 @@ export function configureHarness(home: string, input: {
   const builtIn = new Set(['deepseek-official', 'openai', 'anthropic'])
   if (!builtIn.has(provider) && !input.baseUrl) throw new Error('a custom provider requires --base-url')
   const dshHome = harnessHome(home)
-  const settingsPath = join(dshHome, 'settings.yaml')
-  let text = existsSync(settingsPath) ? readFileSync(settingsPath, 'utf8') : 'version: 1\n'
+  const profilePath = join(dshHome, 'profiles', 'headless', 'cordis.patch.yml')
+  const legacyPath = join(dshHome, 'settings.yaml')
+  let text = existsSync(profilePath) ? readFileSync(profilePath, 'utf8') : ''
+  if (existsSync(legacyPath)) text = mergeLegacyProfile(text, readFileSync(legacyPath, 'utf8'))
   const label = (provider === 'deepseek-official' ? 'deepseek' : provider).toUpperCase().replace(/[^A-Z0-9]+/g, '_')
   const ref = `SKILLHONE_${label}_CREDENTIAL`
   if (provider === 'deepseek-official') {
-    text = section(text, 'llm-deepseek', ['llm-deepseek:', `  apiKeyEnv: ${ref}`])
-    const profilePatchPath = join(dshHome, 'profiles', 'headless', 'cordis.patch.yml')
-    const profilePatch = existsSync(profilePatchPath) ? readFileSync(profilePatchPath, 'utf8') : '[]\n'
-    atomic(profilePatchPath, webSearchCredentialPatch(profilePatch, ref))
+    text = updateProfileConfig(text, deepseekEntryId(home), [`apiKeyEnv: ${ref}`])
+    text = webSearchCredentialPatch(text.trim() ? text : '[]\n', ref)
   }
   else {
     const body = [`apiKeyEnv: ${ref}`]
     if (input.baseUrl) body.push(`api: ${input.protocol ?? 'openai-completions'}`, `baseURL: ${quote(input.baseUrl)}`, 'models:', `  - id: ${quote(input.model)}`)
-    text = piProvider(text, provider, body)
+    const lines = text.split(/\r?\n/)
+    const current = profileEntries(lines).reverse().find(entry => entry.id === 'llm-pi-ai' && !entry.insert)
+    const currentBody = current ? entryBody(lines, current) : []
+    while (currentBody.length && !currentBody.at(-1)?.trim()) currentBody.pop()
+    const document = `llm-pi-ai:\n${currentBody.map(line => (line ? `  ${line}` : '')).join('\n')}\n`
+    const updated = piProvider(document, provider, body).split(/\r?\n/).slice(1)
+      .map(line => (line.startsWith('  ') ? line.slice(2) : line))
+    text = updateProfileConfig(text, 'llm-pi-ai', updated)
   }
   const role = input.role ?? 'optimizer'
   if (role === 'optimizer') {
-    text = section(text, 'agent-default-model', ['agent-default-model:', `  provider: ${quote(provider)}`, `  model: ${quote(input.model)}`])
+    text = updateProfileConfig(text, 'agent-default-model', [
+      `provider: ${quote(provider)}`, `model: ${quote(input.model)}`,
+    ])
   } else {
     atomic(evaluatorPatchPath(home), [
       '- id: agent-default-model',
@@ -351,9 +604,10 @@ export function configureHarness(home: string, input: {
   const credentialsPath = join(dshHome, '.credentials.yaml')
   const existing = existsSync(credentialsPath) ? readFileSync(credentialsPath, 'utf8') : 'version: 1\nrefs:\n'
   const credentials = credentialReference(existing, ref, input.secret.trim())
-  atomic(settingsPath, text)
+  atomic(profilePath, text)
   atomic(credentialsPath, credentials)
   syncEvaluatorHarness(home, text, credentials)
+  if (existsSync(legacyPath)) retireLegacySettings(legacyPath)
   return { role, provider, model: input.model, custom_endpoint: Boolean(input.baseUrl), credential_saved: true }
 }
 
@@ -363,10 +617,14 @@ export function credentialStorePresent(home: string): boolean {
 }
 
 export function modelConfigured(home: string): boolean {
-  const path = join(harnessHome(home), 'settings.yaml')
-  if (!existsSync(path)) return false
-  const text = readFileSync(path, 'utf8')
-  return /(?:^|\n)agent-default-model:\s*\n(?: {2}.+\n?)+/.test(text) && /\n {2}provider:\s*\S+/.test(text) && /\n {2}model:\s*\S+/.test(text)
+  const profile = join(harnessHome(home), 'profiles', 'headless', 'cordis.patch.yml')
+  if (existsSync(profile) && profileSelection(readFileSync(profile, 'utf8'))) return true
+  const legacy = join(harnessHome(home), 'settings.yaml')
+  if (!existsSync(legacy)) return false
+  return legacySections(readFileSync(legacy, 'utf8')).some(section => {
+    if (section.id !== 'agent-default-model') return false
+    return Boolean(mappingValue(section.body, 'provider') && mappingValue(section.body, 'model'))
+  })
 }
 
 export function harnessConfigured(home: string): boolean {
