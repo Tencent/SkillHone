@@ -1,5 +1,13 @@
 # Third-party notices
 
+SkillHone builds on [Node.js](https://github.com/nodejs/node) (including its
+built-in SQLite API), [Git](https://github.com/git/git),
+[PyYAML](https://github.com/yaml/pyyaml), and
+[TypeScript](https://github.com/microsoft/TypeScript).
+[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) is installed
+separately as the managed repair executor. These projects retain their respective
+upstream licenses and notices. The embedded icon notice follows below.
+
 ## Primer Octicons
 
 The SkillHone Web workbench embeds SVG path data from the 16px

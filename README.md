@@ -17,6 +17,20 @@
 
 </div>
 
+## Get started
+
+Give your coding Agent this prompt:
+
+> Install SkillHone from `https://github.com/zwliJay/SkillHone`, following
+> `docs/install/skillhone.md`. Make the CLI and Skills available to this Agent,
+> use the documented `--install-links=true` Git installation command, and
+> verify the installation.
+
+Prefer the terminal? Start with the [installation guide](docs/install/skillhone.md)
+for installation, provider configuration, and verification.
+
+## Why SkillHone
+
 **Accepted at EMNLP 2026 Industry Track.** The paper reports **+15.8 points on
 GAIA** and **+3.2 points on WebWalkerQA-EN** against its commercially backed
 deep-research baseline, without a pre-integrated search stack.
@@ -33,18 +47,6 @@ ZCode**. DeepSeek Harness runs the repairs; your Agent reports the problem.
 ## SkillHone in 35 seconds
 
 https://github.com/user-attachments/assets/69bafb25-5ba9-44cb-b5ff-8a2a94f8e51a
-
-## Get started
-
-Give your coding Agent this prompt:
-
-> Install SkillHone from `https://github.com/zwliJay/SkillHone`, following
-> `docs/install/skillhone.md`. Make the CLI and Skills available to this Agent,
-> use the documented `--install-links=true` Git installation command, and
-> verify the installation.
-
-Prefer the terminal? Start with the [installation guide](docs/install/skillhone.md)
-for installation, provider configuration, and verification.
 
 <details>
 <summary>Inspect the current workbench</summary>
@@ -79,6 +81,20 @@ Issues, runs, PRs, approval state and Wiki records into one view.
 | Use it for | Missing files, broken scripts, stale instructions and API drift | Broader capability and quality improvements |
 | Review | Issue, regression, repair and local PR | Baseline, candidate iterations, validation and local PR |
 | Learn more | [Runtime workflow](skills/skillhone-auto-optimization/SKILL.md) | [Benchmark workflow](docs/benchmark-optimization.md) |
+
+## Built with open source
+
+| Component | Role in SkillHone |
+|---|---|
+| [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) | Repair executor; the managed installation uses `@deepseek-ai/dsh@0.2.1-rc.2` |
+| [Node.js](https://github.com/nodejs/node) and its built-in SQLite API | CLI, local HTTP server, and persistent Issue / PR / Run / Wiki records |
+| [Git](https://github.com/git/git) | Isolated repair branches, commits, diffs and local merges |
+| [PyYAML](https://github.com/yaml/pyyaml) | YAML metadata parsing for the bundled Python quality checks |
+| [Primer Octicons](https://github.com/primer/octicons) | Issue, PR, repository and Wiki icons in the workbench |
+| [TypeScript](https://github.com/microsoft/TypeScript) | Development and build toolchain |
+
+The workbench uses browser-native HTML, CSS and JavaScript. See
+[third-party notices](THIRD_PARTY_NOTICES.md) and the [Harness integration](docs/deepseek-harness.md).
 
 ## Research and citation
 

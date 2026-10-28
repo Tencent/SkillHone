@@ -17,6 +17,18 @@
 
 </div>
 
+## 开始使用
+
+把这段话交给你的 Coding Agent：
+
+> 从 `https://github.com/zwliJay/SkillHone` 安装 SkillHone，遵循
+> `docs/install/skillhone.md`，让当前 Agent 能发现 CLI 和 Skills。使用文档中的
+> `--install-links=true` Git 安装命令，并验证安装结果。
+
+偏好终端操作？[安装指南](install/skillhone.md)包含安装步骤、Provider 配置及验证方法。
+
+## 为什么用 SkillHone
+
 **论文已被 EMNLP 2026 Industry Track 接收。** 在论文的开放网络实验中，相比其中的
 商业 Deep Research Agent 基线，GAIA 提高 **15.8 分**，WebWalkerQA-EN 提高
 **3.2 分**，且无需预先集成搜索栈。[查看论文与实验条件](https://aclanthology.org/2026.emnlp-industry.105/)。
@@ -31,16 +43,6 @@ Skill 仓库**，再交付经过测试的本地 PR。Issue、回归测试、Diff
 ## 35 秒了解 SkillHone
 
 https://github.com/user-attachments/assets/69bafb25-5ba9-44cb-b5ff-8a2a94f8e51a
-
-## 开始使用
-
-把这段话交给你的 Coding Agent：
-
-> 从 `https://github.com/zwliJay/SkillHone` 安装 SkillHone，遵循
-> `docs/install/skillhone.md`，让当前 Agent 能发现 CLI 和 Skills。使用文档中的
-> `--install-links=true` Git 安装命令，并验证安装结果。
-
-偏好终端操作？[安装指南](install/skillhone.md)包含安装步骤、Provider 配置及验证方法。
 
 <details>
 <summary>展开查看当前工作台完整截图</summary>
@@ -74,6 +76,20 @@ https://github.com/user-attachments/assets/69bafb25-5ba9-44cb-b5ff-8a2a94f8e51a
 | 适合什么问题 | 文件缺失、脚本损坏、说明过时和 API 漂移 | 更大范围的能力与质量提升 |
 | 审阅什么 | Issue、回归测试、修复和本地 PR | 基线、候选迭代、验证结果和本地 PR |
 | 继续阅读 | [运行时工作流](../skills/skillhone-auto-optimization/SKILL.md) | [Benchmark 工作流](benchmark-optimization.zh.md) |
+
+## 开源组件
+
+| 组件 | 在 SkillHone 中的用途 |
+|---|---|
+| [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) | 修复执行器；托管安装使用 `@deepseek-ai/dsh@0.2.1-rc.2` |
+| [Node.js](https://github.com/nodejs/node) 及其内置 SQLite API | CLI、本地 HTTP 服务，以及 Issue / PR / Run / Wiki 的持久化存储 |
+| [Git](https://github.com/git/git) | 独立修复分支、提交、Diff 和本地合并 |
+| [PyYAML](https://github.com/yaml/pyyaml) | 随附 Python 质量检查中的 YAML 元数据解析 |
+| [Primer Octicons](https://github.com/primer/octicons) | 工作台中的 Issue、PR、仓库与 Wiki 图标 |
+| [TypeScript](https://github.com/microsoft/TypeScript) | 开发与构建工具链 |
+
+工作台使用浏览器原生 HTML、CSS 和 JavaScript。详见[第三方声明](../THIRD_PARTY_NOTICES.md)
+及 [Harness 集成说明](deepseek-harness.md)。
 
 ## 论文与引用
 
