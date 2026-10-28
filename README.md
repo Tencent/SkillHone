@@ -4,7 +4,9 @@
 
 **Continually improve your Agent Skills — and keep what was learned.**
 
-[![Paper](https://img.shields.io/badge/EMNLP_2026-Industry-286c3b)](https://aclanthology.org/2026.emnlp-industry.105/)
+[![Paper](https://img.shields.io/badge/EMNLP_2026-Industry_Track-286c3b)](https://aclanthology.org/2026.emnlp-industry.105/)
+[![Version](https://img.shields.io/badge/version-2.0.0--rc.1-315fbd)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
+[![Agent Skills](https://img.shields.io/badge/Agent_Skills-Compatible-7657a5)](skills/)
 [![CI](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml/badge.svg)](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-286c3b)](LICENSE)
 
@@ -28,6 +30,10 @@ so the next Agent can build on what was learned.
 Works with CLI-capable Agents, including **Codex, Claude Code, Cursor, Pi and
 ZCode**. DeepSeek Harness runs the repairs; your Agent reports the problem.
 
+## SkillHone in 35 seconds
+
+https://github.com/user-attachments/assets/69bafb25-5ba9-44cb-b5ff-8a2a94f8e51a
+
 ## Get started
 
 Give your coding Agent this prompt:
@@ -39,12 +45,6 @@ Give your coding Agent this prompt:
 
 Prefer the terminal? Start with the [installation guide](docs/install/skillhone.md)
 for installation, provider configuration, and verification.
-
-## SkillHone in 35 seconds
-
-[![Watch SkillHone: EMNLP 2026 acceptance, paper results and the current workbench](docs/assets/skillhone-promo-poster.png)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
-
-[Watch / download the 35-second MP4](https://github.com/zwliJay/SkillHone/releases/download/v2.0.0-rc.1/skillhone-launch.mp4), in 1080p with original music. The film and GIF are distributed separately as release assets.
 
 <details>
 <summary>Inspect the current workbench</summary>

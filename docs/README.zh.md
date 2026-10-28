@@ -4,7 +4,9 @@
 
 **让 Agent Skills 持续变好，让学到的经验留下来。**
 
-[![论文](https://img.shields.io/badge/EMNLP_2026-Industry-286c3b)](https://aclanthology.org/2026.emnlp-industry.105/)
+[![论文](https://img.shields.io/badge/EMNLP_2026-Industry_Track-286c3b)](https://aclanthology.org/2026.emnlp-industry.105/)
+[![Version](https://img.shields.io/badge/version-2.0.0--rc.1-315fbd)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
+[![Agent Skills](https://img.shields.io/badge/Agent_Skills-Compatible-7657a5)](../skills/)
 [![CI](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml/badge.svg)](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml)
 [![许可证](https://img.shields.io/badge/License-MIT-286c3b)](../LICENSE)
 
@@ -26,6 +28,10 @@ Skill 仓库**，再交付经过测试的本地 PR。Issue、回归测试、Diff
 适用于 **Codex、Claude Code、Cursor、Pi、ZCode** 等能够调用 CLI 的 Agent。
 当前 Agent 报告问题，DeepSeek Harness 执行修复。
 
+## 35 秒了解 SkillHone
+
+https://github.com/user-attachments/assets/69bafb25-5ba9-44cb-b5ff-8a2a94f8e51a
+
 ## 开始使用
 
 把这段话交给你的 Coding Agent：
@@ -35,12 +41,6 @@ Skill 仓库**，再交付经过测试的本地 PR。Issue、回归测试、Diff
 > `--install-links=true` Git 安装命令，并验证安装结果。
 
 偏好终端操作？[安装指南](install/skillhone.md)包含安装步骤、Provider 配置及验证方法。
-
-## 35 秒了解 SkillHone
-
-[![观看 SkillHone 宣传片：EMNLP 2026 接收、论文实验提升和新版工作台](assets/skillhone-promo-poster.png)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
-
-[观看／下载 35 秒 MP4](https://github.com/zwliJay/SkillHone/releases/download/v2.0.0-rc.1/skillhone-launch.mp4)，1080p，配原创音乐。宣传片与 GIF 单独放在 Release 附件中。
 
 <details>
 <summary>展开查看当前工作台完整截图</summary>
