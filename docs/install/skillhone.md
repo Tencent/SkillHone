@@ -11,7 +11,7 @@ optional optimizer, not a prerequisite for recording or reviewing work.
 Paste this into Codex, Claude Code, or another coding Agent:
 
 ```text
-Install SkillHone from https://github.com/zwliJay/SkillHone. Follow docs/install/skillhone.md, run the installer, make SkillHone available to this coding agent, and verify `skillhone --version`. Do not change unrelated files.
+Install SkillHone from https://github.com/Tencent/SkillHone. Follow docs/install/skillhone.md, run the installer, make SkillHone available to this coding agent, and verify `skillhone --version`. Do not change unrelated files.
 ```
 
 The Agent should inspect this guide and `package.json`, install the GitHub
@@ -23,10 +23,10 @@ workbench.
 
 ```bash
 npm install -g --install-links=true \
-  git+https://github.com/zwliJay/SkillHone.git#main
+  git+https://github.com/Tencent/SkillHone.git#main
 ```
 
-This is the Git installation path for this preview repository. SkillHone is not published to the NPM
+This is the Git installation path for this repository. SkillHone is not published to the NPM
 Registry; `npm` is only the local Node.js installer here. It clones the GitHub
 `main` branch, installs the build dependencies, runs the TypeScript `prepare`
 script, and links the resulting `skillhone` binary globally.
@@ -100,6 +100,12 @@ Harness changes quickly and an older global executable can silently change the
 CLI or session-event contract. The package is resolved from the official
 `https://registry.npmjs.org` registry rather than inheriting a machine-wide
 mirror setting.
+
+This pin controls only SkillHone's private copy: packages are installed under
+`~/.skillhone/harness/node_modules/`, with separate configuration and credentials
+in `~/.skillhone/harness/home/`. It does not upgrade, downgrade, or reconfigure
+your global `dsh`. A custom `--home` or `SKILLHONE_HOME` relocates this private
+runtime; the child process receives its own `DSH_HOME`.
 
 ## First use
 

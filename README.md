@@ -5,9 +5,9 @@
 **Continually improve your Agent Skills — and keep what was learned.**
 
 [![Paper](https://img.shields.io/badge/EMNLP_2026-Industry_Track-286c3b)](https://aclanthology.org/2026.emnlp-industry.105/)
-[![Version](https://img.shields.io/badge/version-2.0.0--rc.1-315fbd)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
+[![Version](https://img.shields.io/badge/version-2.0.0--rc.1-315fbd)](https://github.com/Tencent/SkillHone/releases)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-Compatible-7657a5)](skills/)
-[![CI](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml/badge.svg)](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml)
+[![CI](https://github.com/Tencent/SkillHone/actions/workflows/ci.yml/badge.svg)](https://github.com/Tencent/SkillHone/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT-286c3b)](LICENSE)
 
 [Get started](#get-started) · [中文](docs/README.zh.md) ·
@@ -21,7 +21,7 @@
 
 Give your coding Agent this prompt:
 
-> Install SkillHone from `https://github.com/zwliJay/SkillHone`, following
+> Install SkillHone from `https://github.com/Tencent/SkillHone`, following
 > `docs/install/skillhone.md`. Make the CLI and Skills available to this Agent,
 > use the documented `--install-links=true` Git installation command, and
 > verify the installation.

@@ -26,6 +26,13 @@ official `registry.npmjs.org` host rather than an ambient package mirror. The St
 reports whether this managed runner is available and whether any recorded
 repair is currently running.
 
+The version pin applies only to SkillHone's managed runtime. By default its
+packages live in `~/.skillhone/harness/node_modules/`, and its configuration and
+credentials live in `~/.skillhone/harness/home/`. SkillHone sets `DSH_HOME` only
+for its child processes. Installation and upgrades do not replace a globally
+installed `dsh` or change the configuration of an independently used Harness.
+A custom SkillHone home moves these private directories together.
+
 Run `skillhone harness configure` when provider or default-model settings need
 to change. It updates the active headless profile's Cordis patch and Harness
 credential store from the terminal; it does not start Web. Repair jobs use the

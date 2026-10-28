@@ -5,9 +5,9 @@
 **让 Agent Skills 持续变好，让学到的经验留下来。**
 
 [![论文](https://img.shields.io/badge/EMNLP_2026-Industry_Track-286c3b)](https://aclanthology.org/2026.emnlp-industry.105/)
-[![Version](https://img.shields.io/badge/version-2.0.0--rc.1-315fbd)](https://github.com/zwliJay/SkillHone/releases/tag/v2.0.0-rc.1)
+[![Version](https://img.shields.io/badge/version-2.0.0--rc.1-315fbd)](https://github.com/Tencent/SkillHone/releases)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-Compatible-7657a5)](../skills/)
-[![CI](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml/badge.svg)](https://github.com/zwliJay/SkillHone/actions/workflows/ci.yml)
+[![CI](https://github.com/Tencent/SkillHone/actions/workflows/ci.yml/badge.svg)](https://github.com/Tencent/SkillHone/actions/workflows/ci.yml)
 [![许可证](https://img.shields.io/badge/License-MIT-286c3b)](../LICENSE)
 
 [开始使用](#开始使用) · [English](../README.md) ·
@@ -21,7 +21,7 @@
 
 把这段话交给你的 Coding Agent：
 
-> 从 `https://github.com/zwliJay/SkillHone` 安装 SkillHone，遵循
+> 从 `https://github.com/Tencent/SkillHone` 安装 SkillHone，遵循
 > `docs/install/skillhone.md`，让当前 Agent 能发现 CLI 和 Skills。使用文档中的
 > `--install-links=true` Git 安装命令，并验证安装结果。
 
