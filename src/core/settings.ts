@@ -2,6 +2,8 @@ import { chmodSync, cpSync, existsSync, mkdirSync, readFileSync, readdirSync, re
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
+import { managedHarnessDependencyPolicy } from './harness-dependencies.js'
+
 export type TriggerMode = 'queued' | 'immediate' | 'scheduled'
 export type MergeMode = 'review' | 'automatic'
 export type AuditMode = 'standard' | 'signed'
@@ -16,7 +18,7 @@ interface Settings {
   harness: { package: string }
 }
 
-export const testedHarnessPackage = '@deepseek-ai/dsh@0.2.1-rc.2'
+export const testedHarnessPackage = managedHarnessDependencyPolicy.package
 
 const defaults: Settings = {
   automation: { default: { mode: 'queued', interval_minutes: 60 }, skills: {} },
