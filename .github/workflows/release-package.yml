@@ -51,4 +51,11 @@ jobs:
       - name: Attach the verified package to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${GITHUB_REF_NAME}" release/* --clobber
+          GH_REPO: ${{ github.repository }}
+        run: |
+          package="$(basename release/*.tgz)"
+          if [ "$(gh release view "${GITHUB_REF_NAME}" --json assets --jq ".assets | any(.name == \"$package\")")" = true ]; then
+            echo "A verified package is already attached; preserving the existing package and checksums."
+          else
+            gh release upload "${GITHUB_REF_NAME}" release/*
+          fi
