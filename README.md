@@ -57,6 +57,14 @@ See which Skills need attention, expand their repair records, and inspect each l
 
 </details>
 
+## Watch a real repair
+
+https://github.com/user-attachments/assets/1a8e9989-12d6-4451-8e24-4c3ff1c8f384
+
+A 96-second edited replay: Claude Desktop with DeepSeek Flash on the left,
+SkillHone on the right. Follow the failure, local Issue, tested repair and
+local PR awaiting human review.
+
 **Reproduce a real repair.** The [Phoenix tracing walkthrough](examples/phoenix-tracing/) starts with four referenced documents that were never shipped, then follows the failure, regression test and repair evidence. Public source: [Issue #2567](https://github.com/github/awesome-copilot/issues/2567) · [merged fix #2568](https://github.com/github/awesome-copilot/pull/2568).
 
 ## What stays with the fix
