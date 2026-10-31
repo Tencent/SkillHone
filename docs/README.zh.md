@@ -53,13 +53,6 @@ https://github.com/user-attachments/assets/69bafb25-5ba9-44cb-b5ff-8a2a94f8e51a
 
 </details>
 
-## 观看一次真实修复
-
-https://github.com/user-attachments/assets/1a8e9989-12d6-4451-8e24-4c3ff1c8f384
-
-96 秒英文回放：左侧是使用 DeepSeek Flash 的 Claude Desktop，右侧是
-SkillHone 工作台。展示故障发现、本地 Issue、修复验证和等待人工审批的本地 PR。
-
 **亲手复现一次修复。** [Phoenix tracing 示例](../examples/phoenix-tracing/)从四份未随 Skill 发布的引用文档开始，完整展示故障、回归测试和修复证据。公开依据：[Issue #2567](https://github.com/github/awesome-copilot/issues/2567) · [已合并的修复 #2568](https://github.com/github/awesome-copilot/pull/2568)。
 
 ## 修复之后留下什么
