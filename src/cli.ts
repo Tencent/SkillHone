@@ -1,5 +1,5 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { closeSync, openSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs'
+import { appendFileSync, closeSync, openSync, readFileSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -10,9 +10,10 @@ import {
 } from './core/benchmark.js'
 import { install as installHarness, installedBinary, diagnoseFailure, probe as probeHarness, repairPrompt, runRepair, runWeb, status as harnessStatus } from './core/harness.js'
 import { repairPrBody } from './core/pr-description.js'
+import { endNativeExecution, executorStatus, loadNativeExecution, nativeAssignment, saveNativeExecution, selectedExecutor, verifyNativeCandidate } from './core/execution.js'
 import {
   auditPolicy, clearAuditPolicy, clearPolicy, configureHarness, loadSettings, mergePolicy, policy, saveSettings,
-  setAuditPolicy, setMergePolicy, setPolicy, type AuditMode, type MergeMode, type TriggerMode,
+  setAuditPolicy, setMergePolicy, setPolicy, setExecutor, executorMode, executorPolicy, type AuditMode, type MergeMode, type TriggerMode,
 } from './core/settings.js'
 import { Tracker, type WorkRow } from './core/tracker.js'
 import { redact, slug } from './core/util.js'
@@ -38,7 +39,9 @@ Commands:
   pr create|list|view|merge                Review local repair branches
   wiki create|list|view|update             Keep repository-scoped work records
   retry ISSUE                              Retry a failed repair on a new branch
-  optimize ISSUE                           Repair a queued Issue with DeepSeek Harness
+  optimize ISSUE [--executor auto|native|dsh] Prepare a current-Agent assignment or run optional DSH
+  execution complete RUN --commit SHA     Verify a native candidate, tests, and local PR
+  execution fail|cancel RUN --reason TEXT  End a native assignment without discarding files
   benchmark init|status|run|optimize
                                            Evaluation-driven Issue discovery and repair
   dispatch                                Consume queued repairs serially
@@ -187,19 +190,74 @@ function withOptimizationLock<T>(tracker: Tracker, work: () => T): T {
   }
 }
 
-function optimizeIssueUnlocked(tracker: Tracker, issueNumber: number, retry = false): WorkRow {
+function finalizeRepair(tracker: Tracker, issueNumber: number, record: WorkRow, branch: string, base: string,
+  runner: string, selectedMerge: { mode: MergeMode }, verifyCandidate?: () => void): WorkRow {
+  const issue = tracker.issue(issueNumber)
+  tracker.cleanupGeneratedArtifacts()
+  const verification = tracker.runIssueTests(issueNumber)
+  appendFileSync(String(record.log_path), `${redact(JSON.stringify({ event: 'host_verification', candidate_commit: tracker.git(['rev-parse', 'HEAD']), passed: verification.passed, tests: verification.tests }))}\n`, { mode: 0o600 })
+  if (!verification.passed) {
+    tracker.finishRun(String(record.id), 'failed')
+    return { run: publicRun(tracker.runRecord(String(record.id))), tests: verification.tests, exit_code: 1 }
+  }
+  const ahead = tracker.git(['rev-list', '--count', `${base}..${branch}`])
+  if (ahead === '0') {
+    tracker.finishRun(String(record.id), 'failed')
+    throw new Error(`${runner} exited successfully but created no commit`)
+  }
+  if (tracker.git(['status', '--porcelain'])) {
+    tracker.finishRun(String(record.id), 'failed')
+    throw new Error(`${runner} left uncommitted changes; no PR was created`)
+  }
+  if (verifyCandidate) verifyCandidate()
+  const finished = tracker.finishRun(String(record.id), 'completed')
+  const pr = tracker.createPr({
+    title: `Fix #${issueNumber}: ${String(issue.title)}`, head: branch, base,
+    issueNumber, body: repairPrBody({
+      issueNumber, issueTitle: String(issue.title), runner, runId: String(finished.id),
+      diff: tracker.git(['diff', '--name-status', `${base}...${branch}`], false),
+      commitCount: Number(ahead), tests: verification.tests, mergeMode: selectedMerge.mode,
+    }),
+  })
+  let wiki = tracker.upsertWiki(
+    `issue-${issueNumber}-repair`, `Repair record: ${String(issue.title)}`,
+    `Issue #${issueNumber}: ${String(issue.title)}\n\n${runner} completed run ${finished.id} on branch ${branch}.\n` +
+    (selectedMerge.mode === 'automatic'
+      ? `Local PR #${pr.number} passed its gates and is authorized for automatic local merge.\nNo push was performed.`
+      : `Local PR #${pr.number} is open for review.\nNo push or merge was performed.`),
+    issueNumber, Number(pr.number),
+  )
+  if (selectedMerge.mode === 'automatic') {
+    const merged = tracker.mergePr(Number(pr.number), true)
+    wiki = tracker.upsertWiki(
+      `issue-${issueNumber}-repair`, `Repair record: ${String(issue.title)}`,
+      `Issue #${issueNumber}: ${String(issue.title)}\n\n${runner} completed run ${finished.id} on branch ${branch}.\n` +
+      `Local PR #${pr.number} passed all linked tests and was merged locally by the saved automatic policy.\nNo push was performed.`,
+      issueNumber, Number(pr.number),
+    )
+    return { run: publicRun(finished), pull_request: merged, wiki, merge_policy: selectedMerge }
+  }
+  // Review mode must leave the runtime on the approved base revision. This is
+  // especially important for takeover imports, where Agent runtimes use the
+  // managed repository through a symlink and must not observe an open PR.
+  tracker.git(['checkout', base])
+  return { run: publicRun(finished), pull_request: pr, wiki, merge_policy: selectedMerge }
+}
+
+function optimizeIssueUnlocked(tracker: Tracker, issueNumber: number, retry = false, requested?: string, hiddenEval = false): WorkRow {
+  const executor = selectedExecutor(tracker.home, tracker.project().id, requested)
+  if (hiddenEval) throw new Error(`${executor} execution cannot isolate hidden evaluation answers; use a fresh permission-restricted role`)
   const issue = tracker.issue(issueNumber)
   if (issue.status !== 'open') throw new Error('optimization requires an open Issue')
   if (tracker.listPrs('open').some(pr => pr.issue_number === issueNumber)) throw new Error('Issue already has an open PR')
-  const runs = tracker.listRuns().filter(run => run.issue_number === issueNumber)
-  if (runs.some(run => run.status === 'running')) throw new Error('Issue already has a running optimization')
-  const previous = runs[0]
-  if (retry && (!previous || previous.status !== 'failed' || previous.runner !== 'deepseek-harness')) {
-    throw new Error('retry requires the latest runtime repair to have failed')
-  }
+  const allRuns = tracker.listRuns()
+  if (allRuns.some(run => run.status === 'running' || run.status === 'awaiting_agent')) throw new Error('repository already has an active execution (running optimization or awaiting Agent); complete, fail, or cancel it first')
+  const previous = allRuns.find(run => run.issue_number === issueNumber)
+  if (retry && (!previous || !['failed', 'cancelled'].includes(String(previous.status)))) throw new Error('retry requires the latest runtime repair to have failed or been cancelled')
   const tests = tracker.listIssueTests(issueNumber)
   const selectedMerge = mergePolicy(tracker.home, String(tracker.project().id))
   if (!tests.length) throw new Error('Issue must have at least one linked reproduction test before optimization')
+  if (executor === 'dsh' && !installedBinary(tracker.home)) throw new Error('DSH executor is not installed; select --executor native or explicitly run setup --with-harness')
   const canonicalBranch = `skillhone/issue-${issueNumber}-${slug(String(issue.title), 36)}`
   let branch = canonicalBranch
   if (retry) {
@@ -216,80 +274,64 @@ function optimizeIssueUnlocked(tracker: Tracker, issueNumber: number, retry = fa
   ].flatMap(value => value.split('\0').filter(Boolean))
   const linkedTestPaths = new Set(tests.map(item => String(item.path)))
   const unrelatedChanges = [...new Set(changedPaths)].filter(path => !linkedTestPaths.has(path))
-  if (unrelatedChanges.length) {
-    throw new Error(`working tree has changes unrelated to Issue tests: ${unrelatedChanges.join(', ')}`)
-  }
+  if (unrelatedChanges.length) throw new Error(`working tree has changes unrelated to Issue tests: ${unrelatedChanges.join(', ')}`)
   if (tracker.git(['rev-parse', '--verify', branch], false)) throw new Error(`optimization branch already exists: ${branch}; use skillhone retry ${issueNumber} after resolving the failure`)
   const base = tracker.project().default_branch
+  const baseCommit = tracker.git(['rev-parse', base])
   tracker.git(['checkout', '-b', branch, retry ? `refs/heads/${previous!.branch}` : base])
-  const record = tracker.startRun(issueNumber, 'deepseek-harness', branch)
+  const record = tracker.startRun(issueNumber, executor === 'native' ? 'native-agent' : 'deepseek-harness', branch,
+    executor === 'native' ? 'awaiting_agent' : 'running')
+  if (executor === 'native') {
+    try {
+      const manifest = saveNativeExecution(tracker, record, { issue_number: issueNumber, branch, base, base_commit: baseCommit, merge_mode: selectedMerge.mode })
+      return { run: publicRun(record), executor: 'native', assignment: nativeAssignment(tracker, manifest), exit_code: 0 }
+    } catch (error) { tracker.finishRun(String(record.id), 'failed'); throw error }
+  }
   let code: number
   try {
-    code = tracker.protectAuditTrail(() => runRepair(
-      repairPrompt(issue, tracker.root, tests), tracker.root, tracker.home, String(record.log_path),
-    ))
-  }
-  catch (error) { tracker.finishRun(String(record.id), 'failed'); throw error }
-  const finished = tracker.finishRun(String(record.id), code === 0 ? 'completed' : 'failed')
-  if (code !== 0) return { run: publicRun(finished), exit_code: code, failure: diagnoseFailure(readFileSync(String(record.log_path), 'utf8')), retry: `skillhone retry ${issueNumber}` }
-  tracker.cleanupGeneratedArtifacts()
-  const verification = tracker.runIssueTests(issueNumber)
-  if (!verification.passed) {
-    tracker.finishRun(String(record.id), 'failed')
-    return { run: publicRun(tracker.runRecord(String(record.id))), tests: verification.tests, exit_code: 1 }
-  }
-  const ahead = tracker.git(['rev-list', '--count', `${base}..${branch}`])
-  if (ahead === '0') {
-    tracker.finishRun(String(record.id), 'failed')
-    throw new Error('DeepSeek Harness exited successfully but created no commit')
-  }
-  if (tracker.git(['status', '--porcelain'])) {
-    tracker.finishRun(String(record.id), 'failed')
-    throw new Error('DeepSeek Harness left uncommitted changes; no PR was created')
-  }
-  const pr = tracker.createPr({
-    title: `Fix #${issueNumber}: ${String(issue.title)}`, head: branch, base,
-    issueNumber, body: repairPrBody({
-      issueNumber, issueTitle: String(issue.title), runner: 'DeepSeek Harness', runId: String(finished.id),
-      diff: tracker.git(['diff', '--name-status', `${base}...${branch}`], false),
-      commitCount: Number(ahead), tests: verification.tests, mergeMode: selectedMerge.mode,
-    }),
+    code = tracker.protectAuditTrail(() => runRepair(repairPrompt(issue, tracker.root, tests), tracker.root, tracker.home, String(record.log_path)))
+    if (code !== 0) {
+      const finished = tracker.finishRun(String(record.id), 'failed')
+      return { run: publicRun(finished), exit_code: code, failure: diagnoseFailure(readFileSync(String(record.log_path), 'utf8')), retry: `skillhone retry ${issueNumber}` }
+    }
+    return finalizeRepair(tracker, issueNumber, record, branch, base, 'DeepSeek Harness', selectedMerge)
+  } catch (error) { tracker.finishRun(String(record.id), 'failed'); throw error }
+}
+
+export function optimizeIssue(tracker: Tracker, issueNumber: number, retry = false, requested?: string, hiddenEval = false): WorkRow {
+  return withOptimizationLock(tracker, () => optimizeIssueUnlocked(tracker, issueNumber, retry, requested, hiddenEval))
+}
+
+function executeExecution(global: Globals, tracker: Tracker): number {
+  const [action, id] = global.args
+  if (!id) throw new Error('execution requires a Run identifier')
+  const result = withOptimizationLock(tracker, () => {
+    if (action === 'fail' || action === 'cancel') return { run: publicRun(endNativeExecution(tracker, id, action === 'fail' ? 'failed' : 'cancelled', required(global.args, '--reason'))) }
+    if (action !== 'complete') throw new Error('execution requires complete, fail, or cancel')
+    const manifest = loadNativeExecution(tracker, id)
+    const candidate = required(global.args, '--commit')
+    const verify = (): void => verifyNativeCandidate(tracker, manifest, candidate)
+    verify()
+    try {
+      return finalizeRepair(tracker, manifest.issue_number, tracker.runRecord(id), manifest.branch, manifest.base,
+        'Current Agent (trusted-host-session)', mergePolicy(tracker.home, tracker.project().id), verify)
+    } catch (error) { tracker.finishRun(id, 'failed'); throw error }
   })
-  let wiki = tracker.upsertWiki(
-    `issue-${issueNumber}-repair`, `Repair record: ${String(issue.title)}`,
-    `Issue #${issueNumber}: ${String(issue.title)}\n\nDeepSeek Harness completed run ${finished.id} on branch ${branch}.\n` +
-    (selectedMerge.mode === 'automatic'
-      ? `Local PR #${pr.number} passed its gates and is authorized for automatic local merge.\nNo push was performed.`
-      : `Local PR #${pr.number} is open for review.\nNo push or merge was performed.`),
-    issueNumber, Number(pr.number),
-  )
-  if (selectedMerge.mode === 'automatic') {
-    const merged = tracker.mergePr(Number(pr.number), true)
-    wiki = tracker.upsertWiki(
-      `issue-${issueNumber}-repair`, `Repair record: ${String(issue.title)}`,
-      `Issue #${issueNumber}: ${String(issue.title)}\n\nDeepSeek Harness completed run ${finished.id} on branch ${branch}.\n` +
-      `Local PR #${pr.number} passed all linked tests and was merged locally by the saved automatic policy.\nNo push was performed.`,
-      issueNumber, Number(pr.number),
-    )
-    return { run: publicRun(finished), pull_request: merged, wiki, merge_policy: selectedMerge }
-  }
-  // Review mode must leave the runtime on the approved base revision. This is
-  // especially important for takeover imports, where Agent runtimes use the
-  // managed repository through a symlink and must not observe an open PR.
-  tracker.git(['checkout', base])
-  return { run: publicRun(finished), pull_request: pr, wiki, merge_policy: selectedMerge }
+  emit(result, global.json)
+  return result.exit_code ? 1 : 0
 }
 
-export function optimizeIssue(tracker: Tracker, issueNumber: number, retry = false): WorkRow {
-  return withOptimizationLock(tracker, () => optimizeIssueUnlocked(tracker, issueNumber, retry))
-}
-
-function guide(home: string): string[] {
+function guide(home: string, project?: string, requested?: string): string[] {
+  if (selectedExecutor(home, project, requested) === 'native') return [
+    'Native attached execution uses the current Agent; no DSH installation or model change is required.',
+    'An assignment waits for the current Agent to edit and commit; execution complete independently verifies the candidate.',
+    'No autonomous runtime bridge or hidden-evaluation isolation is provided by attached mode.',
+  ]
   const harness = harnessStatus(home)
   return [
-    ...(!harness.installed ? ['Run `skillhone setup --with-harness` to install the optional optimizer.'] : []),
-    ...(!harness.model_configured ? ['Run `skillhone harness configure --provider deepseek --model <model>` or configure a default model in Harness.'] : []),
-    'Run `skillhone doctor --probe` to verify model access and native tool execution. Configuration alone does not verify connectivity.',
+    ...(!harness.installed ? ['Run skillhone setup --with-harness to explicitly install the optional DSH executor.'] : []),
+    ...(!harness.model_configured ? ['Configure the optional DSH executor with skillhone harness configure.'] : []),
+    'Run skillhone doctor --probe --executor dsh to verify DSH model and tool access.',
   ]
 }
 
@@ -303,7 +345,7 @@ function selectedAgent(args: string[]): AgentRuntime | undefined {
 
 function executeInit(global: Globals, catalog: Catalog): number {
   const runtime = option(global.args, '--from')
-  const positional = positionals(global.args, ['--from', '--name', '--mode', '--merge', '--audit', '--trigger', '--interval-minutes', '--agent'])
+  const positional = positionals(global.args, ['--from', '--name', '--mode', '--merge', '--audit', '--trigger', '--interval-minutes', '--agent', '--executor'])
   if (runtime && positional.length) throw new Error('provide either a Skill path or --from codex|cursor|claude-code|pi|zcode|all')
   const requestedMode = option(global.args, '--mode')
   const mode = importMode(requestedMode)
@@ -333,9 +375,13 @@ function executeInit(global: Globals, catalog: Catalog): number {
   }
   if (!audit) throw new Error('--audit must be standard or signed')
   if (runtime && !agentRuntimes.has(runtime as AgentRuntime)) throw new Error('--from must be codex, cursor, claude-code, pi, zcode, or all')
-  const configuredTrigger = triggerMode(option(global.args, '--trigger') ?? 'queued')
-  if (!configuredTrigger) throw new Error('--trigger must be queued, immediate, or scheduled')
+  const requestedTrigger = option(global.args, '--trigger')
+  const configuredTrigger = requestedTrigger ? triggerMode(requestedTrigger) : undefined
+  if (requestedTrigger && !configuredTrigger) throw new Error('--trigger must be queued, immediate, or scheduled')
+  const requestedExecutor = option(global.args, '--executor')
+  if (requestedExecutor) executorMode(requestedExecutor)
   const settings = loadSettings(catalog.home); saveSettings(catalog.home, settings)
+  if (requestedExecutor) setExecutor(catalog.home, executorMode(requestedExecutor))
   const agent = selectedAgent(global.args)
   const source = positional[0] ?? global.repo
   const selectedAudit = setAuditPolicy(catalog.home, audit)
@@ -344,12 +390,22 @@ function executeInit(global: Globals, catalog: Catalog): number {
     const tracker = catalog.tracker(String(skill.id))
     try { tracker.auditStatus() } finally { tracker.close() }
   }
+  // Resolve each optional flag independently from the saved global policy:
+  // an explicit --trigger must not reset an omitted saved interval, and an
+  // explicit --interval-minutes must not be ignored when --trigger is omitted.
+  const savedPolicy = policy(catalog.home)
+  const requestedInterval = option(global.args, '--interval-minutes')
+  const interval = requestedInterval === undefined ? savedPolicy.interval_minutes : Number(requestedInterval)
+  const triggerModeValue = configuredTrigger ?? savedPolicy.mode
   emit({
     home: catalog.home,
     import_mode: requestedMode === 'takeover' ? 'takeover' : mode,
-    trigger: setPolicy(catalog.home, configuredTrigger, Number(option(global.args, '--interval-minutes') ?? 60)),
+    trigger: configuredTrigger || requestedInterval !== undefined
+      ? setPolicy(catalog.home, triggerModeValue, interval)
+      : savedPolicy,
     merge: setMergePolicy(catalog.home, merge),
     audit: selectedAudit,
+    executor: executorStatus(catalog.home),
     skills,
     harness: flag(global.args, '--with-harness') ? installHarness(catalog.home) : harnessStatus(catalog.home),
     ...(agent ? { agent_skills: installAgentSkills(agent) } : {}),
@@ -358,12 +414,16 @@ function executeInit(global: Globals, catalog: Catalog): number {
 }
 
 function executeSetup(global: Globals, catalog: Catalog): number {
+  const requestedExecutor = option(global.args, '--executor')
+  if (requestedExecutor) executorMode(requestedExecutor)
   const settings = loadSettings(catalog.home); saveSettings(catalog.home, settings)
+  if (requestedExecutor) setExecutor(catalog.home, executorMode(requestedExecutor))
   const agent = selectedAgent(global.args)
   emit({
     home: catalog.home,
     trigger: policy(catalog.home),
     merge: mergePolicy(catalog.home),
+    executor: executorStatus(catalog.home),
     harness: flag(global.args, '--with-harness') ? installHarness(catalog.home) : harnessStatus(catalog.home),
     ...(agent ? { agent_skills: installAgentSkills(agent) } : {}),
     configuration: guide(catalog.home),
@@ -373,12 +433,16 @@ function executeSetup(global: Globals, catalog: Catalog): number {
 
 function executeDoctor(global: Globals, catalog: Catalog): number {
   const harness = harnessStatus(catalog.home)
-  const probe = flag(global.args, '--probe') ? probeHarness(catalog.home) : undefined
+  const project = selectedProject(global, catalog)
+  const executor = executorStatus(catalog.home, project, option(global.args, '--executor'))
+  const selected = executor.selected
+  const probe = flag(global.args, '--probe') && selected === 'dsh' ? probeHarness(catalog.home) : undefined
+  const ready = selected === 'native' || (harness.installed && harness.model_configured && (probe?.ok ?? true))
   emit({
-    ok: probe?.ok ?? true, ready_for_optimization: harness.installed && harness.model_configured && (probe?.ok ?? true),
+    ok: probe?.ok ?? true, ready_for_optimization: ready, executor,
     connectivity_verified: probe?.ok ?? false, ...(probe ? { probe } : {}),
     node: { available: true, version: process.version }, harness,
-    trigger: policy(catalog.home), merge: mergePolicy(catalog.home), audit: auditPolicy(catalog.home), configuration: guide(catalog.home),
+    trigger: policy(catalog.home), merge: mergePolicy(catalog.home), audit: auditPolicy(catalog.home), configuration: guide(catalog.home, project, option(global.args, '--executor')),
   }, global.json)
   return probe && !probe.ok ? 1 : 0
 }
@@ -449,13 +513,15 @@ function executeConfigSet(global: Globals, catalog: Catalog, project: string | u
   const requestedTrigger = option(global.args, '--trigger')
   const requestedMerge = option(global.args, '--merge')
   const requestedAudit = option(global.args, '--audit')
-  if (!requestedTrigger && !requestedMerge && !requestedAudit) throw new Error('config set requires --trigger, --merge, or --audit')
+  const requestedExecutor = option(global.args, '--executor')
+  if (!requestedExecutor && !requestedTrigger && !requestedMerge && !requestedAudit) throw new Error('config set requires --executor, --trigger, --merge, or --audit')
   const selectedTrigger = requestedTrigger ? triggerMode(requestedTrigger) : undefined
   const selectedMerge = requestedMerge ? selectedMergeMode(requestedMerge) : undefined
   const selectedAudit = requestedAudit ? selectedAuditMode(requestedAudit) : undefined
   if (requestedTrigger && !selectedTrigger) throw new Error('--trigger must be queued, immediate, or scheduled')
   if (requestedMerge && !selectedMerge) throw new Error('--merge must be review or automatic')
   if (requestedAudit && !selectedAudit) throw new Error('--audit must be standard or signed')
+  if (requestedExecutor) executorMode(requestedExecutor)
   const configuredAudit = selectedAudit ? setAuditPolicy(catalog.home, selectedAudit, project) : auditPolicy(catalog.home, project)
   if (selectedAudit === 'signed') {
     const trackers = project
@@ -467,13 +533,14 @@ function executeConfigSet(global: Globals, catalog: Catalog, project: string | u
     trigger: selectedTrigger ? setPolicy(catalog.home, selectedTrigger, Number(option(global.args, '--interval-minutes') ?? 60), project) : policy(catalog.home, project),
     merge: selectedMerge ? setMergePolicy(catalog.home, selectedMerge, project) : mergePolicy(catalog.home, project),
     audit: configuredAudit,
+    executor: requestedExecutor ? setExecutor(catalog.home, executorMode(requestedExecutor), project) : executorPolicy(catalog.home, project),
   }, global.json)
 }
 
 function executeConfig(global: Globals, catalog: Catalog): number {
   const action = global.args[0]
   const project = selectedProject(global, catalog)
-  if (action === 'show') emit({ trigger: policy(catalog.home, project), merge: mergePolicy(catalog.home, project), audit: auditPolicy(catalog.home, project) }, global.json)
+  if (action === 'show') emit({ executor: executorPolicy(catalog.home, project), trigger: policy(catalog.home, project), merge: mergePolicy(catalog.home, project), audit: auditPolicy(catalog.home, project) }, global.json)
   else if (action === 'set') executeConfigSet(global, catalog, project)
   else if (action === 'reset' && project) emit({ trigger: clearPolicy(catalog.home, project), audit: clearAuditPolicy(catalog.home, project) }, global.json)
   else if (action === 'reset') throw new Error('global trigger policy cannot be reset; set it explicitly')
@@ -491,9 +558,11 @@ function dispatchOnce(global: Globals, catalog: Catalog): WorkRow[] {
   const results: WorkRow[] = []
   for (const tracker of dispatchTargets(global, catalog)) try {
     if (policy(catalog.home, tracker.project().id).mode === 'immediate') continue
+    if (tracker.listRuns().some(run => run.status === 'running' || run.status === 'awaiting_agent')) continue
     for (const issue of tracker.pendingIssues()) {
       try {
-        results.push({ skill: tracker.project().name, issue: issue.number, optimization: optimizeIssue(tracker, Number(issue.number)) })
+        results.push({ skill: tracker.project().name, issue: issue.number, optimization: optimizeIssue(tracker, Number(issue.number), false, option(global.args, '--executor'), flag(global.args, '--hidden-eval')) })
+        if (selectedExecutor(catalog.home, tracker.project().id, option(global.args, '--executor')) === 'native') break
       } catch (error) {
         results.push({
           skill: tracker.project().name, issue: issue.number,
@@ -531,7 +600,7 @@ function executeIssue(global: Globals, catalog: Catalog, tracker: Tracker): numb
       ...result.issue, created: result.created, automation,
       merge_policy: mergePolicy(catalog.home, tracker.project().id),
     }
-    if (result.created && automation.mode === 'immediate') output.optimization = optimizeIssue(tracker, Number(result.issue.number))
+    if (result.created && automation.mode === 'immediate') output.optimization = optimizeIssue(tracker, Number(result.issue.number), false, option(global.args, '--executor'), flag(global.args, '--hidden-eval'))
     emit(output, global.json)
     return (output.optimization as WorkRow | undefined)?.exit_code ? 1 : 0
   } else if (action === 'test') executeIssueTest(global, tracker, reference)
@@ -590,6 +659,8 @@ function executeBenchmarkRun(global: Globals, tracker: Tracker): void {
 }
 
 function executeBenchmarkOptimization(global: Globals, tracker: Tracker): void {
+  if (flag(global.args, '--hidden-eval')) throw new Error('configured executors do not provide hidden evaluation isolation; use a fresh permission-restricted role')
+  if (selectedExecutor(tracker.home, tracker.project().id, option(global.args, '--executor')) === 'native') throw new Error('native attached execution does not support benchmark optimization; a fresh permission-restricted evaluation role is required')
   const maxIterations = Number(option(global.args, '--max-iterations') ?? 1)
   emit(optimizeBenchmark(
     tracker, Number(option(global.args, '--min-improvement') ?? 0.02), maxIterations,
@@ -613,11 +684,12 @@ function executeRepositoryCommand(global: Globals, catalog: Catalog): number {
   }
   const tracker = global.skill ? catalog.tracker(global.skill) : new Tracker(global.repo, global.home)
   try {
+    if (global.command === 'execution') return executeExecution(global, tracker)
     if (global.command === 'issue') return executeIssue(global, catalog, tracker)
     else if (global.command === 'pr') executePr(global, tracker)
     else if (global.command === 'wiki') executeWiki(global, tracker)
     else if (global.command === 'optimize' || global.command === 'retry') {
-      const result = optimizeIssue(tracker, number(global.args[0], 'issue number'), global.command === 'retry')
+      const result = optimizeIssue(tracker, number(global.args[0], 'issue number'), global.command === 'retry', option(global.args, '--executor'), flag(global.args, '--hidden-eval'))
       emit(result, global.json)
       return result.exit_code ? 1 : 0
     }

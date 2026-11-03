@@ -18,7 +18,7 @@ import {
 import { main } from '../cli.js'
 import {
   auditPolicy, benchmarkHarnessHome, configureHarness, evaluatorHarnessHome, evaluatorPatchPath, harnessHome,
-  loadSettings, mergePolicy, modelConfigured, policy, profilePatchPath, setAuditPolicy, setMergePolicy, setPolicy,
+  loadSettings, mergePolicy, modelConfigured, policy, setExecutor, profilePatchPath, setAuditPolicy, setMergePolicy, setPolicy,
   testedHarnessPackage,
 } from '../core/settings.js'
 import { Tracker, type WorkRow } from '../core/tracker.js'
@@ -302,6 +302,38 @@ test('Init requires explicit ownership and merge choices before importing', asyn
   }
 })
 
+test('Init without --trigger preserves an existing global trigger and interval', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'skillhone-ts-init-trigger-'))
+  const originalLog = console.log
+  try {
+    const source = join(root, 'source')
+    mkdirSync(source, { recursive: true })
+    writeFileSync(join(source, 'SKILL.md'), '---\nname: init-trigger-skill\ndescription: test\n---\n')
+    const home = join(root, 'home')
+    const output: string[] = []
+    console.log = (...args: unknown[]) => { output.push(args.map(String).join(' ')) }
+
+    // Establish a non-default global trigger and interval.
+    assert.equal(await main(['--home', home, '--json', 'config', 'set', '--trigger', 'scheduled', '--interval-minutes', '30', '--merge', 'automatic']), 0)
+    assert.deepEqual(policy(home), { mode: 'scheduled', interval_minutes: 30, scope: 'default' })
+
+    // Importing another skill without --trigger must not reset the saved policy.
+    assert.equal(await main(['--home', home, '--repo', source, '--json', 'init', '--mode', 'copy', '--merge', 'automatic']), 0)
+    const preserved = JSON.parse(String(output.shift())) as Record<string, unknown>
+    assert.equal((preserved.trigger as Record<string, unknown>).mode, 'scheduled')
+    assert.equal((preserved.trigger as Record<string, unknown>).interval_minutes, 30)
+    assert.deepEqual(policy(home), { mode: 'scheduled', interval_minutes: 30, scope: 'default' })
+
+    // An explicit --trigger still overrides the saved mode, but an omitted
+    // --interval-minutes must preserve the saved interval rather than reset it.
+    assert.equal(await main(['--home', home, '--repo', source, '--json', 'init', '--mode', 'copy', '--merge', 'automatic', '--trigger', 'immediate']), 0)
+    assert.deepEqual(policy(home), { mode: 'immediate', interval_minutes: 30, scope: 'default' })
+  } finally {
+    console.log = originalLog
+    await rm(root, { recursive: true, force: true })
+  }
+})
+
 test('Local PR needs explicit confirmation and exposes review evidence', async () => {
   const value = await fixture()
   try {
@@ -530,6 +562,7 @@ import { join } from 'node:path'
 process.exit(existsSync(join(process.cwd(), 'fixed.txt')) ? 0 : 1)
 `)
 
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh
@@ -597,6 +630,7 @@ process.exit(existsSync('audit-guard-fixed.txt') ? 0 : 1)
     probe.close()
     setAuditPolicy(value.home, 'signed', projectId)
 
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh
@@ -656,6 +690,7 @@ test('Automatic merge policy merges only after the linked test passes', async ()
 import { existsSync } from 'node:fs'
 process.exit(existsSync('auto-merged.txt') ? 0 : 1)
 `)
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh
@@ -707,6 +742,7 @@ test('Queued reporting needs no repair approval and dispatches it once', async (
 import { existsSync } from 'node:fs'
 process.exit(existsSync('scheduled-fixed.txt') ? 0 : 1)
 `)
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh
@@ -770,6 +806,7 @@ process.exit(existsSync('fixed-${number}.txt') ? 0 : 1)
     run('git', ['add', '.test'], value.repo)
     run('git', ['commit', '-m', 'test: add queued issue contracts'], value.repo)
 
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh
@@ -842,6 +879,7 @@ process.exit(existsSync('recovered-${number}.txt') ? 0 : 1)
 `)
     run('git', ['add', '.test'], value.repo)
     run('git', ['commit', '-m', 'test: add dispatcher recovery contracts'], value.repo)
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh
@@ -901,12 +939,14 @@ test('TypeScript Web API serves bilingual workbench without local paths', async 
     const address = server.address(); assert.ok(address && typeof address === 'object')
     const base = `http://127.0.0.1:${address.port}`
     const dashboard = await request(`${base}/api/dashboard`)
-    const parsed = JSON.parse(dashboard.body) as { issues: unknown[]; pull_requests: Array<Record<string, unknown>>; notifications: { approval_required: number }; audit: Record<string, unknown> }
+    const parsed = JSON.parse(dashboard.body) as { issues: unknown[]; pull_requests: Array<Record<string, unknown>>; notifications: { approval_required: number }; executor: Record<string, unknown>; audit: Record<string, unknown> }
     assert.equal(parsed.issues.length, 1)
     assert.equal(parsed.pull_requests[0]?.decision_state, 'awaiting_approval')
     assert.equal(parsed.notifications.approval_required, 1)
     assert.equal(parsed.audit.integrity, 'verified')
-    assert.equal(parsed.audit.runner_writes, 'blocked-during-run')
+    assert.equal(parsed.audit.runner_writes, 'trusted-host-session')
+    assert.equal(parsed.executor.selected, 'native')
+    assert.equal(parsed.executor.ready_for_autonomous_execution, false)
     assert.doesNotMatch(dashboard.body, new RegExp(value.root.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))
     const issueDetail = JSON.parse((await request(
       `${base}/api/skills/${encodeURIComponent(String(registered.id))}/issues/1`,
@@ -1086,6 +1126,7 @@ writeFileSync(args['--output'], JSON.stringify({score: improved ? 1.0 : 0.9, n_t
 `)
     run('git', ['add', '.'], evalRepo); run('git', ['commit', '-m', 'freeze evaluation'], evalRepo)
 
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh
@@ -1194,6 +1235,7 @@ const args = Object.fromEntries(process.argv.slice(2).reduce((rows, value, index
 writeFileSync(args['--output'], JSON.stringify({score: 0.4, n_total: 1, n_passed: 0, traces: [{query: 'PRIVATE FLAT PROBE', passed: false, error: 'wrong answer included private text'}]}))
 `)
     run('git', ['add', '.'], evalRepo); run('git', ['commit', '-m', 'freeze flat evaluation'], evalRepo)
+    setExecutor(value.home, 'dsh')
     const binaryDir = join(value.home, 'harness', 'node_modules', '.bin'); mkdirSync(binaryDir, { recursive: true })
     const binary = join(binaryDir, 'dsh')
     writeFileSync(binary, `#!/bin/sh

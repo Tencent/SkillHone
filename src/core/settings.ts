@@ -7,6 +7,7 @@ import { managedHarnessDependencyPolicy } from './harness-dependencies.js'
 export type TriggerMode = 'queued' | 'immediate' | 'scheduled'
 export type MergeMode = 'review' | 'automatic'
 export type AuditMode = 'standard' | 'signed'
+export type ExecutorMode = 'auto' | 'native' | 'dsh'
 export interface Policy { mode: TriggerMode; interval_minutes: number; scope: 'default' | 'skill' }
 export interface MergePolicy { mode: MergeMode; scope: 'default' | 'skill' }
 export interface AuditPolicy { mode: AuditMode; scope: 'default' | 'skill' }
@@ -16,6 +17,7 @@ interface Settings {
   merge: { default: MergeMode; skills: Record<string, MergeMode> }
   audit: { default: AuditMode; skills: Record<string, AuditMode> }
   harness: { package: string }
+  executor: { default: ExecutorMode; skills: Record<string, ExecutorMode> }
 }
 
 export const testedHarnessPackage = managedHarnessDependencyPolicy.package
@@ -25,6 +27,7 @@ const defaults: Settings = {
   merge: { default: 'review', skills: {} },
   audit: { default: 'standard', skills: {} },
   harness: { package: testedHarnessPackage },
+  executor: { default: 'auto', skills: {} },
 }
 
 function triggerMode(value: unknown): TriggerMode {
@@ -56,6 +59,10 @@ export function loadSettings(home: string): Settings {
   if (!existsSync(path)) return structuredClone(defaults)
   const parsed = JSON.parse(readFileSync(path, 'utf8')) as Partial<Settings>
   return {
+    executor: {
+      default: parsed.executor === undefined ? 'dsh' : executorMode(parsed.executor.default),
+      skills: Object.fromEntries(Object.entries(parsed.executor?.skills ?? {}).map(([key, value]) => [key, executorMode(value)])),
+    },
     automation: {
       default: {
         mode: triggerMode(parsed.automation?.default?.mode),
@@ -90,6 +97,26 @@ function atomic(path: string, text: string): void {
 
 export function saveSettings(home: string, value: Settings): void {
   atomic(join(home, 'settings.json'), JSON.stringify(value, null, 2))
+}
+
+export function executorMode(value: unknown): ExecutorMode {
+  if (value === undefined || value === 'auto') return 'auto'
+  if (value === 'native' || value === 'dsh') return value
+  throw new Error('executor must be auto, native, or dsh')
+}
+
+export function executorPolicy(home: string, project?: string): { mode: ExecutorMode; scope: 'default' | 'skill' } {
+  const settings = loadSettings(home)
+  const selected = project ? settings.executor.skills[project] : undefined
+  return { mode: selected ?? settings.executor.default, scope: selected ? 'skill' : 'default' }
+}
+
+export function setExecutor(home: string, mode: ExecutorMode, project?: string): ReturnType<typeof executorPolicy> {
+  const settings = loadSettings(home)
+  if (project) settings.executor.skills[project] = executorMode(mode)
+  else settings.executor.default = executorMode(mode)
+  saveSettings(home, settings)
+  return executorPolicy(home, project)
 }
 
 export function policy(home: string, project?: string): Policy {

@@ -1,6 +1,7 @@
-# SkillHone Python dependencies
+# Optional SkillHone Python static-check dependencies
 # -----------------------------------------------------------------------------
-# Install:
+# These are not dependencies of the Node.js CLI or native repair executor.
+# Install only when running the bundled Python metadata/static checks:
 #   pip install -r requirements.txt
 #
 # Recommended inside a virtualenv:
@@ -13,9 +14,11 @@
 # YAML parsing for skill metadata and static checks
 PyYAML==6.0.3
 
-# Runtime maintenance uses the Python standard library plus Git. DeepSeek
-# Harness runs as a separate Node.js process, so no Agent SDK, Anthropic client,
-# LiteLLM proxy, HTTP client, or GitPython package is required here.
+# The CLI/state backend use Node.js and Git. Native repair uses the current
+# Agent session; it requires neither this Python environment nor a separate
+# model SDK. DSH is optional and runs as a managed Node.js process only when
+# explicitly selected. No Agent SDK, Anthropic client, LiteLLM proxy, HTTP
+# client, or GitPython package is required by these offline checks.
 
 # ── Development / test dependencies (optional) ──────────────────────────────
 
