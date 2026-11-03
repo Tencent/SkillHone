@@ -7,7 +7,7 @@ import { main } from '../cli.js'
 import { Catalog } from '../core/catalog.js'
 import { install } from '../core/harness.js'
 import { managedHarnessDependencyPolicy, managedHarnessPnpmWorkspace } from '../core/harness-dependencies.js'
-import { harnessHome, setPolicy } from '../core/settings.js'
+import { harnessHome, setPolicy, setExecutor } from '../core/settings.js'
 import { Tracker } from '../core/tracker.js'
 import { run } from '../core/util.js'
 
@@ -23,6 +23,7 @@ function fixture() {
   run('git', ['config', 'user.name', 'SkillHone Test'], repo)
   run('git', ['config', 'user.email', 'test@skillhone.local'], repo)
   run('git', ['add', '.'], repo); run('git', ['commit', '-m', 'seed'], repo)
+  setExecutor(home, 'dsh')
   const bin = join(home, 'harness', 'node_modules', '.bin'); mkdirSync(bin, { recursive: true })
   return { root, home, repo, binary: join(bin, 'dsh') }
 }

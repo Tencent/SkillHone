@@ -42,7 +42,10 @@ returns a tested local PR. The Issue, test, diff, run and decision stay together
 so the next Agent can build on what was learned.
 
 Works with CLI-capable Agents, including **Codex, Claude Code, Cursor, Pi and
-ZCode**. DeepSeek Harness runs the repairs; your Agent reports the problem.
+ZCode**. New installations use the current Agent for repair assignments,
+preserving its model and account. [DeepSeek Harness](docs/deepseek-harness.md)
+is an optional managed executor; existing installations retain their saved
+choice. The host verifies the committed repair and linked tests before a PR.
 
 ## SkillHone in 35 seconds
 
@@ -94,8 +97,9 @@ Issues, runs, PRs, approval state and Wiki records into one view.
 ## Acknowledgements
 
 SkillHone uses [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
-as its repair executor. It works on an isolated branch and runs the linked tests;
-SkillHone keeps the resulting local PR, evidence and decision history together.
+as an optional managed repair executor. Native assignments use the current
+Agent instead. Both paths keep test-gated local PRs, evidence, and decision
+history in SkillHone; installing DSH is not required for native repair.
 
 [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) ·
 [MIT License](LICENSE) · [Third-party notices](THIRD_PARTY_NOTICES.md)

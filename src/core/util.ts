@@ -24,6 +24,11 @@ export function redact(value: unknown): string {
   return text
 }
 
+export function processExitCode(result: { status: number | null; error?: Error }): number {
+  if (result.error) return (result.error as NodeJS.ErrnoException).code === 'ETIMEDOUT' ? 124 : 1
+  return result.status ?? 1
+}
+
 export function run(command: string, args: string[], cwd?: string, check = true): string {
   const result = spawnSync(command, args, { cwd, encoding: 'utf8' })
   if (check && result.status !== 0) {

@@ -40,9 +40,10 @@ managed-Skill signal: never repair such a repository directly on `main`.
 
 Do not reinterpret this workflow as optional because the user's primary request
 was to run the broken Skill. Recording and repairing the defect through
-SkillHone is the way to unblock that request. If Harness is not configured,
-create or reuse the Issue, report the configuration blocker, and stop; do not
-perform a direct repair instead.
+SkillHone is the way to unblock that request. For new homes, the default auto executor selects native:
+it prepares work for the current Agent without a DSH installation or new model
+credential. A missing optional DSH installation blocks only an explicitly
+selected DSH repair; do not switch executors or providers silently.
 
 The local Git repository must be the repository containing the target skill.
 One Skill maps to exactly one repository:
@@ -80,20 +81,40 @@ and the user selected the cataloged Skill by name.
    SkillHone creates or reuses one Issue in the local project database. An
    uncommitted linked test is allowed into the repair branch; any unrelated
    working-tree change still blocks optimization.
-6. Let the configured trigger policy decide how the queue is consumed, without
-   asking for repair approval. `immediate` starts Harness in the Issue command.
-   For `queued`, the reporting Agent must call
-   `skillhone --repo <target-repository> dispatch` and let the dispatcher consume
-   queued Issues serially; do not ask whether to dispatch. `scheduled` is
-   consumed by `skillhone dispatch --watch` at the saved interval and likewise
-   requires no per-Issue confirmation.
-7. Only the dispatched repair Agent may add focused implementation files and
-   repair tests. The reporting Agent must not implement the fix itself.
-8. On success, the CLI reruns the Issue tests and records the committed branch
-   as a local PR only when they pass. The saved merge policy either places it
-   in the approval inbox or merges it locally; neither path pushes.
-9. When the user asks to inspect Issues, PRs, trajectories, or completed fixes,
-   run `skillhone web --open`; Runs are shown inside their linked Issue/PR.
+6. Inspect the executor policy. `auto` resolves to `native`, using the current
+   Agent; `dsh` requires an explicit choice. The saved trigger controls when work
+   is prepared, not which model or provider to switch to. If Issue reporting or
+   dispatch already returned a native assignment, reuse it instead of creating
+   a duplicate. For a queued Issue, call the dispatcher or optimize the selected
+   Issue; no extra repair approval is needed.
+   Existing settings without an executor field preserve DSH compatibility;
+   choose `config set --executor auto` explicitly to migrate.
+7. For native execution, retain the assignment's `run_id`, `worktree`, `branch`,
+   `base_commit`, tests, and `completion_args` (an argv vector, not a shell command). `awaiting_agent` means prepared
+   and waiting for the current Agent; it is neither running nor failed. Use the
+   current runtime's tools or independent repair role to reproduce, repair,
+   test, and commit in the assigned path. Preserve the current model, account,
+   and provider. Do not install or start DSH for this path.
+8. Give the repair role only the safe reproduction and assigned workspace. It
+   must not call SkillHone, modify host audit/state files, alter registered
+   reproduction tests, dispatch another repair, merge, or push. It returns an
+   exact commit SHA, changed files, test commands/results, and remaining limits.
+9. The host reviews the actual candidate and independently reruns its checks,
+   then calls `execution complete <run-id> --commit <exact-commit-sha>` in the
+   same repository. The CLI verifies the branch/base/test contract and runs
+   the test gate before making a PR. The saved merge policy applies on the
+   host only. Use `execution fail` or `execution cancel` with a safe reason to
+   end an assignment that cannot complete.
+10. With DSH explicitly selected, dispatch starts the managed child process.
+    Only that repair role edits the implementation; the host reruns tests and
+    records the PR after the process exits. Missing installation/configuration
+    is reported for DSH, not treated as native unavailability.
+11. For Issues, PRs, trajectories, or completed fixes, use `skillhone web --open`.
+
+The native boundary is a trusted host session, not a sandbox or a database lock
+held between CLI commands. A separate role or `fork_turns=none` changes context
+sharing; neither proves hidden-evaluation isolation. Both current backends reject
+`--hidden-eval`; protect hidden evaluation data outside the repair environment.
 
 ## Agent command
 
@@ -121,9 +142,23 @@ skillhone config set --trigger scheduled --interval-minutes 60
 skillhone dispatch --watch
 ```
 
+For native execution, dispatch/watch prepares assignments; a live current Agent
+must still perform them. It does not run an unattended native Agent daemon.
+
 Merge policy is separate: `review` creates an approval notification;
 `automatic` is an explicit saved authorization to merge only after all linked
 tests pass. Neither authorizes a push.
+
+### Native host commands
+
+```bash
+skillhone --repo /path/to/skill optimize 1 --executor native
+# Current Agent repairs/commits the returned assignment; host verifies it:
+skillhone --repo /path/to/skill execution complete <run-id> --commit <exact-commit-sha>
+```
+
+There is no `execution prepare` command: `optimize` or `retry` prepares the
+assignment. A retry keeps the previous attempt and requires the same repository.
 
 ## Composition
 
@@ -133,7 +168,8 @@ normal Agent task
       → skillhone-auto-optimization
       → skillhone CLI (local Issue and PR backend)
       → trigger policy (queued / immediate / scheduled)
-      → managed DeepSeek Harness (focused repair)
+      → selected executor: current Agent (auto/native) or optional DSH
+      → host verifies exact commit and test gate → local PR
 ```
 
 ## Hard rules
@@ -142,8 +178,10 @@ normal Agent task
   Issue before any implementation edit or dependency installation.
 - Never dismiss this workflow as belonging only to the SkillHone source repo;
   it governs the failing target Skill wherever that repository lives.
-- The reporting Agent may add a reproduction under `.test/`, but it must not
-  repair production files or install the missing runtime dependency.
+- Before an assignment exists, the reporting Agent may add only the focused
+  reproduction under `.test/`. After native preparation, the assigned repair
+  role may change the implementation; host audit and merge duties remain
+  outside that role.
 - Run Python reproductions and independent checks with
   `PYTHONDONTWRITEBYTECODE=1`. Before reporting the final repository state,
   remove only generated caches created by the workflow (`__pycache__/`,

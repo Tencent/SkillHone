@@ -56,6 +56,54 @@ Object.assign(messages.zh,{
   reviewSkill:'审阅 {name}',updatedNow:'刚刚更新',
 });
 
+
+Object.assign(messages.en,{
+  allSkills:'All skills',status:'Overview',skillOverview:'Skills',workbench:'Workbench',repositoryWorkspace:'Repository workspace',backWorkspace:'Back to workspace',
+  workQueue:'Needs attention',queueClear:'No tasks need attention.',currentIssues:'Current issues',recentActivity:'Recent activity',
+  globalExecutor:'Global executor',defaultTrigger:'Default trigger',trigger:'Trigger',mergeRule:'Merge',queued:'Queued',queueTrigger:'Dispatch on demand',
+  immediate:'Start immediately',scheduled:'Scheduled',activeSkills:'Running',needsApproval:'Review',failedTasks:'Failed',openIssues:'Open issues',
+  hideFromOverview:'Hide from overview',restoreToOverview:'Restore to overview',hiddenSkills:'Hidden',hiddenNotice:'Hidden from the overview. Its history is still available here.',
+  hiddenHelp:'Hidden repositories are excluded from overview counts and tasks. Their history is preserved.',
+  visibleSkills:'Visible skills',source:'Source',defaultBranch:'Branch',repositorySummary:'Repository summary',
+  testsAndRepair:'Tests and repair details',openWorkspace:'Open workspace',openCode:'View code',viewAll:'View all',
+  noMatchingRecords:'No records match this filter.',clearFilters:'Clear filters',skillSearch:'Find a skill…',
+  overviewHint:'Repository, current work, and repair history.',allTasks:'All tasks',activeTasks:'Running',reviewTasks:'Review',
+  taskCount:'{count} tasks',completedRepairs:'Completed repairs',noCurrentIssues:'No open issues in this repository.',
+  allRepositories:'All skills',scopeUnavailable:'This repository is not available in the current catalog.',
+  sourceMaintenance:'Runtime maintenance',noRecentRuns:'No repair activity recorded.',
+  shownSkills:'Showing {shown} of {total} skills',showMoreSkills:'Show 20 more',collapseSkills:'Collapse list',loadingWorkbench:'Loading workbench…',loadingRecord:'Loading repository record…',navigationFailed:'Could not load this record',retry:'Retry',
+  optimizationProgress:'Optimization progress',lastDays:'Last {days} days',byDay:'By day',byWeek:'By week',completedRuns:'Completed runs',failedRuns:'Failed runs',mergedRepairs:'Merged repairs',
+  progressNote:'Local records only. Completion and merge are separate; failed attempts may belong to resolved issues.',noProgressEvents:'No recorded optimization events in this period.',progressTrend:'Completed runs, failed runs, and merged repairs over time',progressBreakdown:'View period breakdown',period:'Period',issueResolved:'Issue resolved',issueClosedNote:'Issue closed',resolvedHistory:'This issue was resolved by a merged repair.',historicalRuns:'The runs below are historical attempts; their original results are preserved.',viewRepair:'View repair',attemptCount:'{count} attempts',attemptHistory:'View {count} run records',allActivity:'All activity',collapseActivity:'Show recent activity',hideShort:'Hide',restoreShort:'Restore',currentAgent:'Current Agent',dshExecutor:'DSH',awaiting_agent:'Waiting for current Agent',cancelled:'Cancelled',executorReady:'Ready',executorNeedsSetup:'Needs setup',globalRunning:'Global running',repairExecutor:'Repair executor',executorMode:'Execution mode',attachedSession:'Current session',managedProcess:'Managed process',executorCapability:'Capability',assignmentReady:'Can prepare assignments',autonomousReady:'Can run unattended',currentSessionModel:'Keep current session model',optionalDsh:'DSH (optional)',notInstalled:'Not installed',executionBoundary:'Execution boundary',trustedSession:'Trusted current session',lockedProcess:'Host-locked process',
+});
+Object.assign(messages.zh,{
+  status:'总览',repositories:'技能',skillRepositories:'全部技能',code:'代码',skills:'技能',issues:'问题',pullRequests:'修复请求',wiki:'工作记录',
+  listSkills:'技能',listIssues:'问题',listPrs:'修复请求',listWiki:'工作记录',issue:'问题',pr:'修复请求',wikiPage:'工作记录',
+  issuesShort:'问题',prsShort:'修复请求',wikiShort:'工作记录',allRepositories:'全部技能',allSkills:'全部技能',
+  workbench:'工作台',repositoryWorkspace:'仓库工作区',backWorkspace:'返回工作区',skillOverview:'技能',yourSkills:'技能',visibleSkills:'显示中的技能',
+  overviewHint:'查看仓库、当前任务和修复记录。',skillSearch:'搜索技能…',skillName:'技能',
+  workQueue:'需处理',queueClear:'当前没有需要处理的任务。',currentIssues:'当前问题',recentActivity:'最近活动',
+  globalExecutor:'全局执行器',defaultTrigger:'默认触发',trigger:'触发',mergeRule:'合并',queued:'排队中',queueTrigger:'排队后调度',
+  immediate:'立即开始',scheduled:'定时开始',optimizing:'修复中',review:'待审阅',done:'已完成',needsApproval:'待审阅',
+  activeSkills:'运行中',failedTasks:'失败',openIssues:'未关闭问题',openPrs:'未关闭修复请求',wikiPages:'工作记录',
+  hideFromOverview:'从总览隐藏',restoreToOverview:'恢复显示',hiddenSkills:'已隐藏',
+  hiddenNotice:'此仓库已从总览隐藏，仍可在这里查看历史。',hiddenHelp:'隐藏的仓库不计入总览统计和任务，历史记录保留。',
+  source:'来源',defaultBranch:'分支',repositorySummary:'仓库信息',testsAndRepair:'测试与修复详情',openWorkspace:'进入工作区',openCode:'查看代码',
+  noMatchingRecords:'没有符合筛选条件的记录。',noMatchingSkills:'没有符合筛选条件的技能。',clearFilters:'清空筛选',
+  noSkillsTitle:'还没有技能仓库',noSkillsHint:'导入技能仓库后，即可查看问题和修复进展。',
+  allTasks:'全部任务',activeTasks:'运行中',reviewTasks:'待审阅',taskCount:'{count} 项任务',
+  noCurrentIssues:'此仓库当前没有未关闭的问题。',noOpenIssues:'没有未关闭的问题',noActiveWork:'暂无任务',
+  scopeUnavailable:'当前登记表中没有此仓库。',sourceMaintenance:'运行时维护',
+  evidence:'问题描述与复现',noTests:'此问题尚未关联复现测试。',linkedPrs:'关联修复请求',noPr:'尚无关联修复请求。',
+  closesIssue:'关联问题',reproductionTests:'复现测试',prDescription:'修复说明',noPrDescription:'尚无修复说明。',
+  noApprovals:'没有待审阅的修复请求。',awaitingApproval:'待审阅',approvalInbox:'待审阅修复',onlyApprovals:'仅看待审阅',allPullRequests:'全部修复请求',
+  mergeApproval:'等待审阅',mergeApprovalBody:'查看问题、测试、提交和变更文件后，可在这里合入修复。',
+  mergeFailed:'修复请求合入失败。',noRecentRuns:'尚无修复活动。',noRuns:'尚无修复运行。',trajectory:'修复进展',recentRuns:'最近运行',
+  completedRepairs:'已完成修复',mergeReview:'审阅后合入',mergeAutomatic:'测试通过后自动合入',
+  shownSkills:'已显示 {shown} / {total} 项',showMoreSkills:'再显示 20 项',collapseSkills:'收起列表',loadingWorkbench:'正在加载工作台…',loadingRecord:'正在加载仓库记录…',navigationFailed:'记录加载失败',retry:'重试',
+  optimizationProgress:'优化进展',lastDays:'近 {days} 天',byDay:'按天',byWeek:'按周',completedRuns:'完成运行',failedRuns:'失败运行',mergedRepairs:'修复合入',
+  progressNote:'按本地留存记录统计；运行完成与修复合入分别计数，历史失败不等于未解决问题数。',noProgressEvents:'所选时间段没有留存的优化事件。',progressTrend:'完成运行、失败运行与修复合入的时间趋势',progressBreakdown:'查看分段明细',period:'时间段',issueResolved:'问题已解决',issueClosedNote:'问题已关闭',resolvedHistory:'此问题已通过修复请求解决。',historicalRuns:'以下为历史运行记录，保留每次尝试的原始结果。',viewRepair:'查看修复',attemptCount:'{count} 次尝试',attemptHistory:'查看 {count} 次运行记录',allActivity:'全部活动',collapseActivity:'只看最近活动',hideShort:'隐藏',restoreShort:'恢复',currentAgent:'当前 Agent',dshExecutor:'DSH',awaiting_agent:'等待当前 Agent',cancelled:'已取消',executorReady:'就绪',executorNeedsSetup:'需要配置',globalRunning:'全局运行',repairExecutor:'修复执行器',executorMode:'执行方式',attachedSession:'当前会话',managedProcess:'托管进程',executorCapability:'执行能力',assignmentReady:'可准备修复任务',autonomousReady:'可无人值守执行',currentSessionModel:'沿用当前会话模型',optionalDsh:'DSH（可选）',notInstalled:'未安装',executionBoundary:'执行边界',trustedSession:'受信任的当前会话',lockedProcess:'宿主锁定的进程',
+});
+
 // SVG path data from Primer Octicons. See THIRD_PARTY_NOTICES.md.
 const iconPaths={
   issue:'<path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"/><path d="M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0ZM1.5 8a6.5 6.5 0 1 0 13 0 6.5 6.5 0 0 0-13 0Z"/>',
@@ -71,7 +119,8 @@ const requestedLocale=new URLSearchParams(location.search).get('lang');
 const initialLocale=requestedLocale==='en'||requestedLocale==='zh'
   ?requestedLocale
   :storedLocale||((navigator.language||'').toLowerCase().startsWith('zh')?'zh':'en');
-const state={view:'status',items:{skills:[],issues:[],prs:[],wiki:[],runs:[]},harness:{state:'unavailable',active_runs:0,launch_mode:'unavailable'},audit:{integrity:'failed'},automation:{default:{mode:'queued',interval_minutes:60}},mergePolicy:{mode:'review',scope:'default'},notifications:{approval_required:0},skillId:null,query:'',skillQuery:'',skillFilter:'all',approvalOnly:false,locale:initialLocale,detail:null,detailType:null,prTab:'conversation',lastUpdated:null};
+function readHiddenSkills(){try{const value=JSON.parse(localStorage.getItem('skillhone.hiddenSkills')||'[]');return Array.isArray(value)?value.filter(id=>typeof id==='string'):[]}catch{return []}}
+const state={navigationLoading:false,navigationError:null,navigationTarget:null,updateFailed:false,progressDays:7,progressBucket:'day',activityExpanded:false,hiddenSkills:readHiddenSkills(),showHidden:false,skillLimit:20,taskFilter:'all',view:'status',items:{skills:[],issues:[],prs:[],wiki:[],runs:[]},harness:{state:'unavailable',active_runs:0,launch_mode:'unavailable'},audit:{integrity:'failed'},automation:{default:{mode:'queued',interval_minutes:60}},mergePolicy:{mode:'review',scope:'default'},notifications:{approval_required:0},executor:null,skillId:null,query:'',skillQuery:'',skillFilter:'all',approvalOnly:false,locale:initialLocale,detail:null,detailType:null,prTab:'conversation',lastUpdated:null};
 const $=id=>document.getElementById(id);
 const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 const inlineMarkdown=value=>esc(value)
@@ -104,89 +153,175 @@ const t=(key,values={})=>Object.entries(values).reduce((text,[name,value])=>text
 const svg=(name,className='')=>`<svg class="icon ${className}" aria-hidden="true" viewBox="0 0 16 16">${iconPaths[name]}</svg>`;
 const nice=value=>value?new Date(value).toLocaleString(state.locale==='zh'?'zh-CN':'en-US',{dateStyle:'medium',timeStyle:'short'}):t('notFinished');
 const currentSkill=()=>state.items.skills.find(item=>item.id===state.skillId)||null;
-const sourceName=value=>t({existing:'sourceExisting',path:'sourcePath',codex:'sourceCodex',cursor:'Cursor','claude-code':'sourceClaude'}[value]||value);
+const sourceName=value=>t({existing:'sourceExisting',path:'sourcePath',codex:'sourceCodex',cursor:'Cursor','claude-code':'sourceClaude','runtime-maintenance':'sourceMaintenance'}[value]||value);
 const prTitle=item=>item.issue_number?item.title.replace(new RegExp(`^Fix #${item.issue_number}:\\s*`),''):item.title;
 const currentPolicy=()=>currentSkill()?.automation||state.automation.default;
 const currentMergePolicy=()=>currentSkill()?.merge_policy||state.mergePolicy;
 const stageLabel=stage=>t(stage||'queued');
-const policyLabel=policy=>policy.mode==='scheduled'?`${t('scheduled')} · ${t('everyMinutes',{count:policy.interval_minutes})}`:t(policy.mode||'queued');
+const policyLabel=policy=>policy.mode==='scheduled'?`${t('scheduled')} · ${t('everyMinutes',{count:policy.interval_minutes})}`:t(policy.mode==='queued'?'queueTrigger':policy.mode||'queueTrigger');
 const stageBadge=stage=>`<span class="stage-badge ${esc(stage||'queued')}">${esc(stageLabel(stage))}</span>`;
 
 async function api(path,options){const response=await fetch(path,options);if(!response.ok)throw new Error((await response.json()).error||response.statusText);return response.json()}
-function filtered(){let items=state.items[state.view];if(state.view!=='skills'&&state.skillId)items=items.filter(item=>item.skill.id===state.skillId);if(state.view==='prs'&&state.approvalOnly)items=items.filter(item=>item.decision_state==='awaiting_approval');const q=state.query.toLowerCase();return items.filter(item=>`${item.name||''} ${item.title||''} ${item.skill?.name||''} ${item.head||''} ${item.body||''} ${item.slug||''}`.toLowerCase().includes(q))}
+
+function isHidden(id){return state.hiddenSkills.includes(id)}
+function visibleSkills(){return state.items.skills.filter(skill=>!isHidden(skill.id))}
+function scopedItems(view){
+  const items=state.items[view]||[];
+  if(state.skillId)return view==='skills'?items.filter(item=>item.id===state.skillId):items.filter(item=>item.skill?.id===state.skillId);
+  return items.filter(item=>!isHidden(view==='skills'?item.id:item.skill?.id));
+}
+function filtered(){
+  let items=scopedItems(state.view);
+  if(state.view==='prs'&&state.approvalOnly)items=items.filter(item=>item.decision_state==='awaiting_approval');
+  const q=state.query.toLowerCase();
+  return items.filter(item=>`${item.name||''} ${item.title||''} ${item.skill?.name||''} ${item.head||''} ${item.body||''} ${item.slug||''}`.toLowerCase().includes(q));
+}
 function statusText(status){return t(Object.hasOwn(messages.en,status)?status:'open')}
 function issueIcon(status){return svg(status==='closed'?'issueClosed':'issue',status==='closed'?'issue-closed':'issue-open')}
 function prIcon(status){return svg(status==='merged'?'merge':'pr',status==='merged'?'pr-merged':status==='closed'?'pr-closed':'pr-open')}
 function statusPill(status,type){const icon=type==='issue'?issueIcon(status):type==='pr'?prIcon(status):svg(status==='completed'?'issueClosed':'issue');return `<span class="status ${esc(status)}">${icon}${esc(statusText(status))}</span>`}
 function countItem(iconName,value,label,className=''){return `<span>${svg(iconName,className)}<strong>${value}</strong> ${esc(label)}</span>`}
 function itemHtml(item){
-  if(state.view==='skills')return `<button class="item repo-row" data-id="${esc(item.id)}"><div class="item-main"><h3>${svg('repo')}<span>${esc(item.name)}</span></h3><p>${esc(t('imported',{source:sourceName(item.source),branch:item.default_branch}))}</p><div class="count-line">${countItem('issue',item.issue_count,t('issuesShort'),'issue-open')}${countItem('pr',item.pr_count,t('prsShort'),'pr-open')}${countItem('book',item.wiki_count,t('wikiShort'))}${countItem('issueClosed',item.completed_run_count,t('runsShort'),'issue-closed')}</div></div><span class="row-arrow">›</span></button>`;
+  if(state.view==='skills')return `<button class="item repo-row" data-workspace-skill="${esc(item.id)}"><div class="item-main"><h3>${svg('repo')}<span>${esc(item.name)}</span></h3><p>${esc(sourceName(item.source))} · ${esc(item.default_branch)}</p></div><span class="row-arrow">→</span></button>`;
   if(state.view==='wiki')return `<button class="item" data-id="${esc(item.skill.id)}" data-slug="${esc(item.slug)}"><span class="list-icon">${svg('book')}</span><div class="item-main"><h3>${esc(item.title)}</h3><p>${state.skillId?'':`${esc(item.skill.name)} · `}${esc(t('updatedAt',{time:nice(item.updated_at)}))}</p></div></button>`;
   const type=state.view==='issues'?'issue':'pr';
-  const icon=type==='issue'?issueIcon(item.status):prIcon(item.status);
-  const meta=type==='issue'?t('updatedAt',{time:nice(item.updated_at)}):`${esc(item.head)} → ${esc(item.base)}`;
-  return `<button class="item" data-id="${esc(item.skill.id)}" data-number="${item.number}"><span class="list-icon">${icon}</span><div class="item-main"><h3>${esc(type==='pr'?prTitle(item):item.title)} <span class="muted-number">#${item.number}</span></h3><p>${state.skillId?'':`${esc(item.skill.name)} · `}${meta}</p></div>${type==='issue'?stageBadge(item.stage):item.decision_state==='awaiting_approval'?`<span class="stage-badge review">${esc(t('awaitingApproval'))}</span>`:''}</button>`;
+  return `<button class="item" data-id="${esc(item.skill.id)}" data-number="${item.number}"><span class="list-icon">${type==='issue'?issueIcon(item.status):prIcon(item.status)}</span><div class="item-main"><h3>${esc(type==='pr'?prTitle(item):item.title)} <span class="muted-number">#${item.number}</span></h3><p>${state.skillId?'':`${esc(item.skill.name)} · `}${type==='issue'?esc(t('updatedAt',{time:nice(item.updated_at)})):`${esc(item.head)} → ${esc(item.base)}`}</p></div>${type==='issue'?stageBadge(item.stage):item.decision_state==='awaiting_approval'?stageBadge('review'):statusPill(item.status,'pr')}</button>`;
 }
-function listSummary(items){if(state.view==='skills'||state.view==='wiki')return '';const open=items.filter(item=>item.status==='open').length;const closed=items.filter(item=>item.status==='closed').length;const merged=state.view==='prs'?items.filter(item=>item.status==='merged').length:0;return `<div class="state-summary"><span>${state.view==='issues'?issueIcon('open'):prIcon('open')}${esc(t('openCount',{count:open}))}</span><span>${state.view==='issues'?issueIcon('closed'):prIcon('closed')}${esc(t('closedCount',{count:closed}))}</span>${state.view==='prs'?`<span>${prIcon('merged')}${esc(t('mergedCount',{count:merged}))}</span>`:''}</div>`}
-function listPage(){const items=filtered();const label=t({skills:'listSkills',issues:'listIssues',prs:'listPrs',wiki:'listWiki'}[state.view]);return `<div class="page-title"><div><h1>${esc(label)}</h1><p>${esc(t('updated',{time:state.lastUpdated?.toLocaleTimeString(state.locale==='zh'?'zh-CN':'en-US',{hour:'2-digit',minute:'2-digit'})||''}))}</p></div></div><section class="list-panel"><div class="list-toolbar">${state.view==='prs'?`<button class="filter-chip ${state.approvalOnly?'selected':''}" data-toggle-approvals aria-pressed="${state.approvalOnly}">${esc(t('onlyApprovals'))}</button>`:listSummary(items)}<label class="search"><span>⌕</span><input id="search" type="search" value="${esc(state.query)}" placeholder="${esc(t('searchPlaceholder',{view:label}))}"></label></div><div class="item-list">${items.length?items.map(itemHtml).join(''):`<div class="list-empty">${esc(t('nothingHere'))}</div>`}</div></section>`}
-function runTimeline(runs){if(!runs?.length)return `<p class="body-copy">${esc(t('noRuns'))}</p>`;return `<div class="timeline">${runs.map(run=>`<div class="timeline-row"><div class="timeline-head"><strong>${esc(run.runner)}</strong>${statusPill(run.status,'run')}</div><p>${esc(run.id)} · ${nice(run.started_at)} → ${nice(run.finished_at)}</p><p>${esc(t('branch',{branch:run.branch}))}</p></div>`).join('')}</div>`}
-function scopedItems(view){return state.skillId?state.items[view].filter(item=>item.skill?.id===state.skillId):state.items[view]}
+function listSummary(items){if(state.view==='skills'||state.view==='wiki')return '';return `<div class="state-summary"><span>${esc(t('openCount',{count:items.filter(item=>item.status==='open').length}))}</span><span>${esc(t('closedCount',{count:items.filter(item=>item.status==='closed').length}))}</span>${state.view==='prs'?`<span>${esc(t('mergedCount',{count:items.filter(item=>item.status==='merged').length}))}</span>`:''}</div>`}
+function clearEmpty(message){return `<div class="list-empty"><p>${esc(t(message))}</p><button class="text-button" data-clear-filters>${esc(t('clearFilters'))}</button></div>`}
+function pageHeading(title,extra=''){return `<div class="page-title"><h1>${esc(title)}</h1><div class="heading-actions">${extra}</div></div>`}
+function listPage(){
+  if(state.view==='skills'&&!state.skillId)return `${pageHeading(t('skills'))}${skillOverview()}`;
+  const items=filtered(),label=t({skills:'listSkills',issues:'listIssues',prs:'listPrs',wiki:'listWiki'}[state.view]);
+  return `${pageHeading(label)}<section class="list-panel"><div class="list-toolbar">${state.view==='prs'?`<button class="filter-chip ${state.approvalOnly?'selected':''}" data-toggle-approvals aria-pressed="${state.approvalOnly}">${esc(t('onlyApprovals'))}</button>`:listSummary(items)}<label class="search"><span>⌕</span><input id="search" type="search" value="${esc(state.query)}" aria-label="${esc(t('searchPlaceholder',{view:label}))}" placeholder="${esc(t('searchPlaceholder',{view:label}))}"></label></div><div class="item-list">${items.length?items.map(itemHtml).join(''):state.query||state.approvalOnly?clearEmpty('noMatchingRecords'):`<div class="list-empty">${esc(t('nothingHere'))}</div>`}</div></section>`;
+}
+function runnerLabel(runner){return runner==='native-agent'?t('currentAgent'):runner==='deepseek-harness'||runner==='dsh'?t('dshExecutor'):runner}
+function runTimeline(runs){if(!runs?.length)return `<p class="body-copy">${esc(t('noRuns'))}</p>`;return `<div class="timeline">${runs.map(run=>`<div class="timeline-row"><div class="timeline-head"><strong>${esc(runnerLabel(run.runner))}</strong>${statusPill(run.status,'run')}</div><p>${nice(run.started_at)} → ${nice(run.finished_at)}</p><p>${esc(t('branch',{branch:run.branch}))}</p></div>`).join('')}</div>`}
 function duration(run){if(!run.finished_at)return '—';const seconds=Math.max(0,Math.round((new Date(run.finished_at)-new Date(run.started_at))/1000));return t('seconds',{count:seconds})}
-function daySeries(runs){const days=[];for(let offset=6;offset>=0;offset-=1){const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()-offset);const next=new Date(date);next.setDate(next.getDate()+1);days.push({date,count:runs.filter(run=>{const value=new Date(run.started_at);return value>=date&&value<next}).length})}return days}
 function skillWork(skill){
   const belongs=item=>item.skill?.id===skill.id;
-  const issues=state.items.issues.filter(belongs);
-  const approvals=state.items.prs.filter(item=>belongs(item)&&item.decision_state==='awaiting_approval');
-  const runs=state.items.runs.filter(belongs);
-  const active=runs.some(item=>item.status==='running');
-  const stage=skill.available===false?'unavailable':approvals.length?'review':active?'optimizing':issues.some(item=>item.stage==='failed')?'failed':issues.some(item=>item.status==='open')?'queued':'clear';
+  const issues=state.items.issues.filter(belongs),approvals=state.items.prs.filter(item=>belongs(item)&&item.decision_state==='awaiting_approval'),runs=state.items.runs.filter(belongs);
+  const active=runs.some(item=>item.status==='running'),awaiting=runs.some(item=>item.status==='awaiting_agent');
+  const stage=skill.available===false?'unavailable':active?'optimizing':awaiting?'awaiting_agent':approvals.length?'review':issues.some(item=>item.stage==='failed')?'failed':issues.some(item=>item.status==='open')?'queued':'clear';
   return {skill,issues,approvals,runs,active,stage};
 }
 function workLabel(stage){return stage==='clear'?t('noActiveWork'):stage==='unavailable'?t('repositoryUnavailable'):stageLabel(stage)}
-function skillOverview(skills){
-  const all=skills.map(skillWork);
-  const approvalSkills=all.filter(item=>item.approvals.length).length;
-  const activeSkills=all.filter(item=>item.active).length;
-  const matches=all.filter(item=>(state.skillFilter!=='review'||item.approvals.length)&&(state.skillFilter!=='active'||item.active)&&item.skill.name.toLowerCase().includes(state.skillQuery.toLowerCase()))
-    .sort((a,b)=>Number(Boolean(b.approvals.length))-Number(Boolean(a.approvals.length))||Number(b.active)-Number(a.active)||a.skill.name.localeCompare(b.skill.name));
-  const filters=[['all','allSkills',all.length],['review','needsApproval',approvalSkills],['active','activeSkills',activeSkills]];
-  return `<section class="status-panel skill-overview" aria-labelledby="skill-overview-title">
-    <header><div><h2 id="skill-overview-title">${esc(t('skillOverview'))}<span class="section-count">${skills.length}</span></h2><p>${esc(t('overviewHint'))}</p></div></header>
-    <div class="skill-toolbar"><div class="filter-group" aria-label="${esc(t('filter'))}">${filters.map(([value,key,count])=>`<button type="button" data-skill-filter="${value}" aria-pressed="${state.skillFilter===value}" class="filter-chip ${state.skillFilter===value?'selected':''}">${esc(t(key))}<span>${count}</span></button>`).join('')}</div><label class="search skill-search"><svg class="icon" aria-hidden="true" viewBox="0 0 16 16"><path d="M11.5 10.5 15 14l-1 1-3.5-3.5a6 6 0 1 1 1-1ZM6.5 11a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z"/></svg><input id="skill-search" type="search" value="${esc(state.skillQuery)}" aria-label="${esc(t('skillSearch'))}" placeholder="${esc(t('skillSearch'))}"></label></div>
-    ${all.length?`<div class="skill-columns" aria-hidden="true"><span>${esc(t('skillName'))}</span><span>${esc(t('currentState'))}</span><span>Issues</span><span>${esc(t('needsApproval'))}</span><span></span></div><div class="skill-list">${matches.map(({skill,issues,approvals,stage})=>`<details class="skill-entry" data-skill-entry="${esc(skill.id)}"><summary><span class="skill-identity"><span class="skill-avatar">${svg('repo')}</span><span><strong>${esc(skill.name)}</strong><small>${esc(sourceName(skill.source))} · ${esc(skill.default_branch||'—')}</small></span></span><span class="skill-state ${esc(stage)}"><i></i>${esc(workLabel(stage))}</span><span class="skill-issue-count"><b>${issues.filter(item=>item.status==='open').length}</b><small> Issues</small></span><span class="skill-approval-count ${approvals.length?'has-approvals':''}">${approvals.length?`${svg('pr')}<b>${approvals.length}</b><small>${esc(t('needsApproval'))}</small>`:'—'}</span><span class="expand-chevron" aria-hidden="true">⌄</span></summary><div class="skill-expanded"><div class="skill-records">${approvals.length?approvals.map(pr=>`<button class="skill-record" data-approval-skill="${esc(skill.id)}" data-approval-number="${pr.number}">${prIcon('open')}<span><strong>#${pr.number} ${esc(prTitle(pr))}</strong><small>${esc(t('awaitingApproval'))}</small></span><span aria-hidden="true">↗</span></button>`).join(''):issues.filter(item=>item.status==='open').slice(0,3).map(issue=>`<button class="skill-record" data-run-skill="${esc(skill.id)}" data-run-issue="${issue.number}">${issueIcon('open')}<span><strong>#${issue.number} ${esc(issue.title)}</strong><small>${esc(stageLabel(issue.stage))}</small></span><span aria-hidden="true">↗</span></button>`).join('')||`<p class="skill-clear">${esc(t(skill.available===false?'repositoryUnavailable':'noActiveWork'))}</p>`}</div><div class="skill-entry-actions"><button class="text-button" data-open-skill="${esc(skill.id)}">${esc(t('viewRepository'))}</button>${approvals.length?`<button class="review-button" data-review-skill="${esc(skill.id)}">${esc(t('viewApprovals'))} <span>${approvals.length}</span></button>`:''}</div></div></details>`).join('')||`<div class="list-empty"><p>${esc(t('noMatchingSkills'))}</p><button class="text-button" data-clear-skill-filters>${esc(t('clearFilters'))}</button></div>`}</div>`:`<div class="skills-empty">${svg('repo')}<h3>${esc(t('noSkillsTitle'))}</h3><p>${esc(t('noSkillsHint'))}</p></div>`}
-  </section>`;
+function skillOverview(){
+  const all=state.items.skills.filter(skill=>state.showHidden?isHidden(skill.id):!isHidden(skill.id)).map(skillWork);
+  const matches=all.filter(item=>(state.skillFilter!=='review'||item.approvals.length)&&(state.skillFilter!=='active'||item.active)&&(state.skillFilter!=='failed'||item.stage==='failed')&&item.skill.name.toLowerCase().includes(state.skillQuery.toLowerCase()))
+    .sort((a,b)=>Number(b.active)-Number(a.active)||Number(Boolean(b.approvals.length))-Number(Boolean(a.approvals.length))||a.skill.name.localeCompare(b.skill.name));
+  const shown=matches.slice(0,state.skillLimit);
+  const hiddenCount=state.items.skills.filter(skill=>isHidden(skill.id)).length;
+  const filters=[['all','allSkills',all.length],['review','needsApproval',all.filter(item=>item.approvals.length).length],['active','activeSkills',all.filter(item=>item.active).length]];
+  return `<section class="list-panel skill-overview" aria-labelledby="skill-overview-title"><header class="section-header"><h2 id="skill-overview-title">${esc(t(state.showHidden?'hiddenSkills':'skills'))}<span class="section-count">${matches.length}</span></h2><button class="text-button" data-toggle-hidden aria-pressed="${state.showHidden}">${esc(t(state.showHidden?'allSkills':'hiddenSkills'))}${!state.showHidden?` (${hiddenCount})`:''}</button></header>
+    ${state.showHidden?`<p class="notice">${esc(t('hiddenHelp'))}</p>`:''}
+    <div class="skill-toolbar"><div class="filter-group">${filters.map(([value,key,count])=>`<button type="button" data-skill-filter="${value}" aria-pressed="${state.skillFilter===value}" class="filter-chip ${state.skillFilter===value?'selected':''}">${esc(t(key))}<span>${count}</span></button>`).join('')}</div><label class="search"><span>⌕</span><input id="skill-search" type="search" value="${esc(state.skillQuery)}" aria-label="${esc(t('skillSearch'))}" placeholder="${esc(t('skillSearch'))}"></label></div>
+    <div class="skill-list">${shown.map(({skill,issues,approvals,stage})=>`<div class="skill-entry"><button class="skill-main" data-workspace-skill="${esc(skill.id)}"><span class="skill-identity">${svg('repo')}<span><strong>${esc(skill.name)}</strong><small>${esc(sourceName(skill.source))} · ${esc(skill.default_branch||'—')}</small></span></span><span class="skill-row-meta"><span class="skill-state ${esc(stage)}">${esc(workLabel(stage))}</span><span class="skill-counts">${issues.filter(item=>item.status==='open').length} ${esc(t('issues'))}${approvals.length?` · ${approvals.length} ${esc(t('needsApproval'))}`:''}</span></span><span class="row-arrow" aria-hidden="true">→</span></button><button class="quiet-button visibility-action" data-hide-skill="${esc(skill.id)}" aria-label="${esc(t(isHidden(skill.id)?'restoreToOverview':'hideFromOverview'))}: ${esc(skill.name)}" title="${esc(t(isHidden(skill.id)?'restoreToOverview':'hideFromOverview'))}">${esc(t(isHidden(skill.id)?'restoreShort':'hideShort'))}</button></div>`).join('')||clearEmpty('noMatchingSkills')}</div>${matches.length?`<footer class="skill-list-footer"><span>${esc(t('shownSkills',{shown:shown.length,total:matches.length}))}</span><div>${shown.length<matches.length?`<button class="text-button" data-show-more-skills>${esc(t('showMoreSkills'))}</button>`:''}${state.skillLimit>20&&matches.length>20?`<button class="quiet-button" data-collapse-skills>${esc(t('collapseSkills'))}</button>`:''}</div></footer>`:''}</section>`;
 }
-function approvalInbox(items){
-  return `<section class="status-panel approval-inbox ${items.length?'has-pending':''}" aria-labelledby="approval-inbox-title"><header><div><h2 id="approval-inbox-title">${svg('pr')}${esc(t('approvalInbox'))}<span class="section-count">${items.length}</span></h2><p>${esc(t('reviewHint'))}</p></div></header><div class="approval-list">${items.length?items.map(pr=>`<button class="approval-row" data-approval-skill="${esc(pr.skill.id)}" data-approval-number="${pr.number}"><span class="approval-repo">${esc(pr.skill.name)}<span>#${pr.number}</span></span><strong>${esc(prTitle(pr))}</strong><span class="approval-row-footer"><span class="stage-badge review">${esc(t('awaitingApproval'))}</span><em>${esc(t('reviewAndMerge'))}<span aria-hidden="true"> ↗</span></em></span></button>`).join(''):`<div class="approval-empty">${svg('issueClosed')}<strong>${esc(t('approvalClear'))}</strong><p>${esc(t('noApprovals'))}</p></div>`}</div></section>`;
-}
-function statusPage(){
-  const skills=state.skillId?state.items.skills.filter(item=>item.id===state.skillId):state.items.skills;
+function taskItems(){
   const issues=scopedItems('issues'),prs=scopedItems('prs'),runs=scopedItems('runs');
-  const awaiting=prs.filter(item=>item.decision_state==='awaiting_approval');
-  const approvalSkills=new Set(awaiting.map(item=>item.skill.id)).size;
-  const counts={queued:0,optimizing:0,review:0,done:0,failed:0};issues.forEach(item=>{counts[item.stage||'queued']=(counts[item.stage||'queued']||0)+1});
-  const harness=state.harness,policy=currentPolicy(),merge=currentMergePolicy();
-  const harnessLabel=t(harness.state==='running'?'running':harness.state==='idle'?'idle':'unavailable');
-  const harnessDetail=harness.installed?t('managedHarness',{version:harness.version||'unknown'}):t('runnerUnavailable');
-  const modelState=t(harness.model_configured?'modelReady':'modelMissing');
-  const auditState=t(state.audit.integrity==='verified'?'auditVerified':'auditFailed');
-  return `<div class="page-title status-title"><div><h1>${esc(t('workbench'))}</h1><p>${esc(t('updated',{time:state.lastUpdated?.toLocaleTimeString(state.locale==='zh'?'zh-CN':'en-US',{hour:'2-digit',minute:'2-digit'})||''}))}</p></div><span id="update-state" class="update-state"><i></i>${esc(t('liveUpdates'))}</span></div>
-    <section class="status-cards" aria-label="${esc(t('status'))}">
-      <button class="skills-card" data-overview-filter="all">${svg('repo')}<span><strong data-count-key="skills">${skills.length}</strong><small>${esc(t('yourSkills'))}</small></span><span class="metric-arrow" aria-hidden="true">↗</span></button>
-      <button class="approval-card ${awaiting.length?'has-pending':''}" data-overview-filter="review">${svg('pr')}<span><strong data-count-key="approvals">${awaiting.length}</strong><small>${esc(t('awaitingApproval'))}</small><em>${esc(t('skillApprovalCount',{count:approvalSkills}))}</em></span><span class="metric-arrow" aria-hidden="true">↗</span></button>
-      <details class="harness-card ${esc(harness.state)}" data-preserve="executor"><summary><span class="live-dot"></span><div><strong>${esc(harnessLabel)}</strong><small>${esc(t('harnessStatus'))}</small></div><span class="expand-chevron" aria-hidden="true">⌄</span></summary><dl class="executor-details"><div><dt>${esc(t('version'))}</dt><dd>${esc(harnessDetail)}</dd></div><div><dt>${esc(t('model'))}</dt><dd>${esc(modelState)}</dd></div><div><dt>${esc(t('audit'))}</dt><dd>${esc(auditState)}</dd></div></dl></details>
-      <article class="policy-card"><span class="policy-mark">↻</span><div><strong>${esc(policyLabel(policy))}</strong><small>${esc(t('triggerPolicy'))}</small><em>${esc(t(merge.mode==='automatic'?'mergeAutomatic':'mergeReview'))}</em></div></article>
-    </section>
-    <div class="overview-layout">${skillOverview(skills)}${approvalInbox(awaiting)}</div>
-    <section class="pipeline-panel"><header><h2>${esc(t('pipeline'))}</h2><p>${esc(t('pipelineHint'))}</p></header><div class="pipeline">${['queued','optimizing','review','done',...(counts.failed?['failed']:[])].map(stage=>`<div class="pipeline-stage ${stage} ${counts[stage]?'has-work':''}"><span class="pipeline-node">${stage==='done'?svg('issueClosed'):stage==='review'?svg('pr'):svg('issue')}</span><span><strong data-count-key="${stage}">${counts[stage]}</strong><span>${esc(t(stage))}</span></span></div>`).join('')}</div></section>
-    <section class="status-panel recent-runs"><header><div><h2>${esc(t('recentRuns'))}</h2></div></header><div class="run-list">${runs.length?runs.slice(0,6).map(run=>`<button class="run-row" data-run-skill="${esc(run.skill.id)}" data-run-issue="${run.issue_number}"><span class="run-state ${esc(run.status)}">${run.status==='completed'?issueIcon('closed'):issueIcon('open')}</span><div><strong>${esc(run.skill.name)} <span>· Issue #${run.issue_number}</span></strong><small>${esc(run.runner)} · ${nice(run.started_at)}</small></div><span class="stage-badge ${run.status==='running'?'optimizing':run.status==='failed'?'failed':'done'}">${esc(t(run.status))}</span><dl><div><dt>${esc(t('duration'))}</dt><dd>${esc(duration(run))}</dd></div><div><dt>${esc(t('toolCalls'))}</dt><dd>${run.tool_call_count??'—'}</dd></div></dl></button>`).join(''):`<div class="list-empty">${esc(t('noRecentRuns'))}</div>`}</div></section>`;
+  const tasks=prs.filter(pr=>pr.decision_state==='awaiting_approval').map(pr=>({kind:'review',type:'prs',item:pr}));
+  for(const issue of issues){
+    const active=runs.some(run=>run.skill?.id===issue.skill?.id&&run.issue_number===issue.number&&run.status==='running');
+    if(issue.status!=='open')continue;
+    if(!active&&tasks.some(task=>task.item.skill?.id===issue.skill?.id&&task.item.issue_number===issue.number))continue;
+    const awaiting=runs.some(run=>run.skill?.id===issue.skill?.id&&run.issue_number===issue.number&&run.status==='awaiting_agent');
+    tasks.push({kind:active?'optimizing':awaiting?'awaiting_agent':issue.stage==='failed'?'failed':'queued',type:'issues',item:issue});
+  }
+  const order={optimizing:0,review:1,failed:2,awaiting_agent:3,queued:4};
+  return tasks.sort((a,b)=>order[a.kind]-order[b.kind]||String(b.item.updated_at||'').localeCompare(String(a.item.updated_at||'')));
+}
+function taskRow(task){const item=task.item;return `<button class="task-row" ${task.type==='prs'?`data-approval-skill="${esc(item.skill.id)}" data-approval-number="${item.number}"`:`data-run-skill="${esc(item.skill.id)}" data-run-issue="${item.number}"`}><span class="task-kind ${esc(task.kind)}">${task.type==='prs'?prIcon(item.status):issueIcon(item.status)}</span><span class="task-main"><strong>${esc(task.type==='prs'?prTitle(item):item.title)}</strong><small>${state.skillId?'':`${esc(item.skill.name)} · `}${esc(t(task.type==='prs'?'pr':'issue'))} #${item.number}</small></span>${stageBadge(task.kind)}<span class="row-arrow" aria-hidden="true">→</span></button>`}
+function taskPanel(){
+  const all=taskItems(),tasks=all.filter(task=>state.taskFilter==='all'||task.kind===state.taskFilter);
+  return `<section class="list-panel task-panel" aria-labelledby="task-panel-title"><header class="section-header"><h2 id="task-panel-title">${esc(t('workQueue'))}<span class="section-count">${all.length}</span></h2><div class="filter-group">${[['all','allTasks'],['optimizing','activeTasks'],['review','reviewTasks'],['failed','failedTasks']].map(([value,key])=>`<button class="filter-chip ${state.taskFilter===value?'selected':''}" data-task-filter="${value}" aria-pressed="${state.taskFilter===value}">${esc(t(key))}</button>`).join('')}</div></header><div>${tasks.length?tasks.map(taskRow).join(''):state.taskFilter!=='all'?clearEmpty('noMatchingRecords'):`<p class="compact-empty">${esc(t('queueClear'))}</p>`}</div></section>`;
+}
+function activityGroups(runs=scopedItems('runs')){
+  const grouped=new Map();
+  for(const run of [...runs].sort((a,b)=>String(b.started_at||'').localeCompare(String(a.started_at||'')))){
+    const key=`${run.skill?.id}/${run.issue_number??run.id}`;
+    if(!grouped.has(key))grouped.set(key,{key,run,attempts:[]});grouped.get(key).attempts.push(run);
+  }
+  return [...grouped.values()].map(group=>({...group,issue:state.items.issues.find(item=>item.skill?.id===group.run.skill?.id&&item.number===group.run.issue_number),merged:state.items.prs.find(pr=>pr.skill?.id===group.run.skill?.id&&pr.issue_number===group.run.issue_number&&pr.status==='merged')}));
+}
+function activityPanel(runs=scopedItems('runs')){
+  const groups=activityGroups(runs),shown=state.activityExpanded?groups:groups.slice(0,5);
+  return `<section class="list-panel recent-runs"><header class="section-header"><h2>${esc(t('recentActivity'))}</h2>${groups.length>5?`<button class="text-button" data-toggle-activity>${esc(t(state.activityExpanded?'collapseActivity':'allActivity'))}</button>`:''}</header>${shown.length?shown.map(({key,run,attempts,issue,merged})=>{const resolution=merged?t('issueResolved'):issue?.status==='closed'?t('issueClosedNote'):null;return `<article class="activity-group"><button class="activity-row" data-run-skill="${esc(run.skill.id)}" data-run-issue="${run.issue_number}"><span class="run-state ${resolution?'completed':esc(run.status)}">${svg(resolution?'issueClosed':'issue')}</span><span class="task-main"><strong>${esc(issue?.title||`${t('issue')} #${run.issue_number}`)}</strong><small>${state.skillId?'':`${esc(run.skill.name)} · `}${esc(t('attemptCount',{count:attempts.length}))} · ${nice(run.started_at)}</small></span>${resolution?`<span class="stage-badge done">${esc(resolution)}</span>`:statusPill(run.status,'run')}</button><details class="attempt-history" data-preserve="activity-${esc(key)}"><summary>${esc(t('attemptHistory',{count:attempts.length}))}</summary><div>${attempts.map(attempt=>`<div class="activity-attempt">${statusPill(attempt.status,'run')}<span>${nice(attempt.started_at)}</span><span>${esc(duration(attempt))}</span></div>`).join('')}</div></details></article>`}).join(''):`<p class="compact-empty">${esc(t('noRecentRuns'))}</p>`}</section>`;
 }
 
+function currentExecutor(scoped=false){
+  const descriptor=scoped?(currentSkill()?.executor??state.executor):state.executor;
+  if(descriptor)return descriptor;
+  // Older servers expose only Harness metadata. Missing optional DSH must not
+  // imply that the attached current-Agent workflow is unavailable.
+  const dsh=Boolean(state.harness.installed);
+  return {requested:dsh?'dsh':'auto',selected:dsh?'dsh':'native',mode:dsh?'managed':'attached',state:dsh?state.harness.state:'idle',available:dsh?state.harness.model_configured!==false:true,ready_for_assignment:!dsh,ready_for_autonomous_execution:dsh&&state.harness.model_configured!==false,audit_boundary:dsh?'host-locked':'trusted-host-session'};
+}
+function runtimeStrip(scoped=false){
+  const harness=state.harness,executor=currentExecutor(scoped),native=executor.selected==='native',name=t(native?'currentAgent':'dshExecutor');
+  const policy=scoped?currentPolicy():state.automation.default,merge=scoped?currentMergePolicy():state.mergePolicy;
+  const label=native?t(executor.state==='awaiting_agent'?'awaiting_agent':'assignmentReady'):t(executor.available?'executorReady':'executorNeedsSetup');
+  const active=harness.active_runs??state.items.runs.filter(run=>run.status==='running').length;
+  return `<div class="runtime-strip"><span class="executor-state"><i class="status-dot ${executor.available?'idle':'unavailable'}"></i>${esc(t(scoped?'repairExecutor':'globalExecutor'))}: <strong>${esc(name)}</strong> · ${esc(label)}</span><span>${esc(t('globalRunning'))}: <strong>${active}</strong></span><span>${esc(t(scoped?'trigger':'defaultTrigger'))}: <strong>${esc(policyLabel(policy))}</strong></span><span>${esc(t('mergeRule'))}: ${esc(t(merge.mode==='automatic'?'mergeAutomatic':'mergeReview'))}</span><details class="runtime-details" data-preserve="executor"><summary>${esc(t('executorDetails'))}</summary><dl><div><dt>${esc(t('executorMode'))}</dt><dd>${esc(t(native?'attachedSession':'managedProcess'))}</dd></div><div><dt>${esc(t('executorCapability'))}</dt><dd>${esc(t(native?'assignmentReady':executor.ready_for_autonomous_execution?'autonomousReady':'executorNeedsSetup'))}</dd></div><div><dt>${esc(t('model'))}</dt><dd>${esc(t(native?'currentSessionModel':harness.model_configured?'modelReady':'modelMissing'))}</dd></div><div><dt>${esc(t(native?'optionalDsh':'version'))}</dt><dd>${esc(harness.installed?harness.version||'—':t('notInstalled'))}</dd></div><div><dt>${esc(t('executionBoundary'))}</dt><dd>${esc(t(native?'trustedSession':'lockedProcess'))}</dd></div><div><dt>${esc(t('audit'))}</dt><dd>${esc(t(state.audit.integrity==='verified'?'auditVerified':'auditFailed'))}</dd></div></dl></details></div>`;
+}
+
+function localDay(date){const value=new Date(date);value.setHours(0,0,0,0);return value}
+function bucketDate(date,unit){const value=localDay(date);if(unit==='week')value.setDate(value.getDate()-(value.getDay()+6)%7);return value}
+function dateKey(date){return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`}
+function optimizationProgress(period=state.progressDays,unit=state.progressBucket,now=new Date()){
+  const days=[7,30,90].includes(period)?period:7,step=unit==='week'?7:1;
+  const start=localDay(now);start.setDate(start.getDate()-days+1);
+  const end=new Date(now),buckets=[],byDate=new Map();
+  for(const cursor=bucketDate(start,unit);cursor<=end;cursor.setDate(cursor.getDate()+step)){
+    const next=new Date(cursor);next.setDate(next.getDate()+step);
+    const item={start:new Date(Math.max(cursor.getTime(),start.getTime())),end:new Date(Math.min(next.getTime()-1,end.getTime())),completed:0,failed:0,merged:0};
+    buckets.push(item);byDate.set(dateKey(cursor),item);
+  }
+  function count(value,kind){
+    if(typeof value!=='string'||!value)return;
+    const time=new Date(value);if(!Number.isFinite(time.getTime())||time<start||time>end)return;
+    const bucket=byDate.get(dateKey(bucketDate(time,unit)));if(bucket)bucket[kind]++;
+  }
+  for(const run of scopedItems('runs'))if(run.status==='completed'||run.status==='failed')count(run.finished_at,run.status);
+  // mergePr is the only writer of a merged PR's updated_at; it records the
+  // merge time. Creation time would misplace repairs opened in earlier periods.
+  for(const pr of scopedItems('prs'))if(pr.status==='merged')count(pr.updated_at,'merged');
+  const totals=buckets.reduce((sum,item)=>({completed:sum.completed+item.completed,failed:sum.failed+item.failed,merged:sum.merged+item.merged}),{completed:0,failed:0,merged:0});
+  return {start,end,buckets,totals};
+}
+function progressDate(date){return date.toLocaleDateString(state.locale==='zh'?'zh-CN':'en-US',{month:'short',day:'numeric'})}
+function progressBucketLabel(bucket){return dateKey(bucket.start)===dateKey(bucket.end)?progressDate(bucket.start):`${progressDate(bucket.start)}–${progressDate(bucket.end)}`}
+function progressPanel(){
+  const {start,end,buckets,totals}=optimizationProgress(),series=[['completed','completedRuns'],['failed','failedRuns'],['merged','mergedRepairs']];
+  const hasEvents=totals.completed+totals.failed+totals.merged>0,max=Math.max(1,...buckets.flatMap(bucket=>series.map(([kind])=>bucket[kind]))),width=640,height=120,slot=width/buckets.length,bar=slot/5;
+  const range=`${progressDate(start)}–${progressDate(end)}`;
+  const graph=hasEvents?`<div class="progress-chart"><div class="progress-plot"><div class="progress-scale" aria-hidden="true"><span>${max}</span><span>0</span></div><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="${esc(t('progressTrend'))}"><title>${esc(t('progressTrend'))} · ${esc(range)}</title><g class="progress-grid">${[0,40,80,120].map(y=>`<line x1="0" x2="${width}" y1="${y}" y2="${y}"/>`).join('')}</g>${buckets.map((bucket,index)=>`<g><title>${esc(progressBucketLabel(bucket))} · ${series.map(([kind,key])=>`${esc(t(key))}: ${bucket[kind]}`).join(' · ')}</title>${series.map(([kind],offset)=>{const value=bucket[kind],h=value/max*(height-4);return `<rect class="progress-bar ${kind}" x="${index*slot+bar*(offset+1)}" y="${height-h}" width="${bar}" height="${h}"/>`}).join('')}</g>`).join('')}</svg></div><div class="progress-axis"><span>${esc(progressDate(buckets[0].start))}</span><span>${esc(progressDate(buckets[Math.floor(buckets.length/2)].start))}</span><span>${esc(progressDate(buckets[buckets.length-1].end))}</span></div></div>`:`<p class="compact-empty">${esc(t('noProgressEvents'))}</p>`;
+  return `<section class="list-panel progress-panel" aria-labelledby="progress-title"><header class="section-header"><h2 id="progress-title">${esc(t('optimizationProgress'))}</h2><div class="progress-controls"><div class="filter-group">${[7,30,90].map(days=>`<button class="filter-chip ${state.progressDays===days?'selected':''}" data-progress-days="${days}" aria-pressed="${state.progressDays===days}">${esc(t('lastDays',{days}))}</button>`).join('')}</div><div class="filter-group bucket-controls">${[['day','byDay'],['week','byWeek']].map(([unit,key])=>`<button class="filter-chip ${state.progressBucket===unit?'selected':''}" data-progress-bucket="${unit}" aria-pressed="${state.progressBucket===unit}">${esc(t(key))}</button>`).join('')}</div></div></header><div class="progress-totals">${series.map(([kind,key])=>`<span><i class="series-dot ${kind}"></i>${esc(t(key))}<strong data-progress-${kind}>${totals[kind]}</strong></span>`).join('')}<small>${esc(range)}</small></div>${graph}<div class="progress-footnote">${esc(t('progressNote'))}</div>${hasEvents?`<details class="progress-breakdown" data-preserve="progress"><summary>${esc(t('progressBreakdown'))}</summary><div><table><thead><tr><th>${esc(t('period'))}</th>${series.map(([,key])=>`<th>${esc(t(key))}</th>`).join('')}</tr></thead><tbody>${buckets.map(bucket=>`<tr><th scope="row">${esc(progressBucketLabel(bucket))}</th>${series.map(([kind])=>`<td>${bucket[kind]}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details>`:''}</section>`;
+}
+
+function globalOverview(){
+  const tasks=taskItems(),issues=scopedItems('issues'),runs=scopedItems('runs');
+  return `${pageHeading(t('workbench'))}<div class="summary-bar"><span><strong data-count-key="skills">${visibleSkills().length}</strong> ${esc(t('skills'))}</span><span><strong>${runs.filter(run=>run.status==='running').length}</strong> ${esc(t('activeTasks'))}</span><span><strong>${issues.filter(issue=>issue.status==='open').length}</strong> ${esc(t('openIssues'))}</span><button data-task-filter="review"><strong data-count-key="approvals">${tasks.filter(task=>task.kind==='review').length}</strong> ${esc(t('needsApproval'))}</button><button data-task-filter="failed"><strong>${tasks.filter(task=>task.kind==='failed').length}</strong> ${esc(t('failedTasks'))}</button></div>${runtimeStrip()}<div class="overview-primary">${taskPanel()}${progressPanel()}</div><div class="workbench-columns">${activityPanel()}${skillOverview()}</div>`;
+}
+function workspacePage(){
+  const skill=currentSkill();if(!skill)return `${pageHeading(t('repositoryWorkspace'))}<p>${esc(t('scopeUnavailable'))}</p><button class="text-button" data-go-home>${esc(t('allSkills'))}</button>`;
+  const issues=scopedItems('issues'),prs=scopedItems('prs'),runs=scopedItems('runs'),open=issues.filter(issue=>issue.status==='open');
+  const orderedPrs=[...prs].sort((a,b)=>Number(b.decision_state==='awaiting_approval')-Number(a.decision_state==='awaiting_approval')||String(b.updated_at||'').localeCompare(String(a.updated_at||'')));
+  return `${pageHeading(skill.name,`<button class="secondary-button" data-open-skill="${esc(skill.id)}">${svg('repo')}${esc(t('openCode'))}</button>`)}
+    ${isHidden(skill.id)?`<div class="notice">${esc(t('hiddenNotice'))}</div>`:''}
+    <div class="repository-context"><span>${esc(t('source'))}: ${esc(sourceName(skill.source))}</span><span>${svg('repo')}${esc(t('defaultBranch'))}: <strong>${esc(skill.default_branch||'—')}</strong></span><button class="quiet-button" data-hide-skill="${esc(skill.id)}">${esc(t(isHidden(skill.id)?'restoreToOverview':'hideFromOverview'))}</button></div>
+    <div class="workspace-links"><button data-view-link="issues">${issueIcon('open')}<strong>${open.length}</strong> ${esc(t('openIssues'))}</button><button data-view-link="prs">${prIcon('open')}<strong>${prs.length}</strong> ${esc(t('pullRequests'))}</button><button data-view-link="wiki">${svg('book')}<strong>${scopedItems('wiki').length}</strong> ${esc(t('wiki'))}</button><span>${runs.filter(run=>run.status==='completed').length} ${esc(t('completedRuns'))}</span></div>
+    ${runtimeStrip(true)}${progressPanel()}
+    <div class="workspace-columns"><section class="list-panel"><header class="section-header"><h2>${esc(t('currentIssues'))}<span class="section-count">${open.length}</span></h2><button class="text-button" data-view-link="issues">${esc(t('viewAll'))}</button></header>${open.length?open.slice(0,5).map(issue=>`<button class="workspace-issue" data-run-skill="${esc(skill.id)}" data-run-issue="${issue.number}"><span><strong>#${issue.number} ${esc(issue.title)}</strong><small>${esc(t('testsAndRepair'))}</small></span>${stageBadge(issue.stage)}</button>`).join(''):`<p class="compact-empty">${esc(t('noCurrentIssues'))}</p>`}</section>
+    <section class="list-panel"><header class="section-header"><h2>${esc(t('pullRequests'))}<span class="section-count">${prs.length}</span></h2><button class="text-button" data-view-link="prs">${esc(t('viewAll'))}</button></header>${orderedPrs.length?orderedPrs.slice(0,5).map(pr=>`<button class="workspace-issue" data-approval-skill="${esc(skill.id)}" data-approval-number="${pr.number}"><span><strong>#${pr.number} ${esc(prTitle(pr))}</strong><small>${esc(pr.head)} → ${esc(pr.base)}</small></span>${pr.decision_state==='awaiting_approval'?stageBadge('review'):statusPill(pr.status,'pr')}</button>`).join(''):`<p class="compact-empty">${esc(t('noPr'))}</p>`}</section></div>${activityPanel(runs)}`;
+}
+function statusPage(){return state.skillId?workspacePage():globalOverview()}
+
 function metrics(item){return `<div class="repo-metrics"><button data-view-link="issues">${issueIcon('open')}<strong>${item.issue_count}</strong><span>${esc(t('issues'))}</span></button><button data-view-link="prs">${prIcon('open')}<strong>${item.pr_count}</strong><span>${esc(t('pullRequests'))}</span></button><button data-view-link="wiki">${svg('book')}<strong>${item.wiki_count}</strong><span>${esc(t('wiki'))}</span></button><span>${svg('issueClosed','issue-closed')}<strong>${item.completed_run_count}</strong><small>${esc(t('repairs'))}</small></span></div>`}
-function backButton(){return `<button class="back-link" data-action="back">← ${esc(t('backTo',{view:t({skills:'repositories',issues:'issues',prs:'pullRequests',wiki:'wiki'}[state.view])}))}</button>`}
+function backButton(){return `<button class="back-link" data-action="back">← ${esc(state.view==='skills'?t('backWorkspace'):t('backTo',{view:t({issues:'issues',prs:'pullRequests',wiki:'wiki'}[state.view])}))}</button>`}
 function skillDetail(item){const document=item.document;const body=document?.truncated?`<p>${esc(t('documentTooLarge'))}</p>`:document?renderMarkdown(document.content):`<p>${esc(t('noRepositoryDocument'))}</p>`;return `${backButton()}<section class="repo-overview"><div class="repo-box-head">${svg('repo')}<strong>${esc(item.name)}</strong><span>${esc(item.default_branch)}</span></div>${metrics(item)}<div class="readme-box"><div class="readme-head">${svg('book')}<strong>${esc(document?.name||'README.md')}</strong></div><section class="markdown-body">${body}</section></div></section>`}
 function evaluationGateSection(gates){if(!gates?.length)return '';return `<section class="detail-section"><h2>${esc(t('evaluationGates'))}</h2><div class="evaluation-gates">${gates.map(gate=>`<div class="evaluation-gate"><span class="run-state ${esc(gate.status)}">${gate.status==='passing'?issueIcon('closed'):issueIcon('open')}</span><div><strong>${esc(gate.split)}</strong><small>${esc(t('baseline'))}: ${gate.baseline_score} (${gate.baseline_passed}/${gate.baseline_total}) → ${esc(t('candidate'))}: ${gate.candidate_score??esc(t('notEvaluated'))}${gate.candidate_score==null?'':` (${gate.candidate_passed}/${gate.candidate_total})`}</small></div><em>${esc(t(gate.status))}</em></div>`).join('')}</div></section>`}
-function issueDetail(item){const hasGates=Boolean(item.evaluation_gates?.length);const tests=item.tests?.length?item.tests.map(test=>`<div class="linked-record issue-test"><span class="run-state ${esc(test.status)}">${test.status==='passing'?issueIcon('closed'):issueIcon('open')}</span><span><strong>${esc(test.path)}</strong><small><code>${esc(test.command)}</code></small></span><em>${esc(t(test.status))}</em></div>`).join(''):`<p class="body-copy">${esc(t('noTests'))}</p>`;const testSection=item.tests?.length||!hasGates?`<section class="detail-section"><h2>${esc(t('reproductionTests'))}</h2>${tests}</section>`:'';return `${backButton()}<header class="record-title"><h1>${esc(item.title)} <span>#${item.number}</span></h1><div class="record-state">${statusPill(item.status,'issue')}${stageBadge(item.stage)}<p>${esc(t('opened',{date:nice(item.created_at)}))}</p></div></header><div class="conversation"><aside>${svg('issue',item.status==='closed'?'issue-closed':'issue-open')}</aside><article class="comment"><header><strong>${esc(t('evidence'))}</strong><span>${esc(nice(item.created_at))}</span></header><div><p class="body-copy">${esc(item.body)||esc(t('noDescription'))}</p></div></article></div>${testSection}${evaluationGateSection(item.evaluation_gates)}<section class="detail-section"><h2>${esc(t('trajectory'))}</h2>${runTimeline(item.runs)}</section><section class="detail-section"><h2>${esc(t('linkedPrs'))}</h2>${item.pull_requests.length?item.pull_requests.map(pr=>`<button class="linked-record" data-go-pr="${pr.number}">${prIcon(pr.status)}<span><strong>#${pr.number} ${esc(prTitle(pr))}</strong><small>${esc(pr.head)} → ${esc(pr.base)}</small></span><em>${esc(statusText(pr.status))}</em></button>`).join(''):`<p class="body-copy">${esc(t('noPr'))}</p>`}</section>`}
+function issueDetail(item){const merged=item.pull_requests.find(pr=>pr.status==='merged'),resolution=item.status==='closed'&&merged?`<section class="resolution-banner">${svg('issueClosed')}<div><strong>${esc(t('resolvedHistory'))}</strong><p>${esc(t('historicalRuns'))}</p></div><button class="text-button" data-go-pr="${merged.number}">${esc(t('viewRepair'))} #${merged.number}</button></section>`:'';const hasGates=Boolean(item.evaluation_gates?.length);const tests=item.tests?.length?item.tests.map(test=>`<div class="linked-record issue-test"><span class="run-state ${esc(test.status)}">${test.status==='passing'?issueIcon('closed'):issueIcon('open')}</span><span><strong>${esc(test.path)}</strong><small><code>${esc(test.command)}</code></small></span><em>${esc(t(test.status))}</em></div>`).join(''):`<p class="body-copy">${esc(t('noTests'))}</p>`;const testSection=item.tests?.length||!hasGates?`<section class="detail-section"><h2>${esc(t('reproductionTests'))}</h2>${tests}</section>`:'';return `${backButton()}<header class="record-title"><h1>${esc(item.title)} <span>#${item.number}</span></h1><div class="record-state">${statusPill(item.status,'issue')}${stageBadge(item.stage)}<p>${esc(t('opened',{date:nice(item.created_at)}))}</p></div></header><div class="conversation"><aside>${svg('issue',item.status==='closed'?'issue-closed':'issue-open')}</aside><article class="comment"><header><strong>${esc(t('evidence'))}</strong><span>${esc(nice(item.created_at))}</span></header><div><p class="body-copy">${esc(item.body)||esc(t('noDescription'))}</p></div></article></div>${testSection}${evaluationGateSection(item.evaluation_gates)}${resolution}<section class="detail-section"><h2>${esc(t('trajectory'))}</h2>${runTimeline(item.runs)}</section><section class="detail-section"><h2>${esc(t('linkedPrs'))}</h2>${item.pull_requests.length?item.pull_requests.map(pr=>`<button class="linked-record" data-go-pr="${pr.number}">${prIcon(pr.status)}<span><strong>#${pr.number} ${esc(prTitle(pr))}</strong><small>${esc(pr.head)} → ${esc(pr.base)}</small></span><em>${esc(statusText(pr.status))}</em></button>`).join(''):`<p class="body-copy">${esc(t('noPr'))}</p>`}</section>`}
 function approvalPanel(item){
   if(item.decision_state==='merged'||item.status==='merged')return `<section class="approval-panel merged">${prIcon('merged')}<div><strong>${esc(t('mergedWithApproval'))}</strong><p>${esc(t('localOnly'))}</p></div></section>`;
   if(item.status!=='open')return '';
@@ -195,101 +330,145 @@ function approvalPanel(item){
 function syncPanel(sync){if(!sync)return '';if(sync.state==='takeover_active')return `<section class="approval-panel merged">${issueIcon('closed')}<div><strong>${esc(t('takeoverComplete'))}</strong><p>${esc(t('takeoverCompleteBody'))}</p></div></section>`;if(sync.state==='in_sync')return `<section class="approval-panel merged">${issueIcon('closed')}<div><strong>${esc(t('syncComplete'))}</strong><p>${esc(t('syncCompleteBody'))}</p></div></section>`;if(sync.state==='ready_to_sync')return `<section class="approval-panel">${svg('repo')}<div><strong>${esc(t('syncRequired'))}</strong><p>${esc(t('syncRequiredBody'))}</p></div><button class="merge-button" type="button" data-sync-skill>${esc(t('syncNow'))}</button></section>`;return `<section class="approval-panel">${svg('repo')}<div><strong>${esc(t('syncBlocked'))}</strong><p>${esc(t('syncBlockedBody'))}</p></div></section>`}
 function diffLines(patch){if(!patch)return `<div class="diff-empty">${esc(t('noDiff'))}</div>`;return String(patch).split('\n').map(line=>{const kind=line.startsWith('@@')?'hunk':line.startsWith('+')&&!line.startsWith('+++')?'addition':line.startsWith('-')&&!line.startsWith('---')?'deletion':/^(diff --git|index |--- |\+\+\+ )/.test(line)?'meta':'context';const content=['addition','deletion','context'].includes(kind)?line.slice(1):line;return `<div class="diff-line ${kind}"><span>${kind==='addition'?'+':kind==='deletion'?'−':' '}</span><code>${esc(content)||' '}</code></div>`}).join('')}
 function prDetail(item){const tabs=['conversation','commits','checks','files'];const selected=tabs.includes(state.prTab)?state.prTab:'conversation';const files=item.files?.map(file=>`<article class="file-diff"><header><b>${esc(file.status)}</b><strong>${esc(file.path)}</strong></header><div class="diff-code">${diffLines(file.patch)}</div>${file.patch_truncated?`<p class="diff-warning">${esc(t('documentTooLarge'))}</p>`:''}</article>`).join('')||`<p class="body-copy">${esc(t('noFiles'))}</p>`;const commits=item.commits?.map(commit=>`<div class="commit"><strong>${esc(commit.subject)}</strong><span>${esc(commit.short_sha)} · ${nice(commit.authored_at)}</span></div>`).join('')||`<p class="body-copy">${esc(t('noCommits'))}</p>`;const description=item.body?renderMarkdown(item.body):`<p>${esc(t('noPrDescription'))}</p>`;const tab=(id,label,count=null,icon='')=>`<button type="button" role="tab" data-pr-tab="${id}" aria-selected="${selected===id}" aria-controls="pr-panel-${id}" class="${selected===id?'active':''}">${icon}${esc(label)}${count===null?'':` <b>${count}</b>`}</button>`;const panel=(id,content)=>`<div id="pr-panel-${id}" class="pr-tab-panel" role="tabpanel" data-pr-panel="${id}"${selected===id?'':' hidden'}>${content}</div>`;const conversation=panel('conversation',`<section class="detail-section pr-description"><h2>${esc(t('prDescription'))}</h2><article class="markdown-body">${description}</article></section>${item.issue?`<section class="detail-section"><h2>${esc(t('closesIssue'))}</h2><button class="linked-record" data-go-issue="${item.issue.number}">${issueIcon(item.issue.status)}<span><strong>#${item.issue.number} ${esc(item.issue.title)}</strong></span><em>${esc(statusText(item.issue.status))}</em></button></section>`:''}`);const commitPanel=panel('commits',`<section class="detail-section"><h2>${esc(t('commits'))}</h2>${commits}</section>`);const checks=panel('checks',`<section class="detail-section"><h2>${esc(t('trajectory'))}</h2>${runTimeline(item.runs)}</section>`);const changed=panel('files',`<section class="detail-section"><h2>${esc(t('changedFiles'))}</h2><p class="diff-stat">${esc(item.diff_stat)||esc(t('noDiff'))}</p><div class="file-diffs">${files}</div></section>`);return `${backButton()}<header class="record-title"><h1>${esc(prTitle(item))} <span>#${item.number}</span></h1><div class="record-state">${statusPill(item.status,'pr')}<p>${esc(t('opened',{date:nice(item.created_at)}))} · ${esc(item.head)} → ${esc(item.base)}</p></div></header>${approvalPanel(item)}${item.status==='merged'?syncPanel(item.sync):''}<nav class="pr-subnav" role="tablist" aria-label="${esc(t('pullRequests'))}">${tab('conversation',t('conversation'),null,svg('issue'))}${tab('commits',t('commits'),item.commits?.length||0)}${tab('checks',t('checks'),item.runs?.length||0)}${tab('files',t('filesChanged'),item.files?.length||0)}</nav>${conversation}${commitPanel}${checks}${changed}`}
-function wikiDetail(item){const links=[item.issue_number?`${t('issue')} #${item.issue_number}`:'',item.pr_number?`${t('pr')} #${item.pr_number}`:''].filter(Boolean).join(' · ');return `${backButton()}<header class="record-title wiki-title"><h1>${svg('book')}${esc(item.title)}</h1><div class="record-state"><p>${esc(t('updatedAt',{time:nice(item.updated_at)}))}${links?` · ${esc(links)}`:''}</p></div></header><article class="wiki-document"><header>${svg('book')}<strong>${esc(item.slug)}</strong></header><div><h2>${esc(t('workRecord'))}</h2><p class="wiki-body">${esc(item.body)||esc(t('noNotes'))}</p><h2>${esc(t('agentCommand'))}</h2><pre>skillhone --skill ${esc(item.skill.name)} wiki view ${esc(item.slug)}</pre></div></article>`}
+function wikiDetail(item){const links=[item.issue_number?`${t('issue')} #${item.issue_number}`:'',item.pr_number?`${t('pr')} #${item.pr_number}`:''].filter(Boolean).join(' · ');return `${backButton()}<header class="record-title wiki-title"><h1>${svg('book')}${esc(item.title)}</h1><div class="record-state"><p>${esc(t('updatedAt',{time:nice(item.updated_at)}))}${links?` · ${esc(links)}`:''}</p></div></header><article class="wiki-document"><header>${svg('book')}<strong>${esc(item.slug)}</strong></header><div><h2>${esc(t('workRecord'))}</h2><p class="wiki-body">${esc(item.body)||esc(t('noNotes'))}</p></div></article>`}
 function detailPage(){return state.detailType==='skills'?skillDetail(state.detail):state.detailType==='issues'?issueDetail(state.detail):state.detailType==='prs'?prDetail(state.detail):wikiDetail(state.detail)}
-let lastRenderKey='';
+
 function renderContent(){
   const content=$('content');
-  const key=`${state.view}/${state.skillId||''}/${state.detail?.number||state.detail?.slug||''}/${state.prTab}`;
   const focused=content.contains(document.activeElement)?document.activeElement:null;
-  const focusId=focused?.id;
-  const selection=focused instanceof HTMLInputElement?[focused.selectionStart,focused.selectionEnd]:null;
+  const focusId=focused?.id,selection=focused instanceof HTMLInputElement?[focused.selectionStart,focused.selectionEnd]:null;
   const opened=new Set([...content.querySelectorAll('details[open]')].map(node=>node.dataset.skillEntry||node.dataset.preserve));
-  const counts=new Map([...content.querySelectorAll('[data-count-key]')].map(node=>[node.dataset.countKey,node.textContent]));
-  content.innerHTML=state.view==='status'?statusPage():state.detail?detailPage():listPage();
+  content.innerHTML=state.navigationLoading?`<p class="loading-message" role="status">${esc(t('loadingRecord'))}</p>`:state.navigationError?`<section class="navigation-error" role="alert"><h1>${esc(t('navigationFailed'))}</h1><p>${esc(state.navigationError)}</p><div><button class="secondary-button" data-retry-navigation>${esc(t('retry'))}</button><button class="text-button" data-workspace-skill="${esc(state.skillId)}">${esc(t('backWorkspace'))}</button><button class="text-button" data-go-home>${esc(t('allSkills'))}</button></div></section>`:state.view==='status'?statusPage():state.detail?detailPage():listPage();
+  if(state.navigationLoading)content.setAttribute('aria-busy','true');else content.removeAttribute('aria-busy');
   content.querySelectorAll('details').forEach(node=>{node.open=opened.has(node.dataset.skillEntry||node.dataset.preserve)});
-  // Replayed only for navigation, never for polling or typing.
-  content.classList.remove('page-enter');
-  if(key!==lastRenderKey){void content.offsetWidth;content.classList.add('page-enter')}
-  lastRenderKey=key;
   wireContent();
   if(focusId&&$(focusId)){$(focusId).focus({preventScroll:true});if(selection)$(focusId).setSelectionRange(...selection)}
-  if(!matchMedia('(prefers-reduced-motion: reduce)').matches){
-    content.querySelectorAll('[data-count-key]').forEach(node=>{
-      if(counts.has(node.dataset.countKey)&&counts.get(node.dataset.countKey)!==node.textContent)node.animate([{transform:'translateY(5px)',opacity:.3},{transform:'translateY(0)',opacity:1}],{duration:320,easing:'cubic-bezier(.2,.8,.2,1)'});
-    });
-  }
 }
-function reviewSkill(skillId){
-  state.skillId=skillId;state.approvalOnly=true;state.view='prs';state.detail=null;state.detailType=null;state.query='';
-  changeHash(skillId?`prs/${encodeURIComponent(skillId)}?approval`:'prs?approval');
+function resetFilters(){state.query='';state.skillQuery='';state.skillFilter='all';state.skillLimit=20;state.activityExpanded=false;state.taskFilter='all';state.approvalOnly=false;state.showHidden=false}
+function setScope(skillId){if(state.skillId!==skillId)resetFilters();state.skillId=skillId}
+function setHiddenSkill(skillId){
+  state.hiddenSkills=isHidden(skillId)?state.hiddenSkills.filter(id=>id!==skillId):[...state.hiddenSkills,skillId];
+  try{localStorage.setItem('skillhone.hiddenSkills',JSON.stringify(state.hiddenSkills))}catch{/* Keep the current session usable if browser storage is unavailable. */}
   updateChrome();renderContent();
 }
+function reviewSkill(skillId){navigationVersion++;clearNavigation();setScope(skillId);state.approvalOnly=true;state.view='prs';state.detail=null;state.detailType=null;state.query='';changeHash(skillId?`prs/${encodeURIComponent(skillId)}?approval`:'prs?approval');updateChrome();renderContent()}
+function clearFilters(){resetFilters();updateChrome();renderContent()}
 function wireContent(){
-  const search=$('search');
-  if(search)search.addEventListener('input',event=>{state.query=event.target.value;renderContent()});
-  const skillSearch=$('skill-search');
-  if(skillSearch)skillSearch.addEventListener('input',event=>{state.skillQuery=event.target.value;renderContent()});
-  document.querySelectorAll('[data-skill-filter]').forEach(button=>button.addEventListener('click',()=>{state.skillFilter=button.dataset.skillFilter;renderContent();document.querySelector(`[data-skill-filter="${state.skillFilter}"]`)?.focus({preventScroll:true})}));
-  document.querySelectorAll('[data-overview-filter]').forEach(button=>button.addEventListener('click',()=>{
-    state.skillFilter=button.dataset.overviewFilter;state.skillQuery='';renderContent();
-    document.querySelector('.skill-overview')?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'nearest'});
-    document.querySelector(`[data-skill-filter="${state.skillFilter}"]`)?.focus({preventScroll:true});
-  }));
-  document.querySelector('[data-clear-skill-filters]')?.addEventListener('click',()=>{state.skillFilter='all';state.skillQuery='';renderContent();$('skill-search')?.focus({preventScroll:true})});
+  $('search')?.addEventListener('input',event=>{state.query=event.target.value;renderContent()});
+  $('skill-search')?.addEventListener('input',event=>{state.skillQuery=event.target.value;state.skillLimit=20;renderContent()});
+  document.querySelectorAll('[data-skill-filter]').forEach(button=>button.addEventListener('click',()=>{state.skillFilter=button.dataset.skillFilter;state.skillLimit=20;renderContent()}));
+  document.querySelectorAll('[data-task-filter]').forEach(button=>button.addEventListener('click',()=>{state.taskFilter=button.dataset.taskFilter;renderContent()}));
+  document.querySelectorAll('[data-progress-days]').forEach(button=>button.addEventListener('click',()=>{state.progressDays=Number(button.dataset.progressDays);state.progressBucket=state.progressDays===90?'week':'day';renderContent()}));
+  document.querySelectorAll('[data-progress-bucket]').forEach(button=>button.addEventListener('click',()=>{state.progressBucket=button.dataset.progressBucket;renderContent()}));
+  document.querySelector('[data-retry-navigation]')?.addEventListener('click',()=>{const target=state.navigationTarget;if(target)openDetail(target.skillId,target.view,target.reference)});
+  document.querySelector('[data-show-more-skills]')?.addEventListener('click',()=>{state.skillLimit+=20;renderContent()});
+  document.querySelector('[data-collapse-skills]')?.addEventListener('click',()=>{state.skillLimit=20;renderContent()});
+  document.querySelector('[data-toggle-activity]')?.addEventListener('click',()=>{state.activityExpanded=!state.activityExpanded;renderContent()});
+  document.querySelectorAll('[data-clear-filters],[data-clear-skill-filters]').forEach(button=>button.addEventListener('click',clearFilters));
+  document.querySelector('[data-toggle-hidden]')?.addEventListener('click',()=>{state.showHidden=!state.showHidden;state.skillQuery='';state.skillFilter='all';state.skillLimit=20;renderContent()});
+  document.querySelectorAll('[data-hide-skill]').forEach(button=>button.addEventListener('click',()=>setHiddenSkill(button.dataset.hideSkill)));
+  document.querySelectorAll('[data-workspace-skill]').forEach(button=>button.addEventListener('click',()=>openWorkspace(button.dataset.workspaceSkill)));
+  document.querySelectorAll('[data-go-home]').forEach(button=>button.addEventListener('click',goHome));
   document.querySelectorAll('[data-open-skill]').forEach(button=>button.addEventListener('click',()=>openRepo(button.dataset.openSkill)));
   document.querySelectorAll('[data-review-skill]').forEach(button=>button.addEventListener('click',()=>reviewSkill(button.dataset.reviewSkill)));
   document.querySelector('[data-toggle-approvals]')?.addEventListener('click',()=>{state.approvalOnly=!state.approvalOnly;changeHash(`prs${state.skillId?`/${encodeURIComponent(state.skillId)}`:''}${state.approvalOnly?'?approval':''}`);renderContent()});
-  document.querySelectorAll('.item').forEach(button=>button.addEventListener('click',()=>state.view==='skills'?openRepo(button.dataset.id):openRecord(button.dataset.id,button.dataset.slug??Number(button.dataset.number))));
-  document.querySelector('[data-action="back"]')?.addEventListener('click',()=>{state.detail=null;state.detailType=null;changeHash(state.view==='skills'?'skills':`${state.view}${state.skillId?`/${encodeURIComponent(state.skillId)}`:''}${state.view==='prs'&&state.approvalOnly?'?approval':''}`);renderContent()});
+  document.querySelectorAll('.item[data-id]').forEach(button=>button.addEventListener('click',()=>openRecord(button.dataset.id,button.dataset.slug??Number(button.dataset.number))));
+  document.querySelector('[data-action="back"]')?.addEventListener('click',()=>{state.detail=null;state.detailType=null;if(state.view==='skills'){openWorkspace(state.skillId);return}changeHash(`${state.view}${state.skillId?`/${encodeURIComponent(state.skillId)}`:''}${state.view==='prs'&&state.approvalOnly?'?approval':''}`);updateChrome();renderContent()});
   document.querySelectorAll('[data-view-link],[data-status-view]').forEach(button=>button.addEventListener('click',()=>switchView(button.dataset.viewLink||button.dataset.statusView)));
   document.querySelectorAll('[data-run-skill]').forEach(button=>button.addEventListener('click',()=>openRecord(button.dataset.runSkill,Number(button.dataset.runIssue),'issues')));
   document.querySelectorAll('[data-approval-skill]').forEach(button=>button.addEventListener('click',()=>openRecord(button.dataset.approvalSkill,Number(button.dataset.approvalNumber),'prs')));
   document.querySelectorAll('[data-pr-tab]').forEach(button=>button.addEventListener('click',()=>{state.prTab=button.dataset.prTab;renderContent();document.querySelector(`[data-pr-tab="${state.prTab}"]`)?.focus({preventScroll:true})}));
   document.querySelector('[data-merge-pr]')?.addEventListener('click',()=>openMergeDialog(state.detail));
   document.querySelector('[data-sync-skill]')?.addEventListener('click',()=>openSyncDialog(state.detail));
-  document.querySelector('[data-go-issue]')?.addEventListener('click',event=>openRecord(state.skillId,Number(event.currentTarget.dataset.goIssue),'issues'));
-  document.querySelector('[data-go-pr]')?.addEventListener('click',event=>openRecord(state.skillId,Number(event.currentTarget.dataset.goPr),'prs'));
+  document.querySelectorAll('[data-go-issue]').forEach(button=>button.addEventListener('click',()=>openRecord(state.skillId,Number(button.dataset.goIssue),'issues')));
+  document.querySelectorAll('[data-go-pr]').forEach(button=>button.addEventListener('click',()=>openRecord(state.skillId,Number(button.dataset.goPr),'prs')));
 }
-
-function updateChrome(){const skill=currentSkill();$('repo-name').textContent=skill?.name||(state.view==='status'?'SkillHone':t('skillRepositories'));$('skills-tab-label').textContent=skill?t('code'):t('skills');$('project').textContent=t('localRepos',{count:state.items.skills.length});const scoped=view=>skill?state.items[view].filter(item=>item.skill?.id===skill.id):state.items[view];$('skill-count').textContent=state.items.skills.length;$('skill-count').hidden=Boolean(skill);$('issue-count').textContent=scoped('issues').length;$('pr-count').textContent=scoped('prs').length;$('wiki-count').textContent=scoped('wiki').length;const dot=document.querySelector('.status-dot');if(dot)dot.className=`status-dot ${state.harness.state}`;document.querySelectorAll('.tab').forEach(element=>{const active=element.dataset.view===state.view;element.classList.toggle('active',active);if(active)element.setAttribute('aria-current','page');else element.removeAttribute('aria-current')});const approvals=scoped('prs').filter(item=>item.decision_state==='awaiting_approval').length;$('pr-count').classList.toggle('pending-counter',approvals>0);$('pr-count').title=t('approvalCount',{count:approvals})}
-let ignoredHash=null;
+function updateChrome(){
+  const skill=currentSkill();
+  $('repo-name').textContent=skill?.name||t('allSkills');
+  $('scope-back').hidden=!state.skillId;
+  $('skills-tab-label').textContent=state.skillId?t('code'):t('skills');
+  $('project').textContent=state.skillId?'':t('localRepos',{count:visibleSkills().length});
+  $('skill-count').textContent=visibleSkills().length;$('skill-count').hidden=Boolean(state.skillId);
+  $('issue-count').textContent=scopedItems('issues').length;$('pr-count').textContent=scopedItems('prs').length;$('wiki-count').textContent=scopedItems('wiki').length;
+  const approvals=scopedItems('prs').filter(item=>item.decision_state==='awaiting_approval').length;
+  $('pr-count').classList.toggle('pending-counter',approvals>0);$('pr-count').title=t('approvalCount',{count:approvals});
+  document.querySelectorAll('.tab').forEach(element=>{const active=element.dataset.view===state.view;element.classList.toggle('active',active);if(active)element.setAttribute('aria-current','page');else element.removeAttribute('aria-current')});
+}
+let ignoredHash=null,navigationVersion=0;
 function changeHash(hash){if(location.hash.slice(1)!==hash){ignoredHash=hash;location.hash=hash}}
-async function openRepo(skillId){state.skillId=skillId;state.view='skills';state.query='';state.detail=await api(`/api/skills/${encodeURIComponent(skillId)}`);state.detailType='skills';changeHash(`repo/${encodeURIComponent(skillId)}`);updateChrome();renderContent()}
-async function openRecord(skillId,reference,forcedView=null){state.skillId=skillId;if(forcedView)state.view=forcedView;if(state.view==='prs')state.prTab='conversation';const segment=state.view==='issues'?'issues':state.view==='prs'?'pull-requests':'wiki';state.detail=await api(`/api/skills/${encodeURIComponent(skillId)}/${segment}/${encodeURIComponent(reference)}`);state.detailType=state.view;changeHash(`${state.view==='issues'?'issue':state.view==='prs'?'pr':'wiki'}/${encodeURIComponent(skillId)}/${encodeURIComponent(reference)}`);updateChrome();renderContent()}
-function switchView(view){state.approvalOnly=false;state.view=view;state.query='';state.detail=null;state.detailType=null;updateChrome();if(view==='skills'&&state.skillId){openRepo(state.skillId);return}changeHash(view==='skills'?'skills':state.skillId?`${view}/${encodeURIComponent(state.skillId)}`:view);renderContent()}
-function goHome(){state.skillId=null;state.view='status';state.approvalOnly=false;state.query='';state.detail=null;state.detailType=null;changeHash('status');updateChrome();renderContent()}
-function applyLocale(locale){state.locale=locale;localStorage.setItem('skillhone.locale',locale);document.documentElement.lang=locale==='zh'?'zh-CN':'en';document.querySelectorAll('[data-i18n]').forEach(element=>{element.textContent=t(element.dataset.i18n)});document.querySelectorAll('[data-locale]').forEach(button=>button.classList.toggle('active',button.dataset.locale===locale));updateChrome();renderContent()}
+function detailApiPath(){const skillId=state.skillId;if(!skillId||!state.detailType)return null;if(state.detailType==='skills')return `/api/skills/${encodeURIComponent(skillId)}`;const segment=state.detailType==='issues'?'issues':state.detailType==='prs'?'pull-requests':'wiki';const reference=state.detailType==='wiki'?state.detail?.slug:state.detail?.number;if(reference==null)return null;return `/api/skills/${encodeURIComponent(skillId)}/${segment}/${encodeURIComponent(reference)}`}
+function clearNavigation(){state.navigationLoading=false;state.navigationError=null;state.navigationTarget=null}
+function openWorkspace(skillId){navigationVersion++;clearNavigation();setScope(skillId);resetFilters();state.view='status';state.detail=null;state.detailType=null;changeHash(`status/${encodeURIComponent(skillId)}`);updateChrome();renderContent()}
+async function openDetail(skillId,view,reference=null){
+  const version=++navigationVersion;setScope(skillId);state.view=view;state.query='';if(view==='prs')state.prTab='conversation';
+  state.detail=null;state.detailType=null;state.navigationLoading=true;state.navigationError=null;state.navigationTarget={skillId,view,reference};
+  const segment=view==='issues'?'issues':view==='prs'?'pull-requests':'wiki';
+  const path=view==='skills'?`/api/skills/${encodeURIComponent(skillId)}`:`/api/skills/${encodeURIComponent(skillId)}/${segment}/${encodeURIComponent(reference)}`;
+  changeHash(view==='skills'?`repo/${encodeURIComponent(skillId)}`:`${view==='issues'?'issue':view==='prs'?'pr':'wiki'}/${encodeURIComponent(skillId)}/${encodeURIComponent(reference)}`);
+  updateChrome();renderContent();
+  try{
+    const detail=await api(path);if(version!==navigationVersion)return;
+    state.detail=detail;state.detailType=view;state.navigationTarget=null;
+  }catch(error){if(version===navigationVersion)state.navigationError=error instanceof Error?error.message:String(error)}
+  finally{if(version===navigationVersion){state.navigationLoading=false;updateChrome();renderContent()}}
+}
+async function openRepo(skillId){return openDetail(skillId,'skills')}
+async function openRecord(skillId,reference,forcedView=null){return openDetail(skillId,forcedView||state.view,reference)}
+
+async function refreshDetail(){
+  const path=detailApiPath();if(!path)return;
+  const token=`${state.detailType}/${state.skillId}/${state.detailType==='wiki'?state.detail?.slug:state.detail?.number}`,version=navigationVersion;
+  const detail=await api(path);
+  if(version===navigationVersion&&token===`${state.detailType}/${state.skillId}/${state.detailType==='wiki'?state.detail?.slug:state.detail?.number}`){state.detail=detail;renderContent()}
+}
+function switchView(view){navigationVersion++;clearNavigation();resetFilters();state.view=view;state.detail=null;state.detailType=null;if(view==='skills'&&state.skillId){openRepo(state.skillId);return}changeHash(state.skillId?`${view}/${encodeURIComponent(state.skillId)}`:view);updateChrome();renderContent()}
+function goHome(){navigationVersion++;clearNavigation();setScope(null);resetFilters();state.view='status';state.detail=null;state.detailType=null;changeHash('status');updateChrome();renderContent()}
+function updateIndicator(failed=state.updateFailed){state.updateFailed=failed;const indicator=$('update-state');if(!indicator)return;indicator.classList.toggle('stale',failed);if(failed)indicator.textContent=t('refreshFailed');else indicator.innerHTML=`<i></i>${esc(t('liveUpdates'))}`}
+function applyLocale(locale){state.locale=locale;localStorage.setItem('skillhone.locale',locale);document.documentElement.lang=locale==='zh'?'zh-CN':'en';document.querySelectorAll('[data-i18n]').forEach(element=>{element.textContent=t(element.dataset.i18n)});document.querySelectorAll('[data-locale]').forEach(button=>button.classList.toggle('active',button.dataset.locale===locale));updateChrome();renderContent();updateIndicator()}
 let loading=false,lastSnapshot='';
 async function load(){
   if(loading)return;loading=true;
   try{
-    const data=await api('/api/dashboard'),snapshot=JSON.stringify(data);
-    state.lastUpdated=new Date();
+    const data=await api('/api/dashboard'),snapshot=JSON.stringify(data);state.lastUpdated=new Date();
     if(snapshot!==lastSnapshot){
       state.items={skills:data.skills,issues:data.issues,prs:data.pull_requests,wiki:data.wiki??[],runs:data.runs??[]};
-      state.harness=data.harness??state.harness;state.audit=data.audit??state.audit;state.automation=data.automation??state.automation;
+      state.harness=data.harness??state.harness;state.executor=data.executor??state.executor;state.audit=data.audit??state.audit;state.automation=data.automation??state.automation;
       state.mergePolicy=data.merge_policy??state.mergePolicy;state.notifications=data.notifications??state.notifications;
       lastSnapshot=snapshot;updateChrome();renderContent();
     }
-    const indicator=$('update-state');if(indicator){indicator.classList.remove('stale');indicator.innerHTML=`<i></i>${esc(t('liveUpdates'))}`}
+    // Detail APIs include tests, diffs, and documents that are absent from the
+    // dashboard snapshot. Poll them independently and let this catch own errors.
+    if(state.detail)await refreshDetail();
+    updateIndicator(false);
   }catch(error){
-    const indicator=$('update-state');if(indicator){indicator.classList.add('stale');indicator.textContent=t('refreshFailed')}
+    updateIndicator(true);
     if(!lastSnapshot)throw error;
-  }finally{loading=false}
+  }finally{loading=false;if(!state.navigationLoading)$('content').removeAttribute('aria-busy')}
 }
+
 let pendingMerge=null;
 function openMergeDialog(item){const copyMode=Boolean(item.sync?.origins?.some(origin=>origin.mode==='copy'));pendingMerge={skillId:String(item.skill.id),number:Number(item.number),copyMode};$('merge-pr-name').textContent=`${item.skill.name} · #${item.number} ${prTitle(item)}`;$('merge-dialog-body').textContent=t(copyMode?'mergeAndSyncBody':'confirmMergeBody');$('merge-confirm').textContent=t(copyMode?'mergeAndSync':'mergeLocally');$('merge-error').hidden=true;$('merge-error').textContent='';$('merge-confirm').disabled=false;$('merge-dialog').showModal()}
 async function confirmMerge(){if(!pendingMerge)return;const target={...pendingMerge},button=$('merge-confirm');button.disabled=true;$('merge-error').hidden=true;try{const headers={'X-SkillHone-Confirm':'merge'};if(target.copyMode)headers['X-SkillHone-Sync']='apply';await api(`/api/skills/${encodeURIComponent(target.skillId)}/pull-requests/${target.number}/merge`,{method:'POST',headers});$('merge-dialog').close();await load();await openRecord(target.skillId,target.number,'prs')}catch(error){$('merge-error').textContent=error instanceof Error?error.message:t('mergeFailed');$('merge-error').hidden=false;button.disabled=false}}
 let pendingSync=null;
 function openSyncDialog(item){pendingSync={skillId:String(item.skill.id),number:Number(item.number)};$('sync-skill-name').textContent=item.skill.name;$('sync-error').hidden=true;$('sync-error').textContent='';$('sync-confirm').disabled=false;$('sync-dialog').showModal()}
 async function confirmSync(){if(!pendingSync)return;const target={...pendingSync},button=$('sync-confirm');button.disabled=true;$('sync-error').hidden=true;try{await api(`/api/skills/${encodeURIComponent(target.skillId)}/sync`,{method:'POST',headers:{'X-SkillHone-Confirm':'sync'}});$('sync-dialog').close();await load();await openRecord(target.skillId,target.number,'prs')}catch(error){$('sync-error').textContent=error instanceof Error?error.message:t('syncFailed');$('sync-error').hidden=false;button.disabled=false}}
-async function restoreHash(){state.detail=null;state.detailType=null;const hash=location.hash.replace(/^#/,'');const parts=hash.split('?')[0].split('/');state.approvalOnly=hash.endsWith('?approval');if(parts[0]==='repo'&&parts[1])return openRepo(decodeURIComponent(parts[1]));if(['issue','pr','wiki'].includes(parts[0])&&parts[1]&&parts[2]){state.view={issue:'issues',pr:'prs',wiki:'wiki'}[parts[0]];return openRecord(decodeURIComponent(parts[1]),decodeURIComponent(parts[2]))}if(parts[0]==='status'){state.view='status';state.skillId=parts[1]?decodeURIComponent(parts[1]):null;updateChrome();renderContent();return}if(['skills','issues','prs','wiki'].includes(parts[0])){state.view=parts[0];state.skillId=parts[1]?decodeURIComponent(parts[1]):null;updateChrome();renderContent();return}goHome()}
+
+async function restoreHash(){
+  navigationVersion++;clearNavigation();state.detail=null;state.detailType=null;resetFilters();
+  const hash=location.hash.replace(/^#/,''),parts=hash.split('?')[0].split('/');
+  setScope(parts[1]?decodeURIComponent(parts[1]):null);state.approvalOnly=hash.endsWith('?approval');
+  if(parts[0]==='repo'&&state.skillId)return openRepo(state.skillId);
+  if(['issue','pr','wiki'].includes(parts[0])&&state.skillId&&parts[2])return openRecord(state.skillId,decodeURIComponent(parts[2]),{issue:'issues',pr:'prs',wiki:'wiki'}[parts[0]]);
+  if(['status','skills','issues','prs','wiki'].includes(parts[0])){state.view=parts[0];if(state.view==='skills'&&state.skillId)return openRepo(state.skillId);updateChrome();renderContent();return}
+  goHome();
+}
 
 document.querySelectorAll('.icon-slot').forEach(slot=>{slot.innerHTML=svg(slot.dataset.icon)});
 document.querySelectorAll('.tab').forEach(tab=>tab.addEventListener('click',()=>switchView(tab.dataset.view)));
 document.querySelectorAll('[data-locale]').forEach(button=>button.addEventListener('click',()=>applyLocale(button.dataset.locale)));
 $('home-link').addEventListener('click',event=>{event.preventDefault();goHome()});
+$('scope-back').addEventListener('click',goHome);
 $('merge-close').addEventListener('click',()=>$('merge-dialog').close());
 $('merge-cancel').addEventListener('click',()=>$('merge-dialog').close());
 $('merge-confirm').addEventListener('click',confirmMerge);

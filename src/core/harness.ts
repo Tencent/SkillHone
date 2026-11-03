@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { storedCredentialReferences } from './credentials.js'
 import { applyManagedHarnessDependencyPolicy, managedHarnessDependencyPolicy } from './harness-dependencies.js'
 import { credentialStorePresent, harnessHome, harnessRoot, loadSettings, modelConfigured } from './settings.js'
-import { redact, run } from './util.js'
+import { processExitCode, redact, run } from './util.js'
 
 const registry = 'https://registry.npmjs.org'
 
@@ -143,7 +143,9 @@ export function runRepair(prompt: string, cwd: string, home: string, logPath: st
     } finally { rmSync(isolatedHome, { recursive: true, force: true }) }
   })()
   writeFileSync(logPath, redact(`${result.stdout ?? ''}${result.stderr ?? ''}${result.error ? `\n${result.error.message}` : ''}`), { mode: 0o600 })
-  return result.status ?? 1
+  // A timed-out child can handle SIGTERM and exit 0. The spawn error still
+  // means the repair did not finish, regardless of its termination status.
+  return processExitCode(result)
 }
 
 export interface ExplorationResult {

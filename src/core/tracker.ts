@@ -5,7 +5,7 @@ import { basename, isAbsolute, join, relative, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { DatabaseSync } from 'node:sqlite'
 
-import { gitRoot, now, projectId, redact, run, sha256, slug } from './util.js'
+import { gitRoot, now, processExitCode, projectId, redact, run, sha256, slug } from './util.js'
 import { auditPolicy, resolveHome, type AuditMode } from './settings.js'
 import { repairPrBody } from './pr-description.js'
 
@@ -170,11 +170,19 @@ export class Tracker {
     if (!prColumns.some(item => item.name === 'base_commit')) {
       this.db.exec('ALTER TABLE pull_request ADD COLUMN base_commit TEXT')
     }
-    const remote = this.git(['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'], false)
-    const defaultBranch = remote ? remote.replace(/^origin\//, '') : this.detectDefaultBranch()
-    this.db.prepare('INSERT OR IGNORE INTO project VALUES (?,?,?,?,?)').run(
-      projectId(this.root), basename(this.root), this.root, defaultBranch, now(),
-    )
+    // Only write the project row when it is absent. An INSERT OR IGNORE still
+    // acquires a write lock even when the row already exists, which blocks
+    // read-only dashboard access while the host holds BEGIN IMMEDIATE during an
+    // active repair. A read-only existence check keeps existing valid databases
+    // untouched while still seeding fresh ones.
+    const projectKey = projectId(this.root)
+    if (!this.db.prepare('SELECT 1 FROM project WHERE id=?').get(projectKey)) {
+      const remote = this.git(['symbolic-ref', '--short', 'refs/remotes/origin/HEAD'], false)
+      const defaultBranch = remote ? remote.replace(/^origin\//, '') : this.detectDefaultBranch()
+      this.db.prepare('INSERT OR IGNORE INTO project VALUES (?,?,?,?,?)').run(
+        projectKey, basename(this.root), this.root, defaultBranch, now(),
+      )
+    }
   }
 
   private detectDefaultBranch(): string {
@@ -328,7 +336,7 @@ export class Tracker {
     return this.pr(number)
   }
 
-  startRun(issueNumber: number, runnerName: string, branch: string): WorkRow {
+  startRun(issueNumber: number, runnerName: string, branch: string, initialStatus: 'running' | 'awaiting_agent' = 'running'): WorkRow {
     this.issue(issueNumber)
     const stamp = new Date().toISOString().replace(/[-:.]/g, '')
     const prefix = `${stamp}-${issueNumber}`
@@ -340,7 +348,7 @@ export class Tracker {
     }
     const logPath = join(this.logsDir, `${id}.log`)
     this.auditMutation(() => this.db.prepare('INSERT INTO run(id,issue_number,runner,status,branch,log_path,started_at,finished_at,tool_call_count) VALUES (?,?,?,?,?,?,?,NULL,NULL)').run(
-      id, issueNumber, runnerName, 'running', branch, logPath, now(),
+      id, issueNumber, runnerName, initialStatus, branch, logPath, now(),
     ))
     return this.runRecord(id)
   }
@@ -435,9 +443,10 @@ export class Tracker {
           env: testEnv,
           encoding: 'utf8', timeout: 5 * 60_000, maxBuffer: 4 * 1024 * 1024,
         })
-        const status = result.status === 0 ? 'passing' : 'failing'
+        const code = processExitCode(result)
+        const status = code === 0 ? 'passing' : 'failing'
         this.auditMutation(() => this.db.prepare('UPDATE issue_test SET status=?,updated_at=? WHERE id=?').run(status, now(), Number(test.id)))
-        results.push({ ...this.db.prepare('SELECT * FROM issue_test WHERE id=?').get(Number(test.id)) as WorkRow, exit_code: result.status ?? 1, output: redact(`${result.stdout ?? ''}${result.stderr ?? ''}`).slice(-4000) })
+        results.push({ ...this.db.prepare('SELECT * FROM issue_test WHERE id=?').get(Number(test.id)) as WorkRow, exit_code: code, output: redact(`${result.stdout ?? ''}${result.stderr ?? ''}${result.error ? `\n${result.error.message}` : ''}`).slice(-4000) })
       }
     } finally {
       if (worktree) this.git(['worktree', 'remove', '--force', worktree], false)
