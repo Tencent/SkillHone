@@ -31,14 +31,30 @@ function intercept(t: TestContext, handler: (args: string[]) => ReturnType<typeo
   return () => { mock.mock.restore(); syncBuiltinESMExports() }
 }
 
-function timedOut(script = '') {
-  const result = spawnSync(process.execPath, ['-e', `process.on('SIGTERM', () => process.exit(0)); ${script}; setInterval(() => {}, 1000)`], {
+function timedOut(output?: string) {
+  const result = spawnSync(process.execPath, ['-e', `
+    process.on('SIGTERM', () => process.exit(0));
+    if (process.argv[1]) require('node:fs').writeFileSync(process.argv[1], JSON.stringify({score:1,n_total:1,n_passed:1}));
+    setInterval(() => {}, 1000);
+  `, ...(output === undefined ? [] : [output])], {
     encoding: 'utf8', timeout: 700,
   })
   assert.equal(result.status, 0)
   assert.equal((result.error as NodeJS.ErrnoException | undefined)?.code, 'ETIMEDOUT')
   return result
 }
+
+test('Timeout fixture treats special output filenames as data', () => {
+  const root = mkdtempSync(join(tmpdir(), 'skillhone-timeout-output-'))
+  const filename = 'score \' " `${process.stdout.write("injected")} spaces.json'
+  try {
+    const result = timedOut(join(root, filename))
+    assert.equal(readFileSync(join(root, filename), 'utf8'), '{"score":1,"n_total":1,"n_passed":1}')
+    assert.deepEqual(readdirSync(root), [filename])
+    assert.equal(result.stdout, '')
+    assert.equal(result.stderr, '')
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
 
 test('Issue verification rejects a real timeout even when the child exits 0', t => {
   const root = mkdtempSync(join(tmpdir(), 'skillhone-verification-timeout-'))
@@ -67,7 +83,7 @@ test('Issue verification preserves normal codes and redacts spawn errors', t => 
   const restore = intercept(t, () => result)
   try {
     for (const code of [0, 7]) {
-      result = spawnSync(process.execPath, ['-e', `process.exit(${code})`], { encoding: 'utf8' })
+      result = spawnSync(process.execPath, ['-e', 'process.exit(Number(process.argv[1]))', String(code)], { encoding: 'utf8' })
       const observed = tracker.runIssueTests(Number(issue.number))
       assert.equal(observed.passed, code === 0)
       assert.equal(observed.tests[0]?.exit_code, code)
@@ -95,7 +111,7 @@ test('Benchmark rejects a timed-out exit-0 evaluator even if it already wrote a 
   const restore = intercept(t, args => {
     const output = args.at(-1)?.match(/'([^']+)'$/)?.[1]
     assert.ok(output)
-    return timedOut(`require('node:fs').writeFileSync(${JSON.stringify(output)}, JSON.stringify({score:1,n_total:1,n_passed:1}))`)
+    return timedOut(output)
   })
   try {
     assert.throws(() => runBenchmark(tracker, 'probe'), /benchmark runner failed for probe \(exit 124\)/)
