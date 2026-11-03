@@ -10,7 +10,7 @@ import { runExploration, runRepair } from './harness.js'
 import { benchmarkPrBody } from './pr-description.js'
 import { benchmarkHarnessHome, mergePolicy } from './settings.js'
 import { Tracker, type WorkRow } from './tracker.js'
-import { now, redact, run, sha256, slug } from './util.js'
+import { now, processExitCode, redact, run, sha256, slug } from './util.js'
 
 type Split = 'probe' | 'pr_val' | 'test'
 
@@ -284,8 +284,9 @@ export function runBenchmark(tracker: Tracker, requestedSplit = 'probe'): WorkRo
     env: { ...process.env, DSH_HOME: benchmarkHarnessHome(tracker.home) },
     encoding: 'utf8', timeout: 2 * 60 * 60_000, maxBuffer: 16 * 1024 * 1024,
   })
-  privateWrite(log, redact(`${result.stdout ?? ''}${result.stderr ?? ''}`))
-  if (result.status !== 0) throw new Error(`benchmark runner failed for ${split}; inspect the private run log`)
+  privateWrite(log, redact(`${result.stdout ?? ''}${result.stderr ?? ''}${result.error ? `\n${result.error.message}` : ''}`))
+  const code = processExitCode(result)
+  if (code !== 0) throw new Error(`benchmark runner failed for ${split} (exit ${code}); inspect the private run log`)
   if (!existsSync(output) || statSync(output).size === 0) throw new Error('benchmark runner did not create its requested output file')
   chmodSync(output, 0o600)
   let raw: ScoreResult

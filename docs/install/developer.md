@@ -49,10 +49,15 @@ indexes repositories, while every Skill keeps a separate Issue/PR/Run/Wiki datab
 
 ## Test optimization
 
+For the current Agent, follow the native assignment and host-completion steps
+in the [installation guide](skillhone.md#first-use). The following commands
+exercise the optional managed DSH executor explicitly:
+
 ```bash
+skillhone setup --with-harness
 skillhone harness configure --provider deepseek --model your-model-id
 # Enter the credential at the hidden terminal prompt.
-skillhone --skill example-skill optimize 1
+skillhone --skill example-skill optimize 1 --executor dsh
 ```
 
 Harness works on a newly created `skillhone/issue-1-*` branch. A successful run

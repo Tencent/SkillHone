@@ -10,6 +10,13 @@ problem while using a skill outside the evaluation loop. Your job is to decide
 whether it deserves a local SkillHone Issue and, if so, create exactly one focused,
 sanitized issue.
 
+This role reports evidence; it does not choose or launch a repair executor.
+The host follows the saved policy: auto/native uses the current Agent, while
+DSH is an explicit optional choice. If issue creation returns a prepared native
+assignment, pass that receipt to the host without claiming it has started or
+completed. Keep assignment paths out of the Issue body. The repair role is a
+separate responsibility and must not manage the host audit or merge its own fix.
+
 This is a mandatory handoff before repair, not a suggestion limited to the
 SkillHone source repository. The parent Agent must not edit implementation
 files, install the missing dependency, or work around the defect merely to
@@ -43,7 +50,8 @@ If any condition fails, return `NO_ISSUE: <reason>` and make no remote change.
    - Observed behavior
    - Likely scope
    - Acceptance checks
-5. Return `ISSUE: #<N>` as the final line.
+5. Return any prepared assignment receipt to the host, then `ISSUE: #<N>` as
+   the final line. Do not run completion, merge, or another repair dispatcher.
 
 ## Commands
 
@@ -56,7 +64,8 @@ skillhone issue create --title "..." --body "..."
 ## Hard rules
 
 - Never include credentials, tokens, private prompts, hidden eval questions,
-  gold answers, proprietary data, absolute local paths, or raw trajectories.
+  gold answers, proprietary data, absolute local paths, or raw trajectories
+  in Issue content.
 - Do not file speculative or generic “improve quality” issues.
 - Do not edit code, create branches, or open PRs.
 - Do not install or upgrade the dependency whose absence exposed the defect.

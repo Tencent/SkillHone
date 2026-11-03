@@ -1,8 +1,11 @@
 # Upstream sync
 
 The canonical implementation is <https://github.com/Tencent/SkillHone>.
-Installing only `SKILL.md` is insufficient because the CLI, DeepSeek Harness
-runner, and Web assets live alongside it.
+Installing only `SKILL.md` is insufficient because the CLI, local state backend,
+and Web assets ship in the full package. New homes use the current Agent through
+`auto`/`native` assignments; DeepSeek Harness is an optional managed executor,
+installed only by an explicit `setup --with-harness`. Existing executor choices
+are preserved on upgrade. See [the CLI reference](cli.md#executor-policy).
 
 For development, clone the repository and build the TypeScript package:
 

@@ -38,7 +38,9 @@ Skill 仓库**，再交付经过测试的本地 PR。Issue、回归测试、Diff
 一起，后续 Agent 可以沿用已有的判断。
 
 适用于 **Codex、Claude Code、Cursor、Pi、ZCode** 等能够调用 CLI 的 Agent。
-当前 Agent 报告问题，DeepSeek Harness 执行修复。
+新安装默认由当前 Agent 接手修复任务，沿用当前模型与账号；
+[DeepSeek Harness](deepseek-harness.md) 是可选的托管执行器，已有安装保留原选择。
+宿主独立验收提交与关联测试后，再创建本地 PR。
 
 ## 35 秒了解 SkillHone
 
@@ -89,7 +91,8 @@ https://github.com/user-attachments/assets/69bafb25-5ba9-44cb-b5ff-8a2a94f8e51a
 ## 致谢
 
 SkillHone 使用 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)
-作为修复执行器，在独立分支上完成修改并运行关联测试；SkillHone 将本地 PR、验证证据与决策历史保存在一起。
+作为可选托管修复执行器；native 任务由当前 Agent 完成，无需安装 DSH。
+两条路径都通过宿主测试门禁，将本地 PR、验证证据与决策历史保存在一起。
 
 [安全](../SECURITY.md) · [参与贡献](../CONTRIBUTING.md) ·
 [MIT License](../LICENSE) · [第三方声明](../THIRD_PARTY_NOTICES.md)

@@ -5,15 +5,13 @@ import { basename, join, relative, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
 import { status as harnessStatus } from './harness.js'
+import { executorStatus } from './execution.js'
+import { containsCredential } from './credential-scan.js'
 import { auditPolicy, mergePolicy, policy, loadSettings, resolveHome } from './settings.js'
 import { Tracker, type WorkRow } from './tracker.js'
 import { gitRoot, now, projectId, redact, run, slug } from './util.js'
 
 const ignored = new Set(['.git', '__pycache__', '.pytest_cache', '.mypy_cache', '.ruff_cache', '.DS_Store', 'node_modules'])
-const bareSecret = /(?:^|[^A-Za-z0-9])(?:gh[pousr]_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{16,})/g
-const assignedSecret = /(?:api[_-]?key|token|secret|password|authorization)\s*[:=]\s*["']?([^\s"',}]{12,})/gi
-const javascriptEnvironmentReference = /^process\.env(?:\.[A-Za-z_][A-Za-z0-9_]*|\[["'][A-Za-z_][A-Za-z0-9_]*["']\])$/
-const placeholders = ['example', 'placeholder', 'redacted', 'dummy', 'changeme', 'your', 'xxx']
 
 type SkillRow = { id: string; name: string; root: string; source: string; source_digest: string | null; created_at: string }
 export type ImportMode = 'copy' | 'managed'
@@ -53,20 +51,9 @@ function preflight(root: string): void {
     const data = readFileSync(path)
     if (data.includes(0)) continue
     const text = data.toString('utf8')
-    // Variable references contain no credential. Keep defaults/assignments and
-    // literal suffixes visible, and scan the original text for token signatures.
-    const assignments = text
-      .replace(/\$\{[A-Za-z_][A-Za-z0-9_]*(?::?\?[^{}\n]*)?\}|\$[A-Za-z_][A-Za-z0-9_]*/g, '$ENV')
-      .replace(/process\.env\[["'][A-Za-z_][A-Za-z0-9_]*["']\]/g, '$ENV')
-    const assigned = [...assignments.matchAll(assignedSecret)]
-      .map(match => match[1] ?? '')
-      .filter(value => !placeholders.some(word => value.toLowerCase().includes(word)))
-      .filter(value => !javascriptEnvironmentReference.test(value))
-    if (bareSecret.test(text) || assigned.length > 0 || text.includes('-----BEGIN PRIVATE KEY-----')) {
-      bareSecret.lastIndex = 0
+    if (containsCredential(text, path)) {
       throw new Error(`possible credential in ${relative(root, path)}; redact it before import`)
     }
-    bareSecret.lastIndex = 0
   }
 }
 
@@ -171,7 +158,21 @@ export class Catalog {
     const target = join(this.repositoriesDir, targetName)
     const existing = this.db.prepare('SELECT * FROM skill WHERE name=?').get(targetName) as SkillRow | undefined
     if (existing) {
-      if (existing.source_digest === sourceDigest) {
+      const origin = this.db.prepare('SELECT skill_id,source_digest FROM skill_origin WHERE path=?').get(sourceRoot) as { skill_id: string; source_digest: string | null } | undefined
+      if (origin && (origin.skill_id !== existing.id || (origin.source_digest ?? existing.source_digest) !== sourceDigest)) {
+        throw new Error('runtime Skill changed since its recorded import; preserve the origin baseline and resolve its drift before reimport')
+      }
+      let matchesCurrent = false
+      if (!origin && existing.source_digest !== sourceDigest) {
+        const tracker = new Tracker(existing.root, this.home)
+        try {
+          matchesCurrent = tracker.auditStatus().integrity === 'verified'
+            && !tracker.git(['status', '--porcelain'])
+            && tracker.git(['branch', '--show-current']) === tracker.project().default_branch
+            && digest(existing.root) === sourceDigest
+        } finally { tracker.close() }
+      }
+      if (origin || existing.source_digest === sourceDigest || matchesCurrent) {
         this.recordOrigin(existing.id, sourceRoot, sourceLabel, mode, undefined, sourceDigest)
         const backup = mode === 'managed' ? this.connectManaged(existing.id, sourceRoot, existing.root, sourceLabel) : undefined
         return { ...this.skill(existing.id, true), import_status: 'already-imported', import_mode: mode === 'managed' ? 'takeover' : mode, ...(backup ? { backup } : {}) }
@@ -393,22 +394,25 @@ export class Catalog {
       ...(includeRoot ? { root: item.root } : {}),
     }
     const tracker = this.tracker(item.id)
-    try {
-      const runs = tracker.listRuns()
-      const result: WorkRow = {
-        id: item.id, name: item.name, source: item.source,
-        available: true, repository_status: 'available',
-        default_branch: tracker.project().default_branch, created_at: item.created_at,
-        audit: tracker.auditStatus(),
-        issue_count: tracker.listIssues().length, open_issue_count: tracker.listIssues('open').length,
-        pr_count: tracker.listPrs().length, open_pr_count: tracker.listPrs('open').length,
-        wiki_count: tracker.listWiki().length,
-        completed_run_count: runs.filter(runItem => runItem.status === 'completed').length,
-      }
-      if (includeDocument) result.document = repositoryDocument(item.root)
-      if (includeRoot) result.root = item.root
-      return result
-    } finally { tracker.close() }
+    try { return this.skillSummary(item, tracker, includeRoot, includeDocument) }
+    finally { tracker.close() }
+  }
+
+  private skillSummary(item: SkillRow, tracker: Tracker, includeRoot = false, includeDocument = false): WorkRow {
+    const runs = tracker.listRuns()
+    const result: WorkRow = {
+      id: item.id, name: item.name, source: item.source,
+      available: true, repository_status: 'available',
+      default_branch: tracker.project().default_branch, created_at: item.created_at,
+      audit: tracker.auditStatus(),
+      issue_count: tracker.listIssues().length, open_issue_count: tracker.listIssues('open').length,
+      pr_count: tracker.listPrs().length, open_pr_count: tracker.listPrs('open').length,
+      wiki_count: tracker.listWiki().length,
+      completed_run_count: runs.filter(runItem => runItem.status === 'completed').length,
+    }
+    if (includeDocument) result.document = repositoryDocument(item.root)
+    if (includeRoot) result.root = item.root
+    return result
   }
 
   listSkills(includeRoot = false): WorkRow[] {
@@ -417,13 +421,15 @@ export class Catalog {
   }
 
   dashboard(): WorkRow {
-    const skills = this.listSkills()
+    const skills: WorkRow[] = []
     const issues: WorkRow[] = [], prs: WorkRow[] = [], runs: WorkRow[] = [], wiki: WorkRow[] = []
-    for (const skill of skills) {
-      if (skill.available === false) continue
-      const tracker = this.tracker(String(skill.id))
-      const owner = { id: skill.id, name: skill.name }
+    const repositories = this.db.prepare('SELECT * FROM skill ORDER BY name').all() as SkillRow[]
+    for (const item of repositories) {
+      if (!existsSync(item.root)) { skills.push(this.skill(item.id)); continue }
+      const tracker = this.tracker(item.id)
+      const owner = { id: item.id, name: item.name }
       try {
+        skills.push(this.skillSummary(item, tracker))
         for (const value of tracker.listIssues()) issues.push({ ...sanitized(value), skill: owner, stage: tracker.issueStage(Number(value.number)) })
         for (const value of tracker.listPrs()) prs.push({
           ...value, skill: owner,
@@ -437,13 +443,14 @@ export class Catalog {
     prs.sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))
     runs.sort((a, b) => String(b.started_at).localeCompare(String(a.started_at)))
     wiki.sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)))
-    const activeRuns = runs.filter(item => item.status === 'running').length
+    const activeRuns = runs.filter(item => item.status === 'running' && item.runner === 'deepseek-harness').length
     const harness = harnessStatus(this.home)
     const launchMode = harness.installed ? 'managed' : 'unavailable'
     for (const skill of skills) {
       skill.automation = policy(this.home, String(skill.id))
       skill.merge_policy = mergePolicy(this.home, String(skill.id))
       skill.audit_policy = auditPolicy(this.home, String(skill.id))
+      skill.executor = executorStatus(this.home, String(skill.id))
     }
     const approvals = prs.filter(item => item.decision_state === 'awaiting_approval').map(item => ({
       skill: item.skill,
@@ -453,12 +460,14 @@ export class Catalog {
       state: 'awaiting_approval',
     }))
     const auditModes = new Set(skills.filter(skill => skill.available !== false).map(skill => String((skill.audit as WorkRow | undefined)?.mode ?? 'standard')))
+    const executor = executorStatus(this.home)
+    const auditBoundaries = new Set(skills.filter(skill => skill.available !== false).map(skill => String((skill.executor as WorkRow).audit_boundary)))
     return {
       skills, issues, pull_requests: prs, runs, wiki,
       audit: {
         integrity: skills.every(skill => (skill.audit as WorkRow | undefined)?.integrity === 'verified') ? 'verified' : 'failed',
         mode: auditModes.size > 1 ? 'mixed' : (auditModes.values().next().value ?? auditPolicy(this.home).mode),
-        authority: 'skillhone-host', runner_writes: 'blocked-during-run',
+        authority: 'skillhone-host', runner_writes: auditBoundaries.size > 1 ? 'mixed' : (auditBoundaries.values().next().value ?? executor.audit_boundary) === 'trusted-host-session' ? 'trusted-host-session' : 'blocked-during-run',
       },
       notifications: {
         approval_required: approvals.length,
@@ -467,6 +476,7 @@ export class Catalog {
             : 'No optimized Skill PRs await approval.',
         items: approvals,
       },
+      executor,
       harness: { state: activeRuns ? 'running' : (harness.installed ? 'idle' : 'unavailable'), active_runs: activeRuns, launch_mode: launchMode, ...harness },
       automation: { default: loadSettings(this.home).automation.default },
       merge_policy: mergePolicy(this.home),

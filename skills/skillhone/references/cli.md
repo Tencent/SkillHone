@@ -97,7 +97,7 @@ skillhone wiki view <slug>
 ```
 
 Wiki entries live in the selected Skill's local state and never cross repository
-boundaries. Successful Harness optimization automatically writes an
+boundaries. Successful optimization automatically writes an
 `issue-<N>-repair` record linked to the local Issue and PR.
 
 ## Report and repair
@@ -109,24 +109,46 @@ skillhone issue test add <N> --path .test/<file> --command <command>
 skillhone issue test list <N>
 skillhone issue test run <N>
 skillhone issue close <N>
-skillhone optimize <issue-number>
-skillhone retry <issue-number>
+skillhone optimize <issue-number> [--executor auto|native|dsh]
+skillhone retry <issue-number> [--executor auto|native|dsh]
+skillhone execution complete <run-id> --commit <exact-commit-sha>
+skillhone execution fail <run-id> --reason <safe-summary>
+skillhone execution cancel <run-id> --reason <safe-summary>
 skillhone pr create --title <title> --head <branch> [--base main] [--issue N]
 skillhone pr merge <N> --confirm
 ```
 
-`optimize` creates a local branch, runs DeepSeek Harness, reruns every test
-attached to the Issue, and records a PR only when Harness exits successfully,
-all tests pass, and the branch contains a real commit. It never pushes. The
-saved `review` policy requires a clean worktree and `pr merge --confirm`;
-`automatic` merges locally only after the same test gate passes.
+`auto` (the new-home default) resolves to `native`, preserving the current Agent's model,
+account, and provider. `optimize` prepares a branch and returns an assignment:
+`run_id`, `worktree`, `branch`, `base_commit`, registered `tests`, and
+`completion_args`. It reports `waiting_for_current_agent` and
+`automatically_started: false`; the Run is `awaiting_agent`, not running or failed.
+Use `completion_args` as an argument vector after replacing its exact-SHA
+placeholder; do not concatenate it into an unescaped shell string.
+There is no `execution prepare` subcommand. Use an already returned assignment
+rather than preparing another one for the same Issue.
 
-Issue, Run, PR, and Wiki state is host-owned. During a Harness repair,
-SkillHone removes its home pointer from the runner environment, gives the runner
-an isolated user home, and holds the audit database under a write lock. The
-runner can change and commit the Skill workspace, but cannot use a nested CLI or
-SQLite connection to rewrite or close its active audit records. `status`
-reports `audit.integrity` and the enforced runner-write boundary.
+The current Agent performs the repair using its normal tools. A delegated
+repair role only edits/tests/commits the assigned workspace and returns the exact
+SHA; it must not call SkillHone, alter host audit records or registered tests,
+merge, or push. The host independently checks the candidate and calls
+`execution complete`. Completion requires the assigned branch/HEAD and exact
+commit, unchanged base and reproduction contract, a clean worktree, and passing
+tests before creating a PR. Saved `review`/`automatic` merge policy is applied
+by the host; no executor pushes. `execution fail` and `execution cancel` end a
+pending native assignment with a safe reason.
+
+Native execution is attached to the trusted host session. It does not hold a
+cross-command audit write lock or claim hidden-evaluation isolation. Removing
+inherited subagent turns is not a filesystem security boundary. Both current backends reject
+`--hidden-eval`.
+
+Explicit `--executor dsh` starts the configured managed DeepSeek Harness,
+reruns linked tests after exit, and requires a real commit before recording a
+PR. DSH's live child process receives an isolated home and no SkillHone home
+pointer, while the host holds its audit database write lock. DSH installation
+and credentials are optional for native use. A requested DSH execution never
+falls back to native if its configuration is unavailable.
 
 After resolving a failed runtime repair's cause, use `retry N` in the same
 repository. It creates a new branch from the failed branch tip, preserves the
@@ -146,7 +168,9 @@ skillhone benchmark optimize --min-improvement 0.02 [--max-iterations 3 --patien
 skillhone benchmark run --split test
 ```
 
-This is the optional paper-compatible path. `init` pins a clean evaluation
+This is the optional paper-compatible path. Native `benchmark optimize` is
+currently unsupported; select the explicit DSH path for supported non-hidden
+campaigns instead of promising an attached native worker. `init` pins a clean evaluation
 repository commit and fingerprints its `probe`, optional `pr_val`, and optional
 `test` datasets. The default runner is the existing paper-compatible
 `evaluator/eval.py` command; use `--runner` for another local evaluator.
@@ -154,11 +178,14 @@ repository commit and fingerprints its `probe`, optional `pr_val`, and optional
 Benchmark evaluation turns the most frequent redacted failure pattern into a
 normal Issue. Repair then uses the same Issue branch, PR, Wiki, and review flow
 as an Agent-reported problem, but its evaluation contract does not enter the
-Skill repository's `.test/`. DeepSeek Harness receives the probe questions plus
-aggregate, redacted feedback; it does not receive the Eval repository path,
+Skill repository's `.test/`. The selected repair executor receives probe questions plus aggregate, redacted
+feedback; it does not receive the Eval repository path,
 probe verifier/gold, held-out `pr_val`/`test` inputs, or raw result JSON. The
 separate Eval Git repository owns all versioned evaluation artifacts. `test` is
-explicit and is never used by `benchmark optimize`.
+explicit and is never used by `benchmark optimize`. Excluding data from the
+prompt is not proof that the repair process cannot read it. Hidden evaluation
+requires a genuinely separate protected environment; native `--hidden-eval`
+is rejected.
 
 ## Install and configure Harness
 
@@ -178,7 +205,9 @@ skillhone harness configure --role evaluator --provider my-evaluator \
   --model my-model --base-url https://example.com/v1 --protocol openai-completions
 ```
 
-`doctor` checks configuration without contacting the model. `doctor --probe`
+`doctor` reports the selected executor and its capabilities. Native readiness
+means an assignment can be prepared; it does not claim an unattended worker is
+installed or that a model call has succeeded. With DSH selected, `doctor --probe`
 adds a real model request and two temporary read-only file challenges to verify
 native tool execution. Missing credential files are valid with environment
 credentials. Tool-call protocol failures require checking the Harness provider
@@ -206,6 +235,29 @@ the process argument list. Custom endpoints additionally use `--base-url` and
 `--protocol`. Repairs use the headless profile. SkillHone stores only a
 configured/not-configured descriptor; it never copies a provider credential
 into `settings.json`, Issue text, logs, or the browser.
+
+## Executor policy
+
+```bash
+# Default: prepare work for the current Agent; never silently start DSH.
+skillhone config set --executor auto
+skillhone config set --executor native
+# Explicit optional managed executor:
+skillhone config set --executor dsh
+# Repository override:
+skillhone --skill web-search config set --executor native
+# One attempt override, without changing the saved policy:
+skillhone --skill web-search optimize 1 --executor native
+```
+
+Existing settings with no executor field keep `dsh` for compatibility. Select
+`config set --executor auto` to migrate deliberately.
+
+Executor selection is independent from queued/immediate/scheduled triggers and
+review/automatic merge policy. `auto` always selects native. A native assignment
+still needs the current Agent to perform it; a scheduled dispatcher is not an
+unattended native model worker. DSH is installed only by explicit
+`setup --with-harness` and configured through its own provider/model settings.
 
 ## Trigger policy
 
