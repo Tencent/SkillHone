@@ -314,7 +314,7 @@ pre{white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;border:1px solid va
 @media(min-width:1180px){
 .topbar{height:52px;padding:0 24px;gap:24px}
 .brand{width:152px}
-.workspace{display:grid;grid-template-columns:196px minmax(0,1fr);min-height:calc(100vh - 52px)}
+.workspace{max-width:none;margin:0;display:grid;grid-template-columns:196px minmax(0,1fr);min-height:calc(100vh - 52px)}
 .tabs{position:sticky;top:52px;align-self:start;min-height:calc(100vh - 52px);max-height:calc(100vh - 52px);overflow-y:auto;padding:24px 12px;flex-direction:column;align-items:stretch;gap:8px;border:0;background:#172b3d}
 .tab{justify-content:flex-start;height:44px;min-height:44px;padding:0 12px;border:0;border-left:3px solid transparent;border-radius:6px;color:#bbcad8;font-size:14px}
 .tab:hover{background:#20394e;color:white}
