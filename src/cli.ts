@@ -591,9 +591,10 @@ async function executeDispatch(global: Globals, catalog: Catalog): Promise<numbe
 function executeIssue(global: Globals, catalog: Catalog, tracker: Tracker): number {
   const [action, reference] = global.args
   if (action === 'create') {
-    const result = tracker.createIssue(required(global.args, '--title'), option(global.args, '--body') ?? '')
     const testPath = option(global.args, '--test-path'), testCommand = option(global.args, '--test-command')
     if (Boolean(testPath) !== Boolean(testCommand)) throw new Error('--test-path and --test-command must be provided together')
+    const result = tracker.createIssue(required(global.args, '--title'), option(global.args, '--body') ?? '',
+      testPath && testCommand ? { path: testPath, command: testCommand } : undefined)
     if (testPath && testCommand) result.issue.tests = [tracker.addIssueTest(Number(result.issue.number), testPath, testCommand)]
     const automation = policy(catalog.home, tracker.project().id)
     const output: WorkRow = {
@@ -603,7 +604,7 @@ function executeIssue(global: Globals, catalog: Catalog, tracker: Tracker): numb
     if (result.created && automation.mode === 'immediate') output.optimization = optimizeIssue(tracker, Number(result.issue.number), false, option(global.args, '--executor'), flag(global.args, '--hidden-eval'))
     emit(output, global.json)
     return (output.optimization as WorkRow | undefined)?.exit_code ? 1 : 0
-  } else if (action === 'test') executeIssueTest(global, tracker, reference)
+  } else if (action === 'test') return executeIssueTest(global, tracker, reference)
   else if (action === 'list') emit(tracker.listIssues(option(global.args, '--status')), global.json)
   else if (action === 'view') emit(tracker.issueDetail(number(reference, 'issue number')), global.json)
   else if (action === 'close') emit(tracker.closeIssue(number(reference, 'issue number')), global.json)
@@ -611,12 +612,16 @@ function executeIssue(global: Globals, catalog: Catalog, tracker: Tracker): numb
   return 0
 }
 
-function executeIssueTest(global: Globals, tracker: Tracker, action: string | undefined): void {
+function executeIssueTest(global: Globals, tracker: Tracker, action: string | undefined): number {
   const issueNumber = number(global.args[2], 'issue number')
   if (action === 'add') emit(tracker.addIssueTest(issueNumber, required(global.args, '--path'), required(global.args, '--command')), global.json)
   else if (action === 'list') emit(tracker.listIssueTests(issueNumber), global.json)
-  else if (action === 'run') emit(tracker.runIssueTests(issueNumber), global.json)
-  else throw new Error('issue test requires add, list, or run')
+  else if (action === 'run') {
+    const result = tracker.runIssueTests(issueNumber)
+    emit(result, global.json)
+    return result.passed ? 0 : 1
+  } else throw new Error('issue test requires add, list, or run')
+  return 0
 }
 
 function executePr(global: Globals, tracker: Tracker): void {

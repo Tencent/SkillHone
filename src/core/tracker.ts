@@ -250,12 +250,15 @@ export class Tracker {
     return sha256(normalized)
   }
 
-  createIssue(title: string, body = ''): { issue: WorkRow; created: boolean } {
+  createIssue(title: string, body = '', test?: { path: string; command: string }): { issue: WorkRow; created: boolean } {
     const safeTitle = redact(title).trim().slice(0, 240)
     const safeBody = redact(body).trim().slice(0, 12000)
     if (!safeTitle) throw new Error('issue title must not be empty')
     const fingerprint = this.fingerprint(safeTitle, safeBody)
     const existing = this.db.prepare("SELECT * FROM issue WHERE fingerprint=? AND status='open'").get(fingerprint)
+    // Validate before creating any Issue. A duplicate may refer to a test that
+    // exists only on its repair branch after review mode restores the base.
+    if (test) this.validateIssueTest(test.path, test.command, existing ? Number(existing.number) : undefined)
     if (existing) return { issue: row(existing), created: false }
     const timestamp = now()
     const result = this.auditMutation(() => this.db.prepare(
@@ -386,17 +389,23 @@ export class Tracker {
     return 'queued'
   }
 
-  addIssueTest(issueNumber: number, path: string, command: string): WorkRow {
-    this.issue(issueNumber)
+  private validateIssueTest(path: string, command: string, issueNumber?: number): { path: string; command: string } {
     const normalizedPath = path.replaceAll('\\', '/').replace(/^\.\//, '')
     const absolute = resolve(this.root, normalizedPath)
     if (isAbsolute(path) || relative(this.root, absolute).startsWith('..')) throw new Error('test path must stay inside the Skill repository')
     if (!normalizedPath.startsWith('.test/')) throw new Error('Issue tests must live under .test/')
     const safeCommand = redact(command).trim().slice(0, 2000)
     if (!safeCommand) throw new Error('test command must not be empty')
+    const existing = issueNumber === undefined ? undefined : this.db.prepare('SELECT id FROM issue_test WHERE issue_number=? AND path=? AND command=?').get(issueNumber, normalizedPath, safeCommand)
+    if (!existing && !existsSync(absolute)) throw new Error(`Issue test does not exist: ${normalizedPath}`)
+    return { path: normalizedPath, command: safeCommand }
+  }
+
+  addIssueTest(issueNumber: number, path: string, command: string): WorkRow {
+    this.issue(issueNumber)
+    const { path: normalizedPath, command: safeCommand } = this.validateIssueTest(path, command, issueNumber)
     const existing = this.db.prepare('SELECT * FROM issue_test WHERE issue_number=? AND path=? AND command=?').get(issueNumber, normalizedPath, safeCommand)
     if (existing) return row(existing)
-    if (!existsSync(absolute)) throw new Error(`Issue test does not exist: ${normalizedPath}`)
     const timestamp = now()
     this.auditMutation(() => this.db.prepare("INSERT OR IGNORE INTO issue_test(issue_number,path,command,status,created_at,updated_at) VALUES (?,?,?,'pending',?,?)").run(
       issueNumber, normalizedPath, safeCommand, timestamp, timestamp,
